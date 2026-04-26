@@ -658,7 +658,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Welcome to Petit</string>
-    <string name="onboarding_welcome_description">Your companion for tracking your cat\'s health, simply and completely.</string>
+    <string name="onboarding_welcome_description">Your companion for tracking your pet\'s health, simply and completely.</string>
     <string name="onboarding_features_title">Everything in one place</string>
     <string name="onboarding_feature_weight">Weight tracking</string>
     <string name="onboarding_feature_vaccination">Vaccination records</string>
@@ -677,7 +677,7 @@
     <string name="profile_section_data">Data</string>
     <string name="profile_section_about">About</string>
     <string name="family_group_title">Family Group</string>
-    <string name="family_group_onboarding_description">Share your cats\' data with your family.</string>
+    <string name="family_group_onboarding_description">Share your pets\' data with your family.</string>
     <string name="family_group_pair_device">Pair Device</string>
     <string name="family_group_join">Join Group</string>
     <string name="family_group_manage">Manage Group</string>
@@ -715,7 +715,7 @@
 
 
     <!-- Pet Types -->
-    <string name="pet_type_cat">Pet</string>
+    <string name="pet_type_cat">Cat</string>
     <string name="pet_type_dog">Dog</string>
     <string name="pet_type_rabbit">Rabbit</string>
     <string name="pet_type_bird">Bird</string>

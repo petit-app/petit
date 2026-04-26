@@ -713,45 +713,45 @@
   <string name="action_done">Concluído</string>
 
 
-    <!-- Tipos de Pet -->
-    <string name="pet_type_cat">Pet</string>
-    <string name="pet_type_dog">Cachorro</string>
-    <string name="pet_type_rabbit">Coelho</string>
-    <string name="pet_type_bird">Pássaro</string>
-    <string name="pet_type_hamster">Hamster</string>
-    <string name="pet_type_other">Outro</string>
-    <string name="pet_form_type_label">Espécie / Tipo</string>
+  <!-- Tipos de Pet -->
+  <string name="pet_type_cat">Gato</string>
+  <string name="pet_type_dog">Cachorro</string>
+  <string name="pet_type_rabbit">Coelho</string>
+  <string name="pet_type_bird">Pássaro</string>
+  <string name="pet_type_hamster">Hamster</string>
+  <string name="pet_type_other">Outro</string>
+  <string name="pet_form_type_label">Espécie / Tipo</string>
 
-    <!-- Vacinas caninas -->
-    <string name="vaccine_dhpp">DHPP - Quádrupla/Óctupla Canina</string>
-    <string name="vaccine_bordetella">Bordetella / Tosse dos Canis</string>
-    <string name="vaccine_leptospirosis">Leptospirose</string>
-    <string name="vaccine_leishmania">Leishmaniose</string>
-    <string name="vaccine_gripe_canina">Gripe Canina</string>
+  <!-- Vacinas caninas -->
+  <string name="vaccine_dhpp">DHPP - Quádrupla/Óctupla Canina</string>
+  <string name="vaccine_bordetella">Bordetella / Tosse dos Canis</string>
+  <string name="vaccine_leptospirosis">Leptospirose</string>
+  <string name="vaccine_leishmania">Leishmaniose</string>
+  <string name="vaccine_gripe_canina">Gripe Canina</string>
 
-    <!-- Vacinas para coelhos -->
-    <string name="vaccine_rhdv">RHDV - Calicivirose</string>
-    <string name="vaccine_myxomatosis">Mixomatose</string>
+  <!-- Vacinas para coelhos -->
+  <string name="vaccine_rhdv">RHDV - Calicivirose</string>
+  <string name="vaccine_myxomatosis">Mixomatose</string>
 
-    <!-- Vacinas para pássaros -->
-    <string name="vaccine_polyomavirus">Poliomavírus Aviário</string>
+  <!-- Vacinas para pássaros -->
+  <string name="vaccine_polyomavirus">Poliomavírus Aviário</string>
 
-    <!-- Vacina personalizada -->
-    <string name="vaccination_custom_name_label">Nome da vacina</string>
-    <string name="vaccination_custom_name_hint">Digite o nome da vacina</string>
+  <!-- Vacina personalizada -->
+  <string name="vaccination_custom_name_label">Nome da vacina</string>
+  <string name="vaccination_custom_name_hint">Digite o nome da vacina</string>
 
-    <!-- Raças de cachorro -->
-    <string name="breed_labrador">Labrador Retriever</string>
-    <string name="breed_golden_retriever">Golden Retriever</string>
-    <string name="breed_german_shepherd">Pastor Alemão</string>
-    <string name="breed_poodle">Poodle</string>
-    <string name="breed_bulldog">Bulldog</string>
-    <string name="breed_beagle">Beagle</string>
-    <string name="breed_shih_tzu">Shih Tzu</string>
-    <string name="breed_yorkshire">Yorkshire Terrier</string>
+  <!-- Raças de cachorro -->
+  <string name="breed_labrador">Labrador Retriever</string>
+  <string name="breed_golden_retriever">Golden Retriever</string>
+  <string name="breed_german_shepherd">Pastor Alemão</string>
+  <string name="breed_poodle">Poodle</string>
+  <string name="breed_bulldog">Bulldog</string>
+  <string name="breed_beagle">Beagle</string>
+  <string name="breed_shih_tzu">Shih Tzu</string>
+  <string name="breed_yorkshire">Yorkshire Terrier</string>
 
-    <!-- Cores adicionais -->
-    <string name="color_golden">Dourado</string>
-    <string name="color_brindle">Malhado</string>
+  <!-- Cores adicionais -->
+  <string name="color_golden">Dourado</string>
+  <string name="color_brindle">Malhado</string>
 
 </resources>
