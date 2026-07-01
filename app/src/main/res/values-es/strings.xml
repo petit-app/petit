@@ -412,6 +412,16 @@
   <string name="deworming_field_next_due_date_placeholder">Opcional</string>
   <string name="deworming_field_note">Nota</string>
   <string name="deworming_field_note_placeholder">Observación opcional</string>
+  <string name="interval_custom">Personalizado</string>
+  <string name="interval_unit_daily">Diario</string>
+  <string name="interval_unit_weekly">Semanal</string>
+  <string name="interval_unit_monthly">Mensual</string>
+  <string name="interval_custom_value_hint">Número</string>
+  <string name="deworming_field_monthly_interval">Intervalo</string>
+  <plurals name="interval_months">
+    <item quantity="one">%d mes</item>
+    <item quantity="other">%d meses</item>
+  </plurals>
   <string name="deworming_detail_type">Tipo:</string>
   <string name="deworming_detail_next_dose">Próxima dosis:</string>
 

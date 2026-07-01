@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -46,8 +47,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,9 +62,13 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 // Common option
 private const val OTHER_OPTION = "OTHER"
+
+private val monthlyIntervalOptions = listOf(1, 2, 3, 4, 5, 6)
+private val intervalUnitOptions = listOf("DAILY", "WEEKLY", "MONTHLY")
 
 // Common internal deworming medications (for intestinal parasites)
 private val internalDewormingMedications =
@@ -126,6 +133,14 @@ fun DewormingFormScreen(
   var medicationDropdownExpanded by remember { mutableStateOf(false) }
   var isMedicationOther by remember { mutableStateOf(false) }
 
+  var showMonthlyIntervalPicker by remember { mutableStateOf(false) }
+  var selectedMonthlyInterval by remember {
+    mutableStateOf(form.dewormingType.defaultIntervalMonths)
+  }
+  var isIntervalCustom by remember { mutableStateOf(false) }
+  var customIntervalValue by remember { mutableStateOf("") }
+  var customIntervalUnit by remember { mutableStateOf("MONTHLY") }
+  var customIntervalUnitExpanded by remember { mutableStateOf(false) }
   // Track if the user has explicitly selected a deworming type
   var hasSelectedType by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
@@ -141,6 +156,42 @@ fun DewormingFormScreen(
   LaunchedEffect(entryId) {
     if (entryId != null) {
       viewModel.loadEntryForEdit(entryId)
+    }
+  }
+
+  // Restore interval picker state when editing an existing entry
+  LaunchedEffect(form.editingEntryId) {
+    form.editingEntryId ?: return@LaunchedEffect
+    val nextDate = form.nextDueDate ?: return@LaunchedEffect
+    val appDate = form.applicationDate
+
+    var handled = false
+    for (months in 1..6) {
+      if (appDate.plusMonths(months.toLong()) == nextDate) {
+        selectedMonthlyInterval = months
+        isIntervalCustom = false
+        handled = true
+        break
+      }
+    }
+
+    if (!handled) {
+      isIntervalCustom = true
+      val totalMonths = ChronoUnit.MONTHS.between(appDate, nextDate)
+      if (totalMonths > 0 && appDate.plusMonths(totalMonths) == nextDate) {
+        customIntervalUnit = "MONTHLY"
+        customIntervalValue = totalMonths.toString()
+      } else {
+        val totalWeeks = ChronoUnit.WEEKS.between(appDate, nextDate)
+        if (totalWeeks > 0 && appDate.plusWeeks(totalWeeks) == nextDate) {
+          customIntervalUnit = "WEEKLY"
+          customIntervalValue = totalWeeks.toString()
+        } else {
+          val totalDays = ChronoUnit.DAYS.between(appDate, nextDate)
+          customIntervalUnit = "DAILY"
+          customIntervalValue = totalDays.toString()
+        }
+      }
     }
   }
 
@@ -449,6 +500,139 @@ fun DewormingFormScreen(
         }
       }
 
+      FormField(label = stringResource(R.string.deworming_field_monthly_interval)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+          ExposedDropdownMenuBox(
+            expanded = showMonthlyIntervalPicker,
+            onExpandedChange = { showMonthlyIntervalPicker = it },
+          ) {
+            val intervalLabel =
+              when {
+                isIntervalCustom -> stringResource(R.string.interval_custom)
+                else ->
+                  pluralStringResource(
+                    R.plurals.interval_months,
+                    selectedMonthlyInterval,
+                    selectedMonthlyInterval,
+                  )
+              }
+            OutlinedTextField(
+              value = intervalLabel,
+              onValueChange = {},
+              readOnly = true,
+              trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = showMonthlyIntervalPicker)
+              },
+              modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
+              shape = RoundedCornerShape(12.dp),
+              colors =
+                OutlinedTextFieldDefaults.colors(
+                  unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                ),
+            )
+            ExposedDropdownMenu(
+              expanded = showMonthlyIntervalPicker,
+              onDismissRequest = { showMonthlyIntervalPicker = false },
+            ) {
+              monthlyIntervalOptions.forEach { months ->
+                DropdownMenuItem(
+                  text = { Text(pluralStringResource(R.plurals.interval_months, months, months)) },
+                  onClick = {
+                    selectedMonthlyInterval = months
+                    isIntervalCustom = false
+                    showMonthlyIntervalPicker = false
+                    viewModel.updateNextDueDate(form.applicationDate.plusMonths(months.toLong()))
+                  },
+                )
+              }
+              DropdownMenuItem(
+                text = { Text(stringResource(R.string.interval_custom)) },
+                onClick = {
+                  isIntervalCustom = true
+                  customIntervalValue = ""
+                  showMonthlyIntervalPicker = false
+                },
+              )
+            }
+          }
+
+          if (isIntervalCustom) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              OutlinedTextField(
+                value = customIntervalValue,
+                onValueChange = { newValue ->
+                  val digits = newValue.filter { it.isDigit() }
+                  customIntervalValue = digits
+                  val num = digits.toLongOrNull() ?: return@OutlinedTextField
+                  val newDate =
+                    when (customIntervalUnit) {
+                      "DAILY" -> form.applicationDate.plusDays(num)
+                      "WEEKLY" -> form.applicationDate.plusWeeks(num)
+                      else -> form.applicationDate.plusMonths(num)
+                    }
+                  viewModel.updateNextDueDate(newDate)
+                },
+                placeholder = { Text(stringResource(R.string.interval_custom_value_hint)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors =
+                  OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                  ),
+              )
+              ExposedDropdownMenuBox(
+                expanded = customIntervalUnitExpanded,
+                onExpandedChange = { customIntervalUnitExpanded = it },
+                modifier = Modifier.weight(1f),
+              ) {
+                OutlinedTextField(
+                  value = getIntervalUnitLabel(customIntervalUnit),
+                  onValueChange = {},
+                  readOnly = true,
+                  trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = customIntervalUnitExpanded)
+                  },
+                  modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                  shape = RoundedCornerShape(12.dp),
+                  colors =
+                    OutlinedTextFieldDefaults.colors(
+                      unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    ),
+                )
+                ExposedDropdownMenu(
+                  expanded = customIntervalUnitExpanded,
+                  onDismissRequest = { customIntervalUnitExpanded = false },
+                ) {
+                  intervalUnitOptions.forEach { unit ->
+                    DropdownMenuItem(
+                      text = { Text(getIntervalUnitLabel(unit)) },
+                      onClick = {
+                        customIntervalUnit = unit
+                        customIntervalUnitExpanded = false
+                        val num = customIntervalValue.toLongOrNull() ?: return@DropdownMenuItem
+                        val newDate =
+                          when (unit) {
+                            "DAILY" -> form.applicationDate.plusDays(num)
+                            "WEEKLY" -> form.applicationDate.plusWeeks(num)
+                            else -> form.applicationDate.plusMonths(num)
+                          }
+                        viewModel.updateNextDueDate(newDate)
+                      },
+                    )
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
       // Next Due Date (optional)
       FormField(label = stringResource(R.string.deworming_field_next_due_date)) {
         Row(
@@ -538,6 +722,14 @@ private fun FormField(label: String, content: @Composable () -> Unit) {
     content()
   }
 }
+
+@Composable
+private fun getIntervalUnitLabel(unit: String): String =
+  when (unit) {
+    "DAILY" -> stringResource(R.string.interval_unit_daily)
+    "WEEKLY" -> stringResource(R.string.interval_unit_weekly)
+    else -> stringResource(R.string.interval_unit_monthly)
+  }
 
 @Composable
 private fun getMedicationName(key: String): String {
