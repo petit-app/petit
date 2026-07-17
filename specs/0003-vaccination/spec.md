@@ -37,12 +37,26 @@ The catalog includes feline vaccines (`V3`, `V4`, `V5`, `FELV`, `FIV`), canine v
 
 ## Test strategy
 
-Unit tests cover status and validation; integration tests cover persistence, grouping, and soft delete; UI tests cover the form, species filters, and visual states.
+Every changed production behavior receives a unit test. Unit tests cover status
+boundaries, validation, species filtering, edit timestamps, and grouping with a
+controlled clock. Room integration tests cover persistence, latest-dose
+selection, complete history, and soft delete. Compose tests cover the `OTHER`
+form branch and the three visible status states. An E2E test is added only if
+the complete save-to-history journey is not already covered at those boundaries.
 
 ## Edge cases
 
 - The next dose must be after the administration date; the administration date cannot be in the future.
 - Rabies and `OTHER` are general options; all other types must match the pet's species.
+- The custom name for `OTHER` is trimmed and must contain visible characters.
+- Changing from `OTHER` to a catalog type does not persist the custom name.
+
+## Decisions
+
+- Date-dependent validation and status calculation use an injectable clock.
+- The main summary is grouped by vaccine type and shows its latest dose; the
+  complete chronological history remains accessible without dropping older doses.
+- `OK`, `SCHEDULED`, and `OVERDUE` always use an explicit text and visual indicator.
 
 ## Known limitations
 

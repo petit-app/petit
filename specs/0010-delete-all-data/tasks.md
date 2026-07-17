@@ -21,16 +21,19 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - verification: source evidence in `DeleteAllDataViewModel`, `DeleteAllDataScreen`, and `PetitNavGraph`.
 - [ ] **Complete the local-data purge scope** (test-type: integration)
   - blocked-by: cancel workers and delete pet-care records
-  - desired behavior: delete family-group members and sync logs, and decide whether user/reminder preferences and onboarding completion are reset.
-  - acceptance criteria: the product definition of all local data matches every Room table and DataStore intentionally retained or removed.
+  - desired behavior: delete family-group members and sync logs, reset reminder/family preferences, and retain theme, language, and onboarding completion.
+  - acceptance criteria: every Room table and DataStore is intentionally deleted, reset, or retained according to the spec.
+  - test expectations: unit tests cover the reset policy; Room and DataStore tests verify every store explicitly.
   - verification: `./gradlew test`
 - [ ] **Make deletion failures recoverable** (test-type: both)
   - blocked-by: cancel workers and delete pet-care records
   - desired behavior: display errors and define recovery when workers were canceled but the Room transaction failed.
   - acceptance criteria: failure never shows success, is visible to the caregiver, and offers a safe retry path.
+  - test expectations: unit tests cover cancellation, Room, and preference-reset failures plus repeated submission/retry; Compose tests cover error and retry UI.
   - verification: `./gradlew test`
 - [ ] **Add automated delete-all-data regression tests** (test-type: both)
   - blocked-by: complete the local-data purge scope, make deletion failures recoverable
   - desired behavior: cover confirmation, idempotence, WorkManager cancellation, transaction rollback, complete scope, errors, and navigation.
   - acceptance criteria: every acceptance criterion and documented retention decision has automated coverage.
-  - verification: `./gradlew test`
+  - test expectations: add a focused E2E journey for complete deletion and safe navigation; keep rollback/idempotence at integration boundaries.
+  - verification: `./gradlew test && ./gradlew spotlessCheck`

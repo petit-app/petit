@@ -35,7 +35,24 @@ Deworming records can be created, edited, listed in descending date order, and s
 
 ## Test strategy
 
-Unit tests cover status and categories; integration tests cover Room, ordering, and soft delete; UI tests cover the form and indicators.
+Every changed production behavior receives a unit test. Unit tests cover status,
+validation, category projection, `BOTH`, and deterministic latest-record
+selection with a controlled clock. Room tests cover ordering and soft delete;
+Compose tests cover the form, category summaries, and all status indicators.
+
+## Edge cases
+
+- The category summary for `INTERNAL` considers `INTERNAL` and `BOTH`; the
+  `EXTERNAL` summary considers `EXTERNAL` and `BOTH`.
+- The latest applicable administration wins. Equal dates are resolved
+  deterministically by `updatedAt`, then by ID.
+- A record without a next dose has status `OK`.
+
+## Decisions
+
+- Category summaries are displayed above the descending chronological history.
+- Date-dependent behavior uses an injectable clock.
+- Every status is represented by text and a visual indicator, not color alone.
 
 ## Known limitation
 

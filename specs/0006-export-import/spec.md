@@ -25,6 +25,8 @@ Versioned JSON export/import, document selection, conflict analysis, and merge s
 - Resolve conflicts by replacing, keeping, or merging based on the latest `updatedAt`.
 - Apply the import atomically and reject an invalid file without changing data.
 - Allow exporting only one pet and its related records.
+- Share a generated backup URI through compatible apps with temporary read permission.
+- Convert supported legacy backups that use the `reminders` key before validation.
 
 ## Acceptance criteria
 
@@ -33,13 +35,27 @@ Versioned JSON export/import, document selection, conflict analysis, and merge s
 - Given an ID conflict, When a strategy is selected, Then the result honors `REPLACE`, `KEEP`, or `MERGE`.
 - Given an invalid or corrupted file, Then no local data is changed.
 - Given a pet, When its profile is exported, Then only that pet and its related data are included.
+- Given pending and completed active tasks, When data is exported and restored, Then both states and their references are preserved.
+- Given a supported legacy backup with `reminders`, When it is selected, Then it is converted to the current task representation or rejected without mutation if conversion is impossible.
 
 ## Test strategy
 
-Unit tests cover serialization, parsing, and merge; integration tests cover ContentResolver, the Room transaction, and selection flows; UI tests cover analysis and confirmation.
+Every changed production behavior receives a unit test. Unit tests cover
+serialization, parsing, complete task history, per-pet filtering, legacy
+conversion, and merge. Integration tests cover `ContentResolver`, share intent
+permissions, Room transactions, and selection flows; Compose tests cover
+analysis and confirmation. The existing backup/restore E2E journey is expanded
+to preserve a completed task.
+
+## Decisions
+
+- “Complete task history” includes non-deleted pending and completed tasks;
+  logically deleted tasks remain excluded.
+- A per-pet export includes only the selected pet and records/tasks carrying
+  that `petId`; global custom tasks are excluded.
+- Share intents include the URI in `ClipData` and grant temporary read permission.
+- Unsupported or non-convertible schema versions fail validation before any write.
 
 ## Known limitations
 
-- Full export omits completed tasks and therefore does not yet contain the entire task domain history.
-- `exportForPet(petId)` exists, but there is no corresponding entry point in the pet profile.
-- The current format uses the `tasks` key; legacy backups containing only `reminders` require explicit conversion.
+- Exported JSON is not encrypted; the user chooses its destination and sharing target.

@@ -4,11 +4,11 @@ Spec: [spec.md](./spec.md)
 
 ## Sequence
 
-1. Aggregate pets, tasks, timeline, and latest weight in `HomeViewModel`.
-2. Calculate `PetWithSummary` and the empty state without blocking the UI.
-3. Implement cards, upcoming tasks, recent activity, and pull-to-refresh.
-4. Integrate navigation to the profile, full lists, settings, and Quick Add.
-5. Evaluate visual separation of alerts and the overall healthy state.
+1. Add unit tests for pet summaries, overall status propagation, healthy/alert states, ordering, and limits.
+2. Carry `overallStatus` from `PetWithSummary` into every pet-card layout.
+3. Derive and render the accessible “All good” state or severity-ordered alerts.
+4. Add Compose/integration coverage without regressing tasks, timeline, refresh, or navigation.
+5. Add a focused dashboard E2E journey backed by persisted health data.
 
 ## Architecture
 
@@ -21,3 +21,10 @@ Spec: [spec.md](./spec.md)
 
 - Depends on `0001`–`0005`; partial failures from one source must not hide the entire dashboard.
 - Per-pet aggregations must avoid excessive queries and inconsistent states.
+- Horizontal and compact pet-card layouts must expose the same health semantics.
+
+## Verification
+
+1. Run focused `HomeViewModel` tests after each aggregation change.
+2. Run dashboard Compose/integration tests and the focused E2E journey.
+3. Run `./gradlew test`, `./gradlew spotlessCheck`, then `./gradlew assembleDebug` followed by `./gradlew installDebug`.

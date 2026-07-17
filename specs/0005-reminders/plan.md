@@ -4,11 +4,11 @@ Spec: [spec.md](./spec.md)
 
 ## Sequence
 
-1. Model `TaskEntity` with types `VACCINATION`, `DEWORMING`, `WEIGHT`, and `CUSTOM` and states `PENDING`/`COMPLETED`.
-2. Implement the repository and `AutoTaskService` to create/cancel linked tasks.
-3. Integrate `TaskScheduler` and `TaskNotificationWorker` with WorkManager.
-4. Persist `ReminderPreferences` in DataStore.
-5. Integrate the list, form, settings, and completed tasks.
+1. Add unit tests for preference-based dates, overdue records, clock boundaries, and replacement/cancellation.
+2. Extract deterministic scheduling calculation and apply advance notice to vaccination and deworming tasks.
+3. Verify linked-task replacement, deletion, weight intervals, and WorkManager uniqueness at integration boundaries.
+4. Close unit and Compose gaps for custom tasks, filters, completion, and settings.
+5. Update the vaccination E2E journey to assert the configured scheduled instant.
 
 ## Architecture
 
@@ -21,3 +21,11 @@ Spec: [spec.md](./spec.md)
 
 - Depends on `0001` and receives events from `0002`, `0003`, and `0004`.
 - Android restrictions on notifications and background execution require integration tests.
+- Scheduling “now” must avoid flaky tests and negative WorkManager delays.
+
+## Verification
+
+1. Run focused `AutoTaskService` and scheduling tests after each slice.
+2. Run `./gradlew test` and `./gradlew spotlessCheck`.
+3. Run `VaccinationTaskJourneyTest` on an emulator.
+4. Run `./gradlew assembleDebug` followed by `./gradlew installDebug`.

@@ -32,10 +32,24 @@ The home screen supports the empty state, pet cards, upcoming tasks, recent acti
 - Given there are tasks, Then the user sees up to five upcoming tasks and can open the full list.
 - Given there are health events, Then the user sees recent activity and can open the full timeline.
 - When a pet or quick action is tapped, Then the app navigates to the profile or correct flow, prompting for pet selection when necessary.
+- Given every pet has overall status `OK`, Then an accessible “All good” state is displayed.
+- Given one or more pets are `SCHEDULED` or `OVERDUE`, Then they appear in a
+  separate alerts section ordered by severity and next relevant date.
 
 ## Test strategy
 
-Unit tests cover aggregation and the empty state; integration tests cover repositories and navigation; UI tests cover states, Quick Add, refresh, and accessibility.
+Every changed production behavior receives a unit test. Unit tests cover
+aggregation, empty/healthy/alert states, severity ordering, limits, and partial
+source failures. Integration tests cover repositories and navigation; Compose
+tests cover cards, alerts, Quick Add, refresh, and accessibility. A focused E2E
+journey verifies that persisted health data reaches the dashboard indicator.
+
+## Decisions
+
+- “All good” is shown only when every displayed pet has overall status `OK`.
+- `OVERDUE` alerts precede `SCHEDULED`; equal severity is ordered by the next relevant date.
+- Pet cards always receive and display `overallStatus` with text/icon semantics, not color alone.
+- Alerts complement rather than replace upcoming tasks and recent activity.
 
 ## Known limitations
 

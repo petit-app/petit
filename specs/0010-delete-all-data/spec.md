@@ -27,6 +27,8 @@ preferences, and deletion errors are not displayed by the screen.
 - Prevent navigation and repeated deletion while the operation is running.
 - Cancel all task notification work before deleting pet-care records.
 - Delete tasks, deworming treatments, vaccinations, weights, and pets in a Room transaction.
+- Delete family-group members and synchronization logs in the same Room transaction.
+- Reset reminder and local-family preferences while preserving theme, language, and onboarding completion.
 - Show success only after deletion finishes and provide an action back to Home.
 - Surface a recoverable error when cancellation or deletion fails.
 
@@ -37,10 +39,16 @@ preferences, and deletion errors are not displayed by the screen.
 - Given scheduled task work and pet-care records exist, When deletion succeeds, Then task work is canceled and tasks, deworming treatments, vaccinations, weights, and pets are removed.
 - Given deletion succeeds, Then a success state is displayed and the caregiver can return to an empty Home.
 - Given deletion fails, Then the caregiver remains in the flow and sees a recoverable error without a false success state.
+- Given deletion is retried after workers were already canceled, Then the operation remains idempotent and can complete safely.
+- Given deletion succeeds, Then theme, language, and onboarding completion are retained while care and local-sharing preferences are reset.
 
 ## Test strategy
 
-Unit tests cover confirmation and ViewModel success/failure state; integration tests cover WorkManager cancellation, Room transaction behavior, deletion order, retained out-of-scope data, navigation, and failure handling.
+Every changed production behavior receives a unit test. Unit tests cover
+confirmation, retained/reset preference policy, idempotence, and ViewModel
+success/failure/retry state. Integration tests cover WorkManager cancellation,
+all Room tables, transaction rollback, DataStore resets, navigation, and
+failure handling. A focused E2E journey verifies deletion and safe recovery.
 
 ## Edge cases
 
@@ -48,12 +56,15 @@ Unit tests cover confirmation and ViewModel success/failure state; integration t
 - An empty database should still produce a successful, idempotent result.
 - Local family data and preferences may exist even when there are no pets.
 
-## Known limitations
+## Decisions
 
-- The current use case does not delete family-group members or synchronization logs from Room.
-- User preferences, onboarding completion, and reminder preferences remain in DataStore.
-- Worker cancellation occurs before the Room transaction and cannot be rolled back if database deletion fails.
-- The dedicated screen emits an error event, but does not currently collect and display it.
+- “All data” means locally stored pet-care content, task history, local-sharing
+  membership/sync logs, reminder settings, and family-group credentials.
+- Theme, language, and onboarding completion are device-experience settings and are retained.
+- Worker cancellation remains before the Room transaction. If Room deletion
+  fails, the screen explains the failure and retry safely repeats cancellation
+  before retrying the transaction.
+- Exported files, OS backups, and remote copies remain out of scope.
 
 ## Out of scope
 
