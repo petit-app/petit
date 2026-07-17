@@ -13,6 +13,12 @@ depends_on: []
 
 A first-time caregiver needs a short introduction to Petit before entering the main pet-care experience.
 
+## Current state
+
+The three-page flow, persisted completion state, start-destination selection,
+skip action, and final call to action are implemented. Failure feedback and
+protection against repeated completion actions remain pending.
+
 ## Functional requirements
 
 - Open onboarding instead of Home until completion has been persisted.

@@ -68,10 +68,9 @@ A Google Play Services API that abstracts Bluetooth, BLE, and Wi-Fi Direct behin
 | **P2P_STAR**           | 1:N      | Hub ↔ N spokes | High       | One central device with multiple peripherals   |
 | **P2P_CLUSTER**        | M:N      | Mesh           | Medium     | Multiplayer gaming and mesh networks           |
 
-**Original research decision**: `P2P_POINT_TO_POINT`—maximum throughput for
-transferring data between two devices. Petit's current implementation uses
-`P2P_STAR`; any strategy change must be validated on two devices before the
-implementation or this decision is updated.
+**Petit decision**: use `P2P_STAR`, matching the current implementation and the
+local family-group topology. Any strategy change must be validated on two
+devices before the implementation or this decision is updated.
 
 ### Payload Types
 
@@ -104,7 +103,7 @@ The developer **does not control** which transport is used. The API optimizes it
 ```kotlin
 // Advertiser (Device A — creates the code)
 val advertisingOptions = AdvertisingOptions.Builder()
-    .setStrategy(Strategy.P2P_POINT_TO_POINT)
+    .setStrategy(Strategy.P2P_STAR)
     .build()
 
 connectionsClient.startAdvertising(
@@ -116,7 +115,7 @@ connectionsClient.startAdvertising(
 
 // Discoverer (Device B — enters the code)
 val discoveryOptions = DiscoveryOptions.Builder()
-    .setStrategy(Strategy.P2P_POINT_TO_POINT)
+    .setStrategy(Strategy.P2P_STAR)
     .build()
 
 connectionsClient.startDiscovery(

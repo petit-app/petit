@@ -12,10 +12,10 @@ based on capability families, while delivery state is tracked through status.
 
 | Block | Family | Reserved for |
 | --- | --- | --- |
-| 0001–0099 | pet-care | Pet registration, health, history, and routine care |
+| 0001–0099 | pet-care | Pet registration, health, routine care, and the app-local experience |
 | 0100–0199 | local-sharing | Family sharing without a remote server |
 | 0200–0299 | identity-access | Identity, account, and authorization |
-| 0300–0399 | backup-recovery | Backup, restore, and transfer |
+| 0300–0399 | backup-recovery | Cloud backup, restore, and recovery |
 | 0400–0499 | cloud-sync | Remote synchronization and cloud collaboration |
 
 ## Status
@@ -33,17 +33,20 @@ based on capability families, while delivery state is tracked through status.
 
 ### pet-care
 
-PRD: [Pet health management in Petit](../docs/prds/2026-07-17-petit-pet-health-management.md)
+PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-management.md)
 
 | Spec | Title | Status | Depends on |
 | --- | --- | --- | --- |
 | [0001](0001-pet-management/spec.md) | Pet management | Implemented | — |
 | [0002](0002-weight-tracking/spec.md) | Weight tracking | Implemented | 0001 |
-| [0003](0003-vaccination/spec.md) | Vaccination records | Implemented | 0001 |
-| [0004](0004-deworming/spec.md) | Deworming records | Implemented | 0001 |
-| [0005](0005-reminders/spec.md) | Local tasks and reminders | Implemented | 0001 |
-| [0006](0006-export-import/spec.md) | JSON export and import | Implemented | 0001–0005 |
-| [0007](0007-home-dashboard/spec.md) | Home dashboard | Implemented | 0001–0005 |
+| [0003](0003-vaccination/spec.md) | Vaccination records | In Progress | 0001 |
+| [0004](0004-deworming/spec.md) | Deworming records | In Progress | 0001 |
+| [0005](0005-reminders/spec.md) | Local tasks and reminders | In Progress | 0001 |
+| [0006](0006-export-import/spec.md) | JSON export and import | In Progress | 0001–0005 |
+| [0007](0007-home-dashboard/spec.md) | Home dashboard | In Progress | 0001–0005 |
+| [0008](0008-onboarding/spec.md) | Onboarding | Implemented | — |
+| [0009](0009-app-preferences/spec.md) | App preferences | Implemented | — |
+| [0010](0010-delete-all-data/spec.md) | Delete all data | In Progress | 0001–0005 |
 
 ### local-sharing
 
@@ -68,10 +71,9 @@ PRD: [Pet health management in Petit](../docs/prds/2026-07-17-petit-pet-health-m
 
 | Spec | Title | Status | Depends on |
 | --- | --- | --- | --- |
-| [0301](0301-manual-backup/spec.md) | Manual backup | On Hold | 0201 |
-| [0302](0302-restore-backup/spec.md) | Restore Backup | On Hold | 0301 |
+| [0301](0301-manual-backup/spec.md) | Manual cloud backup | On Hold | 0201 |
+| [0302](0302-restore-backup/spec.md) | Restore cloud backup | On Hold | 0301 |
 | [0303](0303-manage-backups/spec.md) | Manage Backups | On Hold | 0301 |
-| [0304](0304-device-transfer/spec.md) | Device-to-device transfer | On Hold | 0101 |
 | [0305](0305-automatic-backup/spec.md) | Automatic backup | On Hold | 0301 |
 | [0306](0306-backup-settings/spec.md) | Backup settings | On Hold | 0305 |
 | [0307](0307-backup-triggers/spec.md) | Backup triggers | On Hold | 0305, 0306 |

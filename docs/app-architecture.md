@@ -140,10 +140,10 @@ Firestore as its transport.
 
 ### Battery Use and Local Sync Protocols
 
-Local sync follows strict battery-use rules:
+The planned local-sync design follows strict battery-use rules:
 
-- **Continuous sync** uses **NSD + TCP over infrastructure Wi-Fi** (the home router) — approximately 5–15 mW
+- **Continuous sync** will use **NSD + TCP over infrastructure Wi-Fi** (the home router) — approximately 5–15 mW
 - **Wi-Fi Direct is NEVER used for continuous sync** — only for one-shot transfers
 - **Nearby Connections** (Google Play Services) automatically manages the one-shot transport (BLE → BT → Wi-Fi Direct)
-- **WorkManager** controls background sync with network constraints
-- **NSD is lifecycle-aware**: active in the foreground and unregistered when the app closes
+- **WorkManager** will control background sync with network constraints
+- **NSD will be lifecycle-aware**: active in the foreground and unregistered when the app closes

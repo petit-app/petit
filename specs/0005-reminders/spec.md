@@ -45,4 +45,6 @@ Unit tests cover preferences, dates, and mappings; integration tests cover Room,
 
 ## Known limitation
 
-The configured vaccination advance notice is used in task copy but is not applied to the task's scheduled date. Automatic care tasks therefore do not yet fully honor reminder preferences.
+The configured vaccination and deworming advance notice is used in task copy
+but is not applied to the task's scheduled date. Automatic care tasks therefore
+do not yet fully honor reminder preferences.

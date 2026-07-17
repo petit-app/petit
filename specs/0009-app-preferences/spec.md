@@ -13,6 +13,12 @@ depends_on: []
 
 The caregiver needs Petit to follow their visual and language preferences across app sessions.
 
+## Current state
+
+Theme and language choices are persisted and applied through the settings
+flow. Pre-Android 13 language changes require a restart, and Spanish resources
+exist without an explicit Spanish option in the selector.
+
 ## Functional requirements
 
 - Offer System, Light, and Dark theme choices in Settings.

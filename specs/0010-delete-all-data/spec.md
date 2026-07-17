@@ -2,7 +2,7 @@
 spec: "0010"
 title: Delete all data
 family: pet-care
-status: Implemented
+status: In Progress
 owner: woliveiras
 depends_on: ["0001", "0002", "0003", "0004", "0005"]
 ---
@@ -12,6 +12,12 @@ depends_on: ["0001", "0002", "0003", "0004", "0005"]
 ## Context and motivation
 
 The caregiver needs a deliberate way to remove locally stored pet-care records from Petit and stop their scheduled reminders.
+
+## Current state
+
+The confirmation flow cancels task workers and transactionally deletes the
+visible pet-care records. It does not yet purge local sharing data or
+preferences, and deletion errors are not displayed by the screen.
 
 ## Functional requirements
 

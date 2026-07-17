@@ -35,20 +35,21 @@ professionals.
 - Small settings / flags / preferences: DataStore
 - Synchronization and reminder jobs: WorkManager
 - Local sharing: Nearby Connections API (pairing + P2P transfer)
-- Local network synchronization: NSD (Network Service Discovery / mDNS) + TCP Sockets
-- Device-to-device transfer: Nearby Connections API (P2P_POINT_TO_POINT)
+- Planned local network synchronization: NSD (Network Service Discovery / mDNS) + TCP Sockets
+- Device-to-device transfer: Nearby Connections API (`P2P_STAR`)
 
 > **Firebase and cloud services are on hold** until there is user demand.
 > When resumed: Firebase Auth, Google Drive API, Firestore, Analytics, Crashlytics, FCM, Remote Config.
 
 ## Delivery status
 
-- **pet-care:** implemented locally, including manual export/import and no
-  required sign-in or backend.
-- **local-sharing:** partially implemented, including Nearby Connections
-  pairing, one-shot transfer, a local family group, and local network
-  synchronization via NSD. See the
-  [local-sharing family specs](../../specs/README.md#local-sharing).
+- **pet-care:** core local workflows are available, but several capabilities
+  remain in progress while documented validation and presentation gaps are
+  addressed. No sign-in or backend is required.
+- **local-sharing:** partially implemented, with Nearby Connections pairing,
+  one-shot transfer, and local family-group components still under validation.
+  Continuous local-network synchronization through NSD and TCP remains a
+  draft. See the [local-sharing family specs](../specs/README.md#local-sharing).
 - **identity-access, backup-recovery, and cloud-sync:** on hold until there is
   demonstrated user demand. Their specifications remain available for review.
 
@@ -648,7 +649,7 @@ Layers:
 
 ## 8. Roadmap
 
-The canonical roadmap is the family-based [specs index](../../specs/README.md),
+The canonical roadmap is the family-based [specs index](../specs/README.md),
 where each capability has its own status. Current priorities are pet care and
 local sharing. Identity, remote backup, and cloud synchronization remain on
 hold until there is demonstrated user demand.
