@@ -29,3 +29,9 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: cover conversion, limits, upsert, and queries.
   - acceptance criteria: the automated suite protects all spec criteria.
   - verification: `./gradlew test`
+
+- [x] **Cover weight history with an E2E journey** (test-type: integration)
+  - blocked-by: display history and weight-change chart
+  - desired behavior: register a pet, add a weight through the UI, and read it back from history.
+  - acceptance criteria: the saved kilogram value appears in the current-weight card and the dated history entry.
+  - verification: `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.woliveiras.petit.e2e.WeightHistoryJourneyTest`
