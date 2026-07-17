@@ -1,35 +1,35 @@
-# Plano: Gerenciar Backups
+# Plan: Manage Backups
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0301`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimal integration behind repository abstractions, keeping Room as the local source.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility when necessary.
+6. Run focused tests and the relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
-### Listar Backups
+### List Backups
 
 ```kotlin
-// Em BackupStorageRepositoryImpl
+// In BackupStorageRepositoryImpl
 override suspend fun listBackups(): Result<List<BackupInfo>> {
     return withContext(Dispatchers.IO) {
         try {
@@ -45,7 +45,7 @@ override suspend fun listBackups(): Result<List<BackupInfo>> {
                         path = ref.path,
                         createdAt = Instant.ofEpochMilli(metadata.creationTimeMillis),
                         sizeBytes = metadata.sizeBytes,
-                        petCount = 0,  // Carregar do metadata
+                        petCount = 0,  // Load from metadata
                         appVersion = metadata.getCustomMetadata("appVersion") ?: "unknown"
                     )
                 }
@@ -58,7 +58,7 @@ override suspend fun listBackups(): Result<List<BackupInfo>> {
 }
 ```
 
-### Deletar Backup
+### Delete Backup
 
 ```kotlin
 override suspend fun deleteBackup(fileId: String): Result<Unit> {
@@ -67,7 +67,7 @@ override suspend fun deleteBackup(fileId: String): Result<Unit> {
             val driveService = getDriveService()
             driveService.files().delete(fileId).execute()
 
-            // Atualizar metadata
+            // Update metadata
             removeFromMetadata(fileId)
 
             Result.success(Unit)
@@ -88,7 +88,7 @@ suspend fun deleteMultipleBackups(fileIds: List<String>): Result<Int> {
 }
 ```
 
-### Auto-cleanup de Backups Antigos
+### Automatic Cleanup of Old Backups
 
 ```kotlin
 class BackupCleanupUseCase(
@@ -106,7 +106,7 @@ class BackupCleanupUseCase(
             return Result.success(0)
         }
 
-        // Ordenar por data (mais antigo primeiro para deletar)
+        // Sort by date (oldest first for deletion)
         val toDelete = backups
             .sortedBy { it.createdAt }
             .take(backups.size - MAX_BACKUPS)
@@ -174,7 +174,7 @@ class ManageBackupsViewModel(
                         selectedIds = emptySet(),
                         isSelectionMode = false
                     )}
-                    loadBackups()  // Recarregar lista
+                    loadBackups()  // Reload list
                 }
         }
     }
@@ -200,17 +200,17 @@ data class ManageBackupsUiState(
 ---
 
 
-## Riscos e validações
+## Risks and validations
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependency on external services, authentication, quota, and contractual changes.
+- Privacy and lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
 
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

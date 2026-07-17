@@ -1,6 +1,6 @@
 ---
 spec: "0303"
-title: "Gerenciar Backups"
+title: "Manage Backups"
 family: backup-recovery
 phase: 4
 status: On Hold
@@ -9,190 +9,190 @@ depends_on: ["0301"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Gerenciar Backups
+# Spec: Manage Backups
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário logado,
-> Eu quero gerenciar meus backups no Google Drive,
-> Para que eu possa ver o histórico e limpar backups antigos se necessário.
+> As a signed-in user,
+> I want to manage my backups in Google Drive,
+> So that I can view the history and clean up old backups if necessary.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Ver lista de backups
+### Scenario 1: View the backup list
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou logado com Google
-E tenho múltiplos backups salvos
-QUANDO acesso "Backups salvos"
-ENTÃO vejo lista com todos os backups
-E cada item mostra:
-  - Data e hora do backup
-  - Quantidade de pets
-  - Tamanho do arquivo
-  - Versão do app
+GIVEN I am signed in with Google
+AND I have multiple saved backups
+WHEN I open "Saved backups"
+THEN I see a list of all backups
+AND each item shows:
+  - Backup date and time
+  - Number of pets
+  - File size
+  - App version
 ```
 
-### Cenário 2: Ver detalhes do backup
+### Scenario 2: View backup details
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou na lista de backups
-QUANDO toco em um backup
-ENTÃO vejo detalhes completos:
-  - Data e hora
-  - Conteúdo (X pets, Y pesagens, Z vacinas)
-  - Tamanho
-  - Versão do app que criou
-E vejo opções: Restaurar, Deletar
+GIVEN I am on the backup list
+WHEN I tap a backup
+THEN I see full details:
+  - Date and time
+  - Contents (X pets, Y weigh-ins, Z vaccinations)
+  - Size
+  - Version of the app that created it
+AND I see the options: Restore, Delete
 ```
 
-### Cenário 3: Deletar backup específico
+### Scenario 3: Delete a specific backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou nos detalhes de um backup
-QUANDO toco em "Deletar"
-E confirmo a exclusão
-ENTÃO o backup é removido do Google Drive
-E não aparece mais na lista
+GIVEN I am viewing a backup's details
+WHEN I tap "Delete"
+AND confirm the deletion
+THEN the backup is removed from Google Drive
+AND no longer appears in the list
 ```
 
-### Cenário 4: Deletar múltiplos backups
+### Scenario 4: Delete multiple backups
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou na lista de backups
-QUANDO ativo modo de seleção (long press)
-E seleciono múltiplos backups
-E toco em "Deletar selecionados"
-E confirmo
-ENTÃO todos os backups selecionados são removidos
+GIVEN I am on the backup list
+WHEN I enable selection mode (long press)
+AND select multiple backups
+AND tap "Delete selected"
+AND confirm
+THEN all selected backups are removed
 ```
 
-### Cenário 5: Limite de backups manuais
+### Scenario 5: Manual backup limit
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho 10 backups manuais salvos (limite)
-QUANDO faço um novo backup manual
-ENTÃO o backup manual mais antigo é removido automaticamente
-E o novo backup é adicionado
-E vejo notificação "Backup antigo removido para liberar espaço"
+GIVEN I have 10 saved manual backups (the limit)
+WHEN I create a new manual backup
+THEN the oldest manual backup is removed automatically
+AND the new backup is added
+AND I see the notification "Old backup removed to free up space"
 ```
 
-### Cenário 7: Backups após exclusão de conta
+### Scenario 7: Backups after account deletion
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho backups salvos no Google Drive
-QUANDO excluo minha conta do app
-ENTÃO os backups são mantidos por 90 dias (período de grace)
-E vejo aviso "Sua conta será permanentemente excluída em X dias."
-E após 90 dias sem reativação, os backups são purgados automaticamente
+GIVEN I have backups saved in Google Drive
+WHEN I delete my app account
+THEN the backups are retained for 90 days (grace period)
+AND I see the warning "Your account will be permanently deleted in X days."
+AND after 90 days without reactivation, the backups are purged automatically
 ```
 
-### Cenário 8: Backups após exclusão de conta
+### Scenario 8: Backups after account deletion
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho backups salvos
-QUANDO deleto minha conta
-ENTÃO os backups são agendados para purge em 30 dias
-E após 30 dias, todos os arquivos no bucket do usuário são removidos permanentemente
+GIVEN I have saved backups
+WHEN I delete my account
+THEN the backups are scheduled for purging in 30 days
+AND after 30 days, all files in the user's bucket are permanently removed
 ```
 
-### Cenário 6: Espaço total usado
+### Scenario 6: Total space used
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou na tela de backup
-QUANDO vejo a seção "Backups salvos"
-ENTÃO vejo o total de backups
-E o espaço total usado (ex: "3 backups • 45.2 KB")
+GIVEN I am on the backup screen
+WHEN I view the "Saved backups" section
+THEN I see the total number of backups
+AND the total space used (e.g., "3 backups • 45.2 KB")
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios under **Functional requirements** are this spec's testable criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
 ### UI/UX
 
-### Tela: Detalhes do Backup
+### Screen: Backup Details
 
 ```
 ┌────────────────────────────────┐
-│ ← Detalhes do Backup           │
+│ ← Backup Details               │
 ├────────────────────────────────┤
 │                                │
 │ 📦 BACKUP                      │
 │                                │
-│ 18/03/2026 às 10:30            │
-│ Versão do app: 1.0.0           │
+│ 18/03/2026 at 10:30            │
+│ App version: 1.0.0             │
 │                                │
 ├────────────────────────────────┤
 │                                │
-│ 📊 CONTEÚDO                    │
+│ 📊 CONTENTS                    │
 │ ┌────────────────────────────┐ │
 │ │ 🐱 Pets           2       │ │
-│ │ ⚖️ Pesagens       15       │ │
-│ │ 💉 Vacinas         8       │ │
-│ │ 🪱 Vermífugos      6       │ │
-│ │ 🔔 Lembretes       3       │ │
+│ │ ⚖️ Weigh-ins      15       │ │
+│ │ 💉 Vaccinations    8       │ │
+│ │ 🪱 Dewormers       6       │ │
+│ │ 🔔 Reminders       3       │ │
 │ └────────────────────────────┘ │
 │                                │
-│ 📁 Tamanho: 15.4 KB            │
+│ 📁 Size: 15.4 KB               │
 │                                │
 ├────────────────────────────────┤
 │                                │
 │ ┌────────────────────────────┐ │
-│ │       RESTAURAR            │ │
+│ │        RESTORE             │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │        DELETAR             │ │
+│ │         DELETE             │ │
 │ └────────────────────────────┘ │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Lista com Seleção Múltipla
+### List with Multiple Selection
 
 ```
 ┌────────────────────────────────┐
-│ ← Backups Salvos    [🗑️] [✓]   │
+│ ← Saved Backups     [🗑️] [✓]   │
 ├────────────────────────────────┤
-│ 2 selecionados                 │
+│ 2 selected                     │
 ├────────────────────────────────┤
 │ ┌────────────────────────────┐ │
 │ │ ☑️ 18/03/2026 10:30        │ │
@@ -210,45 +210,45 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 └────────────────────────────────┘
 ```
 
-### Dialog: Confirmar Exclusão
+### Dialog: Confirm Deletion
 
 ```
 ┌────────────────────────────────┐
-│     Deletar Backup?            │
+│      Delete Backup?            │
 ├────────────────────────────────┤
 │                                │
-│ ⚠️ Esta ação não pode ser      │
-│ desfeita.                      │
+│ ⚠️ This action cannot be       │
+│ undone.                        │
 │                                │
-│ O backup será removido         │
-│ permanentemente do Firebase    │
+│ The backup will be permanently │
+│ removed from Firebase          │
 │ Storage.                       │
 │                                │
 │ ┌──────────┐  ┌──────────────┐ │
-│ │ CANCELAR │  │   DELETAR    │ │
+│ │  CANCEL  │  │    DELETE    │ │
 │ └──────────┘  └──────────────┘ │
 └────────────────────────────────┘
 ```
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted during the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, restricts quota, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the referenced APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical pricing, tier, provider, or timeline examples as current decisions.
+- Capabilities covered by the specs declared in `depends_on`.

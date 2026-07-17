@@ -1,32 +1,32 @@
-# Plano: Gatilhos de Backup
+# Plan: Backup Triggers
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0305`, `0306`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when necessary.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Arquitetura
+### Architecture
 
-### Fluxo de Trigger
+### Trigger Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -63,7 +63,7 @@ Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da p
 
 ---
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### BackupTriggerManager
 
@@ -79,15 +79,15 @@ class BackupTriggerManager(
     }
 
     fun onDataChanged() {
-        // Verificar se backup automático está ativado e é premium
+        // Check whether automatic backup is enabled and the user is premium
         if (!backupPreferences.isAutoBackupEnabled() || !premiumRepository.isPremium()) {
             return
         }
 
-        // Cancelar trabalho pendente anterior (debounce)
+        // Cancel the previous pending work (debounce)
         workManager.cancelAllWorkByTag(WORK_TAG)
 
-        // Agendar novo trabalho com delay
+        // Schedule new work with a delay
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(
                 if (backupPreferences.isWifiOnly())
@@ -129,12 +129,12 @@ class BackupOnChangeWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // Verificar premium (pode ter expirado enquanto esperava)
+        // Check premium status (it may have expired while waiting)
         if (!premiumRepository.isPremium()) {
-            return Result.success()  // Não é falha, apenas skip
+            return Result.success()  // Not a failure; just skip
         }
 
-        // Executar backup
+        // Run backup
         return backupUseCase()
             .map {
                 backupPreferences.setLastBackupTimestamp(System.currentTimeMillis())
@@ -142,16 +142,16 @@ class BackupOnChangeWorker(
                 Result.success()
             }
             .getOrElse { error ->
-                // Não fazer retry para backup por alteração
-                // O próximo periódico tentará novamente
+                // Do not retry a change-triggered backup
+                // The next periodic backup will try again
                 backupPreferences.setLastBackupError(error.message)
-                Result.success()  // Marcar como sucesso para não ficar tentando
+                Result.success()  // Mark as successful to prevent repeated attempts
             }
     }
 }
 ```
 
-### Integração nos Repositories
+### Integration into Repositories
 
 ```kotlin
 class PetRepositoryImpl(
@@ -176,10 +176,10 @@ class PetRepositoryImpl(
 }
 ```
 
-### Usando Callback/Listener Pattern
+### Using the Callback/Listener Pattern
 
 ```kotlin
-// Alternativa: usar padrão de eventos
+// Alternative: use an event pattern
 interface DataChangeListener {
     fun onDataChanged(entityType: EntityType)
 }
@@ -200,26 +200,26 @@ class DataChangePublisher {
     }
 }
 
-// BackupTriggerManager implementa DataChangeListener
+// BackupTriggerManager implements DataChangeListener
 class BackupTriggerManager(...) : DataChangeListener {
     override fun onDataChanged(entityType: EntityType) {
-        // Trigger backup com debounce
+        // Trigger backup with debounce
         onDataChanged()
     }
 }
 ```
 
-### Evitar Conflito com Backup Periódico
+### Avoid Conflicts with Periodic Backup
 
 ```kotlin
 class AutoBackupWorker(...) : CoroutineWorker(...) {
 
     override suspend fun doWork(): Result {
-        // Cancelar backup por alteração pendente (evitar duplicação)
+        // Cancel the pending change-triggered backup (avoid duplication)
         WorkManager.getInstance(applicationContext)
             .cancelAllWorkByTag(BackupTriggerManager.WORK_TAG)
 
-        // Continuar com backup normal...
+        // Continue with the normal backup...
         return backupUseCase()
             .map { Result.success() }
             .getOrElse { Result.retry() }
@@ -230,17 +230,17 @@ class AutoBackupWorker(...) : CoroutineWorker(...) {
 ---
 
 
-## Riscos e validações
+## Risks and validation
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
 
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

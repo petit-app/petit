@@ -1,42 +1,42 @@
-# Tarefas: Vinculação de Dados
+# Tasks: Data Ownership
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Primeiro login vincula dados existentes** (test-type: both)
+- [ ] **Scenario 1: First login links existing data** (test-type: both)
   - blocked-by: spec 0201
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Primeiro login vincula dados existentes” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho 2 pets cadastrados localmente E nunca fiz login antes QUANDO faço login com "pessoa-a@example.com" ENTÃO meus 2 pets são marcados com ownerId = meu userId E posso continuar usando normalmente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 1: First login links existing data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I have 2 pets registered locally AND I have never logged in before WHEN I log in with "pessoa-a@example.com" THEN my 2 pets are marked with ownerId = my userId AND I can continue using the app normally
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Dados criados após login já vêm vinculados** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Dados criados após login já vêm vinculados” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou logado como "pessoa-a@example.com" QUANDO cadastro um novo pet "Luna" ENTÃO Luna é criada com ownerId = meu userId
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Data created after login is linked automatically** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 2: Data created after login is linked automatically” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I am logged in as "pessoa-a@example.com" WHEN I register a new pet named "Luna" THEN Luna is created with ownerId = my userId
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Dados em modo anônimo não têm owner** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Dados em modo anônimo não têm owner” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou usando sem login QUANDO cadastro um pet "Simba" ENTÃO Simba é criado com ownerId = null
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Data created in anonymous mode has no owner** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 3: Data created in anonymous mode has no owner” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I am using the app without being logged in WHEN I register a pet named "Simba" THEN Simba is created with ownerId = null
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Logout não remove vinculação** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Logout não remove vinculação” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho pets vinculados ao meu userId QUANDO faço logout ENTÃO os pets continuam com o ownerId preenchido E continuam visíveis no app
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Logging out does not remove ownership** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 4: Logging out does not remove ownership” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I have pets linked to my userId WHEN I log out THEN the pets retain their ownerId AND remain visible in the app
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Login com conta diferente** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Login com conta diferente” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho pets do "user-a" no dispositivo E faço login como "pessoa-b@example.com" (user-b) ENTÃO vejo os pets da Pessoa A (dados locais) MAS eles continuam com ownerId = user-a E novos dados criados terão ownerId = user-b (gestão de múltiplos owners é tratada em sync futuro) ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Log in with a different account** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 5: Log in with a different account” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I have pets belonging to "user-a" on the device AND I log in as "pessoa-b@example.com" (user-b) THEN I see Person A's pets (local data) BUT they retain ownerId = user-a AND new data will have ownerId = user-b (management of multiple owners is handled in a future sync) ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

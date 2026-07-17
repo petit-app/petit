@@ -1,6 +1,6 @@
 ---
 spec: "0304"
-title: "Transferência entre Dispositivos"
+title: "Device-to-Device Transfer"
 family: backup-recovery
 phase: 4
 status: On Hold
@@ -9,290 +9,290 @@ depends_on: ["0101"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Transferência entre Dispositivos
+# Spec: Device-to-Device Transfer
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário do app,
-> Eu quero transferir meus dados para outro celular próximo,
-> Para que eu possa compartilhar dados com outro device sem usar a nuvem.
+> As an app user,
+> I want to transfer my data to another nearby phone,
+> So that I can share data with another device without using the cloud.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. Product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Enviar dados para outro device
+### Scenario 1: Send data to another device
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho dados locais (pets, pesos, etc.)
-E outro device com Petit está próximo
-QUANDO acesso Configurações > "Compartilhar dados"
-E toco em "Enviar dados"
-ENTÃO vejo código de 4 dígitos para compartilhar
-E aguardo conexão do receptor
-QUANDO receptor insere o código
-ENTÃO dados são enviados via Nearby Connections
-E vejo "Dados enviados com sucesso"
+GIVEN I have local data (pets, weights, etc.)
+AND another device with Petit is nearby
+WHEN I open Settings > "Share data"
+AND I tap "Send data"
+THEN I see a 4-digit code to share
+AND I wait for the receiver to connect
+WHEN the receiver enters the code
+THEN the data is sent via Nearby Connections
+AND I see "Data sent successfully"
 ```
 
-### Cenário 2: Receber dados de outro device
+### Scenario 2: Receive data from another device
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou no app
-QUANDO acesso Configurações > "Receber dados"
-E toco em "Receber de outro celular"
-ENTÃO vejo campo para inserir código
-QUANDO insiro código de 4 dígitos do transmissor
-ENTÃO conexão é estabelecida
-E vejo progresso de transferência
-QUANDO transferência completa
-ENTÃO vejo opção "Substituir" ou "Mesclar" dados
+GIVEN I am in the app
+WHEN I open Settings > "Receive data"
+AND I tap "Receive from another phone"
+THEN I see a field for entering a code
+WHEN I enter the sender's 4-digit code
+THEN a connection is established
+AND I see the transfer progress
+WHEN the transfer completes
+THEN I see an option to "Replace" or "Merge" data
 ```
 
-### Cenário 3: Transferência sem internet
+### Scenario 3: Transfer without internet
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que ambos devices estão sem internet
-MAS estão na mesma rede Wi-Fi OU com Bluetooth ativo
-QUANDO inicio transferência
-ENTÃO funciona normalmente
-(Nearby Connections usa Wi-Fi Direct ou Bluetooth)
+GIVEN both devices are offline
+BUT they are on the same Wi-Fi network OR have Bluetooth enabled
+WHEN I start the transfer
+THEN it works normally
+(Nearby Connections uses Wi-Fi Direct or Bluetooth)
 ```
 
-### Cenário 4: Mesclar dados recebidos
+### Scenario 4: Merge received data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que recebi dados de outro device
-E tenho dados locais
-QUANDO escolho "Mesclar"
-ENTÃO dados são combinados
-E duplicatas são resolvidas por ID (UUIDs únicos)
-E vejo resumo: "2 pets adicionados, 10 pesagens mescladas"
+GIVEN I received data from another device
+AND I have local data
+WHEN I choose "Merge"
+THEN the data is combined
+AND duplicates are resolved by ID (unique UUIDs)
+AND I see a summary: "2 pets added, 10 weight records merged"
 ```
 
-### Cenário 5: Substituir dados locais
+### Scenario 5: Replace local data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que recebi dados de outro device
-QUANDO escolho "Substituir"
-ENTÃO vejo confirmação "Seus dados locais serão apagados. Continuar?"
-QUANDO confirmo
-ENTÃO todos dados locais são deletados
-E dados recebidos são importados
-E vejo "Dados restaurados com sucesso"
+GIVEN I received data from another device
+WHEN I choose "Replace"
+THEN I see the confirmation "Your local data will be deleted. Continue?"
+WHEN I confirm
+THEN all local data is deleted
+AND the received data is imported
+AND I see "Data restored successfully"
 ```
 
-### Cenário 6: Cancelar transferência
+### Scenario 6: Cancel transfer
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que transferência está em andamento
-QUANDO toco em "Cancelar"
-ENTÃO transferência é interrompida
-E dados parciais são descartados
-E ambos devices voltam ao estado inicial
+GIVEN a transfer is in progress
+WHEN I tap "Cancel"
+THEN the transfer is interrupted
+AND partial data is discarded
+AND both devices return to their initial state
 ```
 
-### Cenário 7: Erro de conexão
+### Scenario 7: Connection error
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que devices estão muito distantes
-OU Bluetooth/Wi-Fi estão desativados
-QUANDO tento iniciar transferência
-ENTÃO vejo mensagem "Não foi possível conectar. Aproxime os devices e ative Wi-Fi ou Bluetooth."
+GIVEN the devices are too far apart
+OR Bluetooth/Wi-Fi is disabled
+WHEN I try to start a transfer
+THEN I see the message "Could not connect. Move the devices closer together and enable Wi-Fi or Bluetooth."
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the interface, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional requirements** are this spec's testable criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
 ### UI/UX
 
-### Tela: Compartilhar Dados (Transmissor)
+### Screen: Share Data (Sender)
 
 ```
 ┌────────────────────────────────┐
-│ ← Compartilhar Dados           │
+│ ← Share Data                   │
 ├────────────────────────────────┤
 │                                │
 │        📱 ➡️ 📱                │
 │                                │
-│  Compartilhe seus dados com    │
-│  outro celular próximo         │
+│  Share your data with another  │
+│  nearby phone                  │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │    ENVIAR DADOS            │ │
+│ │    SEND DATA               │ │
 │ └────────────────────────────┘ │
 │                                │
-│ ℹ️ Funciona sem internet,      │
-│ usando Wi-Fi Direct ou         │
+│ ℹ️ Works without internet,     │
+│ using Wi-Fi Direct or          │
 │ Bluetooth.                     │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Tela: Aguardando Conexão (Transmissor)
+### Screen: Waiting for Connection (Sender)
 
 ```
 ┌────────────────────────────────┐
-│ ← Aguardando conexão...        │
+│ ← Waiting for connection...    │
 ├────────────────────────────────┤
 │                                │
 │         🔒                     │
 │                                │
-│    Código de segurança:        │
+│    Security code:              │
 │                                │
 │        ┌──────────┐            │
 │        │   4729   │            │
 │        └──────────┘            │
 │                                │
-│  Peça para o outro celular     │
-│  inserir este código.          │
+│  Ask the other phone to enter  │
+│  this code.                    │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │       CANCELAR             │ │
+│ │       CANCEL               │ │
 │ └────────────────────────────┘ │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Tela: Receber Dados (Receptor)
+### Screen: Receive Data (Receiver)
 
 ```
 ┌────────────────────────────────┐
-│ ← Receber Dados                │
+│ ← Receive Data                 │
 ├────────────────────────────────┤
 │                                │
 │        📱 ⬅️ 📱                │
 │                                │
-│  Insira o código mostrado no   │
-│  outro celular:                │
+│  Enter the code shown on the   │
+│  other phone:                  │
 │                                │
 │  ┌────┬────┬────┬────┐         │
 │  │  4 │  7 │  2 │  9 │         │
 │  └────┴────┴────┴────┘         │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │      CONECTAR              │ │
+│ │      CONNECT               │ │
 │ └────────────────────────────┘ │
 │                                │
-│ ℹ️ Certifique-se de que Wi-Fi  │
-│ ou Bluetooth estão ativos.     │
+│ ℹ️ Make sure Wi-Fi or          │
+│ Bluetooth is enabled.          │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Tela: Transferindo
+### Screen: Transferring
 
 ```
 ┌────────────────────────────────┐
-│ Transferindo...                │
+│ Transferring...                │
 ├────────────────────────────────┤
 │                                │
 │         ████████░░             │
 │            80%                 │
 │                                │
-│  Enviando dados...             │
-│  2 pets • 25 registros        │
+│  Sending data...               │
+│  2 pets • 25 records          │
 │                                │
-│  Não desligue o app            │
+│  Do not close the app          │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Dialog: Escolher Ação (Receptor)
+### Dialog: Choose Action (Receiver)
 
 ```
 ┌────────────────────────────────┐
 │                                │
 │         ✅                     │
 │                                │
-│   Dados recebidos!             │
+│   Data received!               │
 │                                │
 │   2 pets                      │
-│   15 pesagens                  │
-│   8 vacinas                    │
+│   15 weight records            │
+│   8 vaccinations               │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │    MESCLAR COM LOCAIS      │ │
+│ │    MERGE WITH LOCAL DATA   │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │    SUBSTITUIR LOCAIS       │ │
+│ │    REPLACE LOCAL DATA      │ │
 │ └────────────────────────────┘ │
 │                                │
-│       Cancelar                 │
+│       Cancel                   │
 │                                │
 └────────────────────────────────┘
 ```
 
 ---
 
-### Segurança
+### Security
 
-- **Código de 4 dígitos**: Previne conexões não autorizadas
-- **Proximity-based**: Funciona apenas com devices próximos (< 10 metros)
-- **One-shot transfer**: Conexão é encerrada após transferência
-- **No cloud storage**: Dados trafegam diretamente entre devices
-- **Encryption**: Nearby Connections usa criptografia automática
+- **4-digit code**: Prevents unauthorized connections
+- **Proximity-based**: Works only with nearby devices (< 10 meters)
+- **One-shot transfer**: The connection is closed after the transfer
+- **No cloud storage**: Data travels directly between devices
+- **Encryption**: Nearby Connections uses automatic encryption
 
 ---
 
 
-### Referências
+### References
 
 - [Google Nearby Connections API](https://developers.google.com/nearby/connections/overview)
 - [Android Strategy.P2P_POINT_TO_POINT](https://developers.google.com/android/reference/com/google/android/gms/nearby/connection/Strategy#P2P_POINT_TO_POINT)
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, enforces a quota, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Features covered by the specs declared in `depends_on`.

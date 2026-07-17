@@ -1,65 +1,65 @@
-# Plano: Vinculação de Dados
+# Plan: Data Ownership
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0201`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility where necessary.
+6. Run focused tests and the relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Modelo de Dados
+### Data Model
 
-### Adição de ownerId nas entidades
+### Adding ownerId to entities
 
 ```kotlin
 @Entity(tableName = "pets")
 data class PetEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
-    val ownerId: String? = null,  // Novo campo
+    val ownerId: String? = null,  // New field
     val name: String,
-    // ... outros campos
+    // ... other fields
 )
 
 @Entity(tableName = "weight_entries")
 data class WeightEntryEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
-    val ownerId: String? = null,  // Novo campo
+    val ownerId: String? = null,  // New field
     val petId: String,
-    // ... outros campos
+    // ... other fields
 )
 
-// Similar para VaccinationEntry, DewormingEntry, Reminder
+// Similar for VaccinationEntry, DewormingEntry, Reminder
 ```
 
 ---
 
-### Requisitos Técnicos
+### Technical Requirements
 
-### Migration do Room
+### Room Migration
 
 ```kotlin
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        // Adicionar coluna ownerId em todas as tabelas
+        // Add ownerId column to all tables
         database.execSQL("ALTER TABLE pets ADD COLUMN ownerId TEXT DEFAULT NULL")
         database.execSQL("ALTER TABLE weight_entries ADD COLUMN ownerId TEXT DEFAULT NULL")
         database.execSQL("ALTER TABLE vaccination_entries ADD COLUMN ownerId TEXT DEFAULT NULL")
@@ -81,8 +81,8 @@ class DataOwnershipManager(
     private val database: PetitDatabase
 ) {
     /**
-     * Vincula todos os dados locais sem owner ao userId atual
-     * Chamado após primeiro login
+     * Links all ownerless local data to the current userId
+     * Called after the first login
      */
     suspend fun claimOrphanedData(userId: String) {
         database.withTransaction {
@@ -96,12 +96,12 @@ class DataOwnershipManager(
 }
 ```
 
-### DAOs atualizados
+### Updated DAOs
 
 ```kotlin
 @Dao
 interface PetDao {
-    // Queries existentes...
+    // Existing queries...
 
     @Query("UPDATE pets SET ownerId = :userId WHERE ownerId IS NULL")
     suspend fun claimOrphanedPets(userId: String)
@@ -111,22 +111,22 @@ interface PetDao {
 }
 ```
 
-### Integração no Login Flow
+### Integration into the Login Flow
 
 ```kotlin
 class AuthRepositoryImpl(...) {
 
     override suspend fun signInWithGoogle(idToken: String): Result<UserInfo> {
         return try {
-            // ... código de login existente ...
+            // ... existing login code ...
 
             val user = firebaseAuth.currentUser!!
 
-            // Verificar se é primeiro login
+            // Check whether this is the first login
             val isFirstLogin = userPreferencesRepository.getFirstLoginDate() == null
 
             if (isFirstLogin) {
-                // Vincular dados órfãos ao novo usuário
+                // Link orphaned data to the new user
                 dataOwnershipManager.claimOrphanedData(user.id)
                 userPreferencesRepository.setFirstLoginDate(System.currentTimeMillis())
             }
@@ -139,7 +139,7 @@ class AuthRepositoryImpl(...) {
 }
 ```
 
-### Criar entidades com owner
+### Create entities with an owner
 
 ```kotlin
 class CreatePetUseCase(
@@ -158,21 +158,21 @@ class CreatePetUseCase(
 
 ---
 
-### Visualização de Dados
+### Data Display
 
-### Fase 2: Mostrar todos os dados locais
+### Phase 2: Show all local data
 
 ```kotlin
-// Por enquanto, mostrar todos os dados locais independente do owner
+// For now, show all local data regardless of owner
 fun getAllPets(): Flow<List<PetEntity>> {
-    return petDao.getAllPets()  // Sem filtro por owner
+    return petDao.getAllPets()  // No owner filter
 }
 ```
 
-### Fase futura (5): Filtrar por owner para sync
+### Future phase (5): Filter by owner for sync
 
 ```kotlin
-// Quando implementar sync, filtrar por owner
+// When implementing sync, filter by owner
 fun getPetsForSync(userId: String): Flow<List<PetEntity>> {
     return petDao.getPetsForUser(userId)
 }
@@ -181,17 +181,17 @@ fun getPetsForSync(userId: String): Flow<List<PetEntity>> {
 ---
 
 
-## Riscos e validações
+## Risks and validations
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive-confirmation states.
 
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When there is a build: `./gradlew assembleDebug` followed by `./gradlew installDebug`

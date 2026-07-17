@@ -1,56 +1,56 @@
-# Tarefas: Transferência entre Dispositivos
+# Tasks: Device-to-Device Transfer
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Enviar dados para outro device** (test-type: both)
+- [ ] **Scenario 1: Send data to another device** (test-type: both)
   - blocked-by: spec 0101
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Enviar dados para outro device” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho dados locais (pets, pesos, etc.) E outro device com Petit está próximo QUANDO acesso Configurações > "Compartilhar dados" E toco em "Enviar dados" ENTÃO vejo código de 4 dígitos para compartilhar E aguardo conexão do receptor QUANDO receptor insere o código ENTÃO dados são enviados via Nearby Connections E vejo "Dados enviados com sucesso"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 1: Send data to another device” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have local data (pets, weights, etc.) AND another device with Petit is nearby WHEN I open Settings > "Share data" AND I tap "Send data" THEN I see a 4-digit code to share AND I wait for the receiver to connect WHEN the receiver enters the code THEN the data is sent via Nearby Connections AND I see "Data sent successfully"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Receber dados de outro device** (test-type: both)
-  - blocked-by: spec 0101; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Receber dados de outro device” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou no app QUANDO acesso Configurações > "Receber dados" E toco em "Receber de outro celular" ENTÃO vejo campo para inserir código QUANDO insiro código de 4 dígitos do transmissor ENTÃO conexão é estabelecida E vejo progresso de transferência QUANDO transferência completa ENTÃO vejo opção "Substituir" ou "Mesclar" dados
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Receive data from another device** (test-type: both)
+  - blocked-by: spec 0101; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 2: Receive data from another device” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am in the app WHEN I open Settings > "Receive data" AND I tap "Receive from another phone" THEN I see a field for entering a code WHEN I enter the sender's 4-digit code THEN a connection is established AND I see the transfer progress WHEN the transfer completes THEN I see an option to "Replace" or "Merge" data
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Transferência sem internet** (test-type: both)
-  - blocked-by: spec 0101; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Transferência sem internet” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que ambos devices estão sem internet MAS estão na mesma rede Wi-Fi OU com Bluetooth ativo QUANDO inicio transferência ENTÃO funciona normalmente (Nearby Connections usa Wi-Fi Direct ou Bluetooth)
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Transfer without internet** (test-type: both)
+  - blocked-by: spec 0101; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 3: Transfer without internet” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN both devices are offline BUT they are on the same Wi-Fi network OR have Bluetooth enabled WHEN I start the transfer THEN it works normally (Nearby Connections uses Wi-Fi Direct or Bluetooth)
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Mesclar dados recebidos** (test-type: both)
-  - blocked-by: spec 0101; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Mesclar dados recebidos” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que recebi dados de outro device E tenho dados locais QUANDO escolho "Mesclar" ENTÃO dados são combinados E duplicatas são resolvidas por ID (UUIDs únicos) E vejo resumo: "2 pets adicionados, 10 pesagens mescladas"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Merge received data** (test-type: both)
+  - blocked-by: spec 0101; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 4: Merge received data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I received data from another device AND I have local data WHEN I choose "Merge" THEN the data is combined AND duplicates are resolved by ID (unique UUIDs) AND I see a summary: "2 pets added, 10 weight records merged"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Substituir dados locais** (test-type: both)
-  - blocked-by: spec 0101; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Substituir dados locais” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que recebi dados de outro device QUANDO escolho "Substituir" ENTÃO vejo confirmação "Seus dados locais serão apagados. Continuar?" QUANDO confirmo ENTÃO todos dados locais são deletados E dados recebidos são importados E vejo "Dados restaurados com sucesso"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Replace local data** (test-type: both)
+  - blocked-by: spec 0101; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 5: Replace local data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I received data from another device WHEN I choose "Replace" THEN I see the confirmation "Your local data will be deleted. Continue?" WHEN I confirm THEN all local data is deleted AND the received data is imported AND I see "Data restored successfully"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 6: Cancelar transferência** (test-type: both)
-  - blocked-by: spec 0101; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 6: Cancelar transferência” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que transferência está em andamento QUANDO toco em "Cancelar" ENTÃO transferência é interrompida E dados parciais são descartados E ambos devices voltam ao estado inicial
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 6: Cancel transfer** (test-type: both)
+  - blocked-by: spec 0101; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 6: Cancel transfer” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN a transfer is in progress WHEN I tap "Cancel" THEN the transfer is interrupted AND partial data is discarded AND both devices return to their initial state
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 7: Erro de conexão** (test-type: both)
-  - blocked-by: spec 0101; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 7: Erro de conexão” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que devices estão muito distantes OU Bluetooth/Wi-Fi estão desativados QUANDO tento iniciar transferência ENTÃO vejo mensagem "Não foi possível conectar. Aproxime os devices e ative Wi-Fi ou Bluetooth." ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 7: Connection error** (test-type: both)
+  - blocked-by: spec 0101; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 7: Connection error” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN the devices are too far apart OR Bluetooth/Wi-Fi is disabled WHEN I try to start a transfer THEN I see the message "Could not connect. Move the devices closer together and enable Wi-Fi or Bluetooth." ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

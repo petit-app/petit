@@ -1,63 +1,63 @@
-# Tarefas: Gerenciar Backups
+# Tasks: Manage Backups
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Ver lista de backups** (test-type: both)
+- [ ] **Scenario 1: View the backup list** (test-type: both)
   - blocked-by: spec 0301
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Ver lista de backups” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou logado com Google E tenho múltiplos backups salvos QUANDO acesso "Backups salvos" ENTÃO vejo lista com todos os backups E cada item mostra: - Data e hora do backup - Quantidade de pets - Tamanho do arquivo - Versão do app
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 1: View the backup list” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am signed in with Google AND have multiple saved backups WHEN I open "Saved backups" THEN I see a list of all backups AND each item shows: - Backup date and time - Number of pets - File size - App version
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Ver detalhes do backup** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Ver detalhes do backup” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou na lista de backups QUANDO toco em um backup ENTÃO vejo detalhes completos: - Data e hora - Conteúdo (X pets, Y pesagens, Z vacinas) - Tamanho - Versão do app que criou E vejo opções: Restaurar, Deletar
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: View backup details** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 2: View backup details” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am on the backup list WHEN I tap a backup THEN I see full details: - Date and time - Contents (X pets, Y weigh-ins, Z vaccinations) - Size - Version of the app that created it AND I see the options: Restore, Delete
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Deletar backup específico** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Deletar backup específico” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou nos detalhes de um backup QUANDO toco em "Deletar" E confirmo a exclusão ENTÃO o backup é removido do Google Drive E não aparece mais na lista
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Delete a specific backup** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 3: Delete a specific backup” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am viewing a backup's details WHEN I tap "Delete" AND confirm the deletion THEN the backup is removed from Google Drive AND no longer appears in the list
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Deletar múltiplos backups** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Deletar múltiplos backups” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou na lista de backups QUANDO ativo modo de seleção (long press) E seleciono múltiplos backups E toco em "Deletar selecionados" E confirmo ENTÃO todos os backups selecionados são removidos
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Delete multiple backups** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 4: Delete multiple backups” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am on the backup list WHEN I enable selection mode (long press) AND select multiple backups AND tap "Delete selected" AND confirm THEN all selected backups are removed
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Limite de backups manuais** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Limite de backups manuais” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho 10 backups manuais salvos (limite) QUANDO faço um novo backup manual ENTÃO o backup manual mais antigo é removido automaticamente E o novo backup é adicionado E vejo notificação "Backup antigo removido para liberar espaço"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Manual backup limit** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 5: Manual backup limit” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have 10 saved manual backups (the limit) WHEN I create a new manual backup THEN the oldest manual backup is removed automatically AND the new backup is added AND I see the notification "Old backup removed to free up space"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 7: Backups após exclusão de conta** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 7: Backups após exclusão de conta” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho backups salvos no Google Drive QUANDO excluo minha conta do app ENTÃO os backups são mantidos por 90 dias (período de grace) E vejo aviso "Sua conta será permanentemente excluída em X dias." E após 90 dias sem reativação, os backups são purgados automaticamente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 7: Backups after account deletion** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 7: Backups after account deletion” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have backups saved in Google Drive WHEN I delete my app account THEN the backups are retained for 90 days (grace period) AND I see the warning "Your account will be permanently deleted in X days." AND after 90 days without reactivation, the backups are purged automatically
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 8: Backups após exclusão de conta** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 8: Backups após exclusão de conta” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho backups salvos QUANDO deleto minha conta ENTÃO os backups são agendados para purge em 30 dias E após 30 dias, todos os arquivos no bucket do usuário são removidos permanentemente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 8: Backups after account deletion** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 8: Backups after account deletion” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have saved backups WHEN I delete my account THEN the backups are scheduled for purging in 30 days AND after 30 days, all files in the user's bucket are permanently removed
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 6: Espaço total usado** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 6: Espaço total usado” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou na tela de backup QUANDO vejo a seção "Backups salvos" ENTÃO vejo o total de backups E o espaço total usado (ex: "3 backups • 45.2 KB") ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 6: Total space used** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 6: Total space used” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am on the backup screen WHEN I view the "Saved backups" section THEN I see the total number of backups AND the total space used (e.g., "3 backups • 45.2 KB") ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

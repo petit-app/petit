@@ -1,49 +1,49 @@
-# Tarefas: Gatilhos de Backup
+# Tasks: Backup Triggers
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Backup após criar pet** (test-type: both)
+- [ ] **Scenario 1: Backup after creating a pet** (test-type: both)
   - blocked-by: spec 0305, spec 0306
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Backup após criar pet” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que backup automático está ativado E tenho conexão de internet QUANDO cadastro um novo pet ENTÃO após 5 minutos de inatividade O backup é executado automaticamente E inclui o novo pet
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 1: Backup after creating a pet” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN automatic backup is enabled AND I have an internet connection WHEN I add a new pet THEN after 5 minutes of inactivity the backup runs automatically AND includes the new pet
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Debounce de múltiplas alterações** (test-type: both)
-  - blocked-by: spec 0305, spec 0306; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Debounce de múltiplas alterações” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que faço várias alterações em sequência: - Adiciono pet Luna - Adiciono pesagem 3.5kg - Adiciono vacina V3 - Tudo em menos de 5 minutos ENTÃO apenas UM backup é executado (após 5 minutos da última alteração) E inclui todas as mudanças
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Debounce multiple changes** (test-type: both)
+  - blocked-by: spec 0305, spec 0306; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 2: Debounce multiple changes” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I make several changes in succession: - I add the pet Luna - I add a 3.5kg weight record - I add the V3 vaccine - All in less than 5 minutes THEN only ONE backup runs (5 minutes after the last change) AND it includes all changes
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Backup após delete** (test-type: both)
-  - blocked-by: spec 0305, spec 0306; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Backup após delete” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que backup automático está ativado QUANDO deleto um pet ENTÃO após 5 minutos sem alterações O backup é executado E reflete a exclusão
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Backup after deletion** (test-type: both)
+  - blocked-by: spec 0305, spec 0306; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 3: Backup after deletion” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN automatic backup is enabled WHEN I delete a pet THEN after 5 minutes without changes the backup runs AND reflects the deletion
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Cancelar backup pendente** (test-type: both)
-  - blocked-by: spec 0305, spec 0306; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Cancelar backup pendente” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que alterei dados e backup está pendente (em 3 min) QUANDO faço outra alteração ENTÃO o timer é resetado para 5 minutos novamente E apenas um backup será feito
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Cancel pending backup** (test-type: both)
+  - blocked-by: spec 0305, spec 0306; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 4: Cancel pending backup” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I changed data and a backup is pending (in 3 min) WHEN I make another change THEN the timer is reset to 5 minutes again AND only one backup will run
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Não duplicar com backup periódico** (test-type: both)
-  - blocked-by: spec 0305, spec 0306; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Não duplicar com backup periódico” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que um backup por alteração está pendente E o backup periódico deveria executar agora ENTÃO apenas um backup é feito E o timer de backup por alteração é cancelado
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Do not duplicate periodic backup** (test-type: both)
+  - blocked-by: spec 0305, spec 0306; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 5: Do not duplicate periodic backup” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN a change-triggered backup is pending AND the periodic backup is due to run now THEN only one backup runs AND the change-triggered backup timer is canceled
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 6: App fechado após alteração** (test-type: both)
-  - blocked-by: spec 0305, spec 0306; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 6: App fechado após alteração” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que fiz alterações E fecho o app imediatamente ENTÃO o backup pendente ainda será executado (WorkManager persiste a tarefa) ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 6: App closed after a change** (test-type: both)
+  - blocked-by: spec 0305, spec 0306; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 6: App closed after a change” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I made changes AND I close the app immediately THEN the pending backup will still run (WorkManager persists the task) ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

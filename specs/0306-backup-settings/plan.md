@@ -1,30 +1,30 @@
-# Plano: Configurações de Backup
+# Plan: Backup Settings
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0305`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when necessary.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### ViewModel
 
@@ -70,7 +70,7 @@ class BackupSettingsViewModel(
         backupPreferences.setBackupIntervalHours(hours)
 
         if (backupPreferences.isAutoBackupEnabled()) {
-            backupScheduler.scheduleAutoBackup()  // Re-schedule com nova frequência
+            backupScheduler.scheduleAutoBackup()  // Reschedule with the new frequency
         }
 
         loadSettings()
@@ -80,7 +80,7 @@ class BackupSettingsViewModel(
         backupPreferences.setWifiOnly(wifiOnly)
 
         if (backupPreferences.isAutoBackupEnabled()) {
-            backupScheduler.scheduleAutoBackup()  // Re-schedule com nova constraint
+            backupScheduler.scheduleAutoBackup()  // Reschedule with the new constraint
         }
 
         loadSettings()
@@ -99,10 +99,10 @@ class BackupSettingsViewModel(
                 .onSuccess {
                     _uiState.update { it.copy(
                         isBackingUp = false,
-                        successMessage = "Backup realizado!"
+                        successMessage = "Backup completed!"
                     )}
 
-                    // Re-schedule para resetar timer
+                    // Reschedule to reset the timer
                     if (backupPreferences.isAutoBackupEnabled()) {
                         backupScheduler.scheduleAutoBackup()
                     }
@@ -143,10 +143,10 @@ fun BackupSettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Toggle principal
+        // Main toggle
         SwitchPreference(
-            title = "Backup automático",
-            subtitle = "Salva seus dados automaticamente",
+            title = "Automatic backup",
+            subtitle = "Saves your data automatically",
             checked = uiState.isAutoBackupEnabled,
             onCheckedChange = { viewModel.setAutoBackupEnabled(it) }
         )
@@ -159,36 +159,36 @@ fun BackupSettingsScreen(
                 lastError = uiState.lastBackupError
             )
 
-            // Frequência
+            // Frequency
             ListPreference(
-                title = "Frequência",
+                title = "Frequency",
                 value = uiState.intervalHours,
                 options = listOf(
-                    6 to "A cada 6 horas",
-                    24 to "A cada 24 horas",
-                    168 to "Uma vez por semana"
+                    6 to "Every 6 hours",
+                    24 to "Every 24 hours",
+                    168 to "Once a week"
                 ),
                 onValueChange = { viewModel.setIntervalHours(it) }
             )
 
             // Wi-Fi only
             SwitchPreference(
-                title = "Apenas em Wi-Fi",
-                subtitle = "Economiza dados móveis",
+                title = "Wi-Fi only",
+                subtitle = "Saves mobile data",
                 checked = uiState.isWifiOnly,
                 onCheckedChange = { viewModel.setWifiOnly(it) }
             )
 
-            // Notificação
+            // Notification
             SwitchPreference(
-                title = "Notificar após backup",
-                subtitle = "Mostra notificação de sucesso",
+                title = "Notify after backup",
+                subtitle = "Shows a success notification",
                 checked = uiState.shouldNotifyOnSuccess,
                 onCheckedChange = { viewModel.setNotifyOnSuccess(it) }
             )
         }
 
-        // Botão backup agora
+        // Back up now button
         Button(
             onClick = { viewModel.backupNow() },
             enabled = !uiState.isBackingUp
@@ -196,7 +196,7 @@ fun BackupSettingsScreen(
             if (uiState.isBackingUp) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp))
             } else {
-                Text("Fazer backup agora")
+                Text("Back up now")
             }
         }
     }
@@ -206,17 +206,17 @@ fun BackupSettingsScreen(
 ---
 
 
-## Riscos e validações
+## Risks and validation
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
 
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

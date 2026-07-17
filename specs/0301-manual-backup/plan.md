@@ -1,30 +1,30 @@
-# Plano: Backup Manual
+# Plan: Manual Backup
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0201`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimal integration behind repository abstractions, keeping Room as the local source.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility when necessary.
+6. Run focused tests and the relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### BackupStorageRepository
 
@@ -67,7 +67,7 @@ class GoogleDriveBackupRepository(
                 val timestamp = Instant.now().toString().replace(":", "-")
                 val fileName = "petit_backup_$timestamp.json"
 
-                // Upload para appDataFolder do Google Drive
+                // Upload to the Google Drive appDataFolder
                 val fileMetadata = com.google.api.services.drive.model.File()
                     .setName(fileName)
                     .setParents(listOf("appDataFolder"))
@@ -106,19 +106,19 @@ class CreateBackupUseCase(
     private val connectivityManager: ConnectivityManager
 ) {
     suspend operator fun invoke(): Result<BackupInfo> {
-        // Verificar login (se não logado, retorna erro que dispara fluxo de login)
+        // Check sign-in status (if signed out, return an error that triggers the sign-in flow)
         val currentUser = authRepository.getCurrentUser()
-            ?: return Result.failure(LoginRequiredException("Login necessário para backup"))
+            ?: return Result.failure(LoginRequiredException("Sign-in required for backup"))
 
-        // Verificar conexão
+        // Check connection
         if (!connectivityManager.isConnected()) {
-            return Result.failure(NoConnectionException("Sem conexão de internet"))
+            return Result.failure(NoConnectionException("No internet connection"))
         }
 
-        // Exportar dados
+        // Export data
         val exportBundle = exportDataUseCase.exportAll()
 
-        // Enviar para Google Drive
+        // Upload to Google Drive
         return googleDriveBackupRepository.createBackup(exportBundle)
     }
 }
@@ -161,7 +161,7 @@ class BackupViewModel(
                     _uiState.update { it.copy(
                         isBackingUp = false,
                         lastBackup = backupInfo,
-                        successMessage = "Backup realizado com sucesso!"
+                        successMessage = "Backup completed successfully!"
                     )}
                 }
                 .onFailure { error ->
@@ -186,68 +186,68 @@ data class BackupUiState(
 
 ---
 
-## Contexto agregado da proposta original
+## Consolidated context from the original proposal
 
-O conteúdo abaixo veio do README histórico da família. Ele é referência para reavaliação, não uma arquitetura aprovada.
+The content below came from the family's historical README. It is a reference for reevaluation, not an approved architecture.
 
-### Visão histórica — Backup Google Drive (antiga Fase N+1)
-
-
-> **Status**: Em holding — poderá ser reavaliada se houver demanda validada por backup na nuvem.
-
-## Motivo do Holding
-
-Backup no Google Drive foi adiado porque:
-1. Export/Import JSON já atende como backup manual
-2. A demanda imediata é compartilhamento local entre dispositivos da casa
-3. Requer Firebase Auth (também em holding)
-4. Poderá ser reavaliado se houver demanda validada por backup automático na nuvem
-
-## Specs Preservadas
-
-### Backup Manual (ex-Fase 3)
-- [US-N11: Backup Manual](../0301-manual-backup/spec.md)
-- [US-N12: Restaurar Backup](../0302-restore-backup/spec.md)
-- [US-N13: Gerenciar Backups](../0303-manage-backups/spec.md)
-
-### Backup Automático (ex-Fase 4)
-- [README original do auto-backup](../0305-automatic-backup/plan.md)
-- [US-N14a: Backup Automático](../0305-automatic-backup/spec.md)
-- [US-N14b: Configurações de Backup](../0306-backup-settings/spec.md)
-- [US-N14c: Triggers de Backup](../0307-backup-triggers/spec.md)
-
-### Transferência Device-to-Device (referência histórica)
-- [US-204 original](../0304-device-transfer/spec.md) — Esta proposta serviu como referência para o compartilhamento familiar, mas permanece não implementada neste formato
+### Historical overview — Google Drive Backup (former Phase N+1)
 
 
-## Pré-requisitos
+> **Status**: On Hold — may be reevaluated if there is validated demand for cloud backup.
 
-- Fase 2 completa (Firebase Auth)
-- Google Cloud Console com Drive API habilitada
-- OAuth configurado para Drive API (scope: `https://www.googleapis.com/auth/drive.appdata`)
+## Reason for the Hold
+
+Google Drive backup was postponed because:
+1. JSON Export/Import already serves as a manual backup
+2. The immediate demand is local sharing among household devices
+3. It requires Firebase Auth (also On Hold)
+4. It may be reevaluated if there is validated demand for automatic cloud backup
+
+## Preserved Specs
+
+### Manual Backup (former Phase 3)
+- [US-N11: Manual Backup](../0301-manual-backup/spec.md)
+- [US-N12: Restore Backup](../0302-restore-backup/spec.md)
+- [US-N13: Manage Backups](../0303-manage-backups/spec.md)
+
+### Automatic Backup (former Phase 4)
+- [Original automatic-backup README](../0305-automatic-backup/plan.md)
+- [US-N14a: Automatic Backup](../0305-automatic-backup/spec.md)
+- [US-N14b: Backup Settings](../0306-backup-settings/spec.md)
+- [US-N14c: Backup Triggers](../0307-backup-triggers/spec.md)
+
+### Device-to-Device Transfer (historical reference)
+- [Original US-204](../0304-device-transfer/spec.md) — This proposal served as a reference for family sharing but remains unimplemented in this form
+
+
+## Prerequisites
+
+- Phase 2 complete (Firebase Auth)
+- Google Cloud Console with the Drive API enabled
+- OAuth configured for the Drive API (scope: `https://www.googleapis.com/auth/drive.appdata`)
 
 
 ## User Stories
 
-| ID | Feature | Prioridade |
+| ID | Feature | Priority |
 |----|---------|------------|
-| [US-201](../0301-manual-backup/spec.md) | Backup Manual | P0 |
-| [US-202](../0302-restore-backup/spec.md) | Restaurar Backup | P0 |
-| [US-203](../0303-manage-backups/spec.md) | Gerenciar Backups | P1 |
-| [US-204](../0304-device-transfer/spec.md) | Transferência Device-to-Device | P1 |
+| [US-201](../0301-manual-backup/spec.md) | Manual Backup | P0 |
+| [US-202](../0302-restore-backup/spec.md) | Restore Backup | P0 |
+| [US-203](../0303-manage-backups/spec.md) | Manage Backups | P1 |
+| [US-204](../0304-device-transfer/spec.md) | Device-to-Device Transfer | P1 |
 
 
-## Arquitetura
+## Architecture
 
 ### Google Drive API — appDataFolder
 
-Backups são salvos no **appDataFolder** do Google Drive:
-- Pasta especial oculta do usuário (não aparece no Drive UI)
-- Acessível apenas pelo app que criou os dados
-- Automaticamente isolada por conta Google
-- Sem consumir quota de armazenamento do usuário na maioria dos casos
+Backups are saved in the Google Drive **appDataFolder**:
+- A special hidden user folder (not shown in the Drive UI)
+- Accessible only to the app that created the data
+- Automatically isolated by Google account
+- Does not consume the user's storage quota in most cases
 
-### Fluxo de Backup
+### Backup Flow
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -260,7 +260,7 @@ Backups são salvos no **appDataFolder** do Google Drive:
                                         └── petit_backup_2026-03-15.json
 ```
 
-### Fluxo de Restore
+### Restore Flow
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -270,16 +270,16 @@ Backups são salvos no **appDataFolder** do Google Drive:
 ```
 
 
-## Configuração Google Drive API
+## Google Drive API Configuration
 
 ### 1. Google Cloud Console
 
-1. Habilitar Google Drive API no projeto
-2. Configurar OAuth consent screen
-3. Adicionar scope: `https://www.googleapis.com/auth/drive.appdata`
-4. Baixar `google-services.json` (se ainda não tiver)
+1. Enable the Google Drive API in the project
+2. Configure the OAuth consent screen
+3. Add the scope: `https://www.googleapis.com/auth/drive.appdata`
+4. Download `google-services.json` (if not already available)
 
-### 2. Dependências
+### 2. Dependencies
 
 ```kotlin
 dependencies {
@@ -290,22 +290,22 @@ dependencies {
 }
 ```
 
-### 3. Permissões no Manifest
+### 3. Manifest Permissions
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 ```
 
 
-## Estrutura de Arquivos no Google Drive
+## Google Drive File Structure
 
 ```
 appDataFolder/
 └── {userId}/
-    ├── petit_backup_2026-03-18T10-30-00Z.json    (mais recente)
+    ├── petit_backup_2026-03-18T10-30-00Z.json    (latest)
     ├── petit_backup_2026-03-15T14-20-00Z.json
     ├── petit_backup_2026-03-10T09-15-00Z.json
-    └── metadata.json                           (índice de backups)
+    └── metadata.json                           (backup index)
 ```
 
 ### Metadata File
@@ -327,48 +327,48 @@ appDataFolder/
 ```
 
 
-## Política de Retenção de Backups
+## Backup Retention Policy
 
-| Tipo | Retenção | Regra |
+| Type | Retention | Rule |
 |------|----------|-------|
-| Backups manuais (Fase 3) | Até o usuário deletar (máx 10) | Usuário controla; ao atingir 10, o mais antigo é removido automaticamente |
-| Backups automáticos (Fase 4) | Últimos 30 dias (rolling window) | Cleanup automático mantém custo previsível |
-| Cancelamento de premium | 90 dias após expiração | Grace period para re-assinar sem perder dados |
-| Exclusão de conta | 30 dias, depois purge permanente | Atende LGPD (direito ao esquecimento) com margem para recuperação |
+| Manual backups (Phase 3) | Until the user deletes them (max. 10) | User-controlled; upon reaching 10, the oldest is removed automatically |
+| Automatic backups (Phase 4) | Last 30 days (rolling window) | Automatic cleanup keeps costs predictable |
+| Premium cancellation | 90 days after expiration | Grace period to resubscribe without losing data |
+| Account deletion | 30 days, then permanent purge | Complies with LGPD (right to erasure) while allowing a recovery window |
 
-### LGPD (Lei 13.709/2018)
+### LGPD (Law 13,709/2018)
 
-- **Princípio da necessidade**: guardar apenas pelo tempo necessário à finalidade
-- **Direito à eliminação**: o usuário pode pedir exclusão a qualquer momento
-- Prazos de retenção devem constar nos Termos de Uso e Política de Privacidade
-
-
-## Critérios de Aceite Globais
-
-- [ ] Usuário premium pode fazer backup manual
-- [ ] Usuário premium pode restaurar de backup
-- [ ] Lista de backups mostra data e tamanho
-- [ ] Pode deletar backups antigos
-- [ ] Funciona apenas com conexão de internet
-- [ ] Feedback claro durante operações (progress)
-- [ ] Tratamento de erros de rede/quota
-- [ ] RLS garante isolamento por usuário
-- [ ] Máximo de 10 backups manuais por usuário (auto-cleanup do mais antigo)
-- [ ] Backups mantidos por 90 dias após cancelamento de premium
-- [ ] Backups purgados em até 30 dias após exclusão de conta
+- **Necessity principle**: retain data only for as long as needed for its purpose
+- **Right to erasure**: the user can request deletion at any time
+- Retention periods must be stated in the Terms of Use and Privacy Policy
 
 
-## Riscos e validações
+## Global Acceptance Criteria
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- [ ] A premium user can create a manual backup
+- [ ] A premium user can restore from a backup
+- [ ] The backup list shows date and size
+- [ ] Old backups can be deleted
+- [ ] Works only with an internet connection
+- [ ] Clear feedback during operations (progress)
+- [ ] Network/quota error handling
+- [ ] RLS ensures per-user isolation
+- [ ] Maximum of 10 manual backups per user (automatic cleanup of the oldest)
+- [ ] Backups retained for 90 days after premium cancellation
+- [ ] Backups purged within 30 days after account deletion
 
-## Verificação planejada
+
+## Risks and validations
+
+- Dependency on external services, authentication, quota, and contractual changes.
+- Privacy and lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
+
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

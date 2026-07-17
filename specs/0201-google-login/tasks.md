@@ -1,42 +1,42 @@
-# Tarefas: Login com Google
+# Tasks: Google Login
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Login bem-sucedido** (test-type: both)
-  - blocked-by: nenhum
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Login bem-sucedido” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou usando o app sem login QUANDO toco em "Entrar com Google" ENTÃO vejo o seletor de contas Google do sistema QUANDO seleciono minha conta E autorizo o app ENTÃO sou autenticado com sucesso E vejo meu nome/foto na tela de configurações E o estado muda para "Authenticated"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 1: Successful login** (test-type: both)
+  - blocked-by: none
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 1: Successful login” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I am using the app without being logged in WHEN I tap "Sign in with Google" THEN I see the system Google account picker WHEN I select my account AND authorize the app THEN I am successfully authenticated AND I see my name/photo on the settings screen AND the state changes to "Authenticated"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Primeiro login associa dados existentes** (test-type: both)
-  - blocked-by: nenhum; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Primeiro login associa dados existentes” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho dados locais (pets, pesos, etc.) E nunca fiz login antes QUANDO faço login com Google pela primeira vez ENTÃO meus dados locais são associados ao meu userId E posso continuar usando normalmente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: First login associates existing data** (test-type: both)
+  - blocked-by: none; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 2: First login associates existing data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I have local data (pets, weights, etc.) AND I have never logged in before WHEN I sign in with Google for the first time THEN my local data is associated with my userId AND I can continue using the app normally
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Login cancelado** (test-type: both)
-  - blocked-by: nenhum; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Login cancelado” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que inicio o processo de login QUANDO cancelo o seletor de contas OU fecho o dialog ENTÃO volto ao estado anterior (anônimo) E não vejo mensagem de erro E posso tentar novamente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Login canceled** (test-type: both)
+  - blocked-by: none; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 3: Login canceled” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I start the login process WHEN I cancel the account picker OR close the dialog THEN I return to the previous state (anonymous) AND I do not see an error message AND I can try again
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Erro de rede no login** (test-type: both)
-  - blocked-by: nenhum; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Erro de rede no login” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou sem conexão de internet QUANDO tento fazer login ENTÃO vejo mensagem "Sem conexão. Tente novamente." E continuo no modo anônimo E o app continua funcionando normalmente offline
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Network error during login** (test-type: both)
+  - blocked-by: none; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 4: Network error during login” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I have no internet connection WHEN I try to log in THEN I see the message "No connection. Try again." AND I remain in anonymous mode AND the app continues to work normally offline
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Login ativado ao tentar backup** (test-type: both)
-  - blocked-by: nenhum; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Login ativado ao tentar backup” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou usando o app sem login E tenho dados locais (pets, pesos, etc.) QUANDO tento fazer "Backup para Google Drive" ENTÃO vejo dialog explicando que é necessário login E tenho opção "Entrar com Google" QUANDO faço login com sucesso ENTÃO o backup é iniciado automaticamente ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Login triggered when attempting a backup** (test-type: both)
+  - blocked-by: none; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 5: Login triggered when attempting a backup” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN that I am using the app without being logged in AND I have local data (pets, weights, etc.) WHEN I try to "Back up to Google Drive" THEN I see a dialog explaining that login is required AND I have a "Sign in with Google" option WHEN I log in successfully THEN the backup starts automatically ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

@@ -1,30 +1,30 @@
-# Plano: Transferência entre Dispositivos
+# Plan: Device-to-Device Transfer
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0101`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when necessary.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### Nearby Connections API
 
@@ -39,12 +39,12 @@ dependencies {
 
 ```kotlin
 interface DeviceTransferRepository {
-    // Transmissor
+    // Sender
     suspend fun startAdvertising(): Flow<TransferState>
     suspend fun sendData(endpointId: String, data: ExportBundle): Result<Unit>
     fun stopAdvertising()
 
-    // Receptor
+    // Receiver
     suspend fun startDiscovery(code: String): Flow<TransferState>
     suspend fun receiveData(endpointId: String): Result<ExportBundle>
     fun stopDiscovery()
@@ -60,7 +60,7 @@ sealed class TransferState {
 }
 ```
 
-### NearbyTransferRepository (Implementação)
+### NearbyTransferRepository (Implementation)
 
 ```kotlin
 class NearbyTransferRepository(
@@ -69,7 +69,7 @@ class NearbyTransferRepository(
 ) : DeviceTransferRepository {
 
     override suspend fun startAdvertising(): Flow<TransferState> = callbackFlow {
-        val code = generateSecurityCode() // 4 dígitos
+        val code = generateSecurityCode() // 4 digits
 
         val advertisingOptions = AdvertisingOptions.Builder()
             .setStrategy(Strategy.P2P_POINT_TO_POINT)
@@ -107,10 +107,10 @@ class TransferDataUseCase(
     private val deviceTransferRepository: DeviceTransferRepository
 ) {
     suspend fun sendData(endpointId: String): Result<Unit> {
-        // Exportar dados locais
+        // Export local data
         val exportBundle = exportDataUseCase.exportAll()
 
-        // Enviar via Nearby Connections
+        // Send via Nearby Connections
         return deviceTransferRepository.sendData(endpointId, exportBundle)
     }
 }
@@ -124,7 +124,7 @@ class ReceiveDataUseCase(
     private val importDataUseCase: ImportDataUseCase
 ) {
     suspend fun receiveAndMerge(endpointId: String): Result<ImportResult> {
-        // Receber dados
+        // Receive data
         val result = deviceTransferRepository.receiveData(endpointId)
 
         if (result.isFailure) {
@@ -133,7 +133,7 @@ class ReceiveDataUseCase(
 
         val exportBundle = result.getOrNull()!!
 
-        // Importar com merge
+        // Import with merge
         return importDataUseCase.importWithMerge(exportBundle)
     }
 
@@ -146,7 +146,7 @@ class ReceiveDataUseCase(
 
         val exportBundle = result.getOrNull()!!
 
-        // Importar com substituição total
+        // Import with full replacement
         return importDataUseCase.importWithReplace(exportBundle)
     }
 }
@@ -154,7 +154,7 @@ class ReceiveDataUseCase(
 
 ---
 
-### Permissões
+### Permissions
 
 ### AndroidManifest.xml
 
@@ -173,39 +173,39 @@ class ReceiveDataUseCase(
 
 ---
 
-### Segurança
+### Security
 
-- **Código de 4 dígitos**: Previne conexões não autorizadas
-- **Proximity-based**: Funciona apenas com devices próximos (< 10 metros)
-- **One-shot transfer**: Conexão é encerrada após transferência
-- **No cloud storage**: Dados trafegam diretamente entre devices
-- **Encryption**: Nearby Connections usa criptografia automática
-
----
-
-### Notas de Implementação
-
-- **Strategy**: Usar `Strategy.P2P_POINT_TO_POINT` (1 transmissor, 1 receptor)
-- **Service ID**: Deve ser único por app (`com.woliveiras.petit.DEVICE_TRANSFER`)
-- **Payload**: Serializar ExportBundle para JSON, enviar como ByteArray
-- **Timeout**: 30 segundos sem atividade cancela conexão
-- **Battery**: Nearby Connections é otimizado para bateria
-- **Reutilização**: Fluxo reutiliza ExportBundle/ImportDataUseCase da Fase 1
+- **4-digit code**: Prevents unauthorized connections
+- **Proximity-based**: Works only with nearby devices (< 10 meters)
+- **One-shot transfer**: The connection is closed after the transfer
+- **No cloud storage**: Data travels directly between devices
+- **Encryption**: Nearby Connections uses automatic encryption
 
 ---
 
+### Implementation Notes
 
-## Riscos e validações
+- **Strategy**: Use `Strategy.P2P_POINT_TO_POINT` (1 sender, 1 receiver)
+- **Service ID**: Must be unique per app (`com.woliveiras.petit.DEVICE_TRANSFER`)
+- **Payload**: Serialize ExportBundle to JSON and send it as a ByteArray
+- **Timeout**: 30 seconds without activity cancels the connection
+- **Battery**: Nearby Connections is battery-optimized
+- **Reuse**: The flow reuses ExportBundle/ImportDataUseCase from Phase 1
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+---
 
-## Verificação planejada
+
+## Risks and validation
+
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
+
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

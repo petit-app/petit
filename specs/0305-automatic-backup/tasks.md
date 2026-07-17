@@ -1,49 +1,49 @@
-# Tarefas: Backup Automático
+# Tasks: Automatic Backup
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Backup automático ativado por padrão (usuário logado)** (test-type: both)
+- [ ] **Scenario 1: Automatic backup enabled by default (signed-in user)** (test-type: both)
   - blocked-by: spec 0301
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Backup automático ativado por padrão (usuário logado)” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou logado com Google QUANDO habilito backup automático nas configurações ENTÃO o WorkManager agenda backup diário às 2h da madrugada E vejo "Backup automático ativado — próximo às 2h"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 1: Automatic backup enabled by default (signed-in user)” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am signed in with Google WHEN I enable automatic backup in settings THEN WorkManager schedules a daily backup at 2:00 a.m. AND I see "Automatic backup enabled — next backup at 2:00 a.m."
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Backup diário executa em background** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Backup diário executa em background” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que backup automático está ativado QUANDO chega 2h da madrugada ENTÃO o backup é executado automaticamente MESMO que o app esteja fechado E não preciso abrir o app E o backup é salvo no Google Drive
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Daily backup runs in the background** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 2: Daily backup runs in the background” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN automatic backup is enabled WHEN it is 2:00 a.m. THEN the backup runs automatically EVEN IF the app is closed AND I do not need to open the app AND the backup is saved to Google Drive
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Backup apenas em Wi-Fi** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Backup apenas em Wi-Fi” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que "Backup apenas em Wi-Fi" está ativado E estou conectado em rede móvel (4G/5G) QUANDO o backup automático deveria executar ENTÃO o backup é adiado E executa quando conectar em Wi-Fi
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Backup over Wi-Fi only** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 3: Backup over Wi-Fi only” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN "Back up over Wi-Fi only" is enabled AND I am connected to a mobile network (4G/5G) WHEN the automatic backup is due to run THEN the backup is postponed AND it runs when I connect to Wi-Fi
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Backup apenas se logado** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Backup apenas se logado” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que backup automático está agendado E não estou mais logado (logout) QUANDO chega 2h da madrugada ENTÃO o backup NÃO é executado E vejo notificação "Faça login para continuar backups automáticos"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Back up only when signed in** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 4: Back up only when signed in” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN an automatic backup is scheduled AND I am no longer signed in (signed out) WHEN it is 2:00 a.m. THEN the backup does NOT run AND I see the notification "Sign in to continue automatic backups"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Configuração Wi-Fi only respeitada** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Configuração Wi-Fi only respeitada” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que "Backup apenas em Wi-Fi" está ativado E estou conectado em rede móvel (4G/5G) às 2h QUANDO o backup automático deveria executar ENTÃO o backup é adiado E executa quando conectar em Wi-Fi E vejo notificação "Aguardando Wi-Fi para backup"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Wi-Fi-only setting is respected** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 5: Wi-Fi-only setting is respected” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN "Back up over Wi-Fi only" is enabled AND I am connected to a mobile network (4G/5G) at 2:00 a.m. WHEN the automatic backup is due to run THEN the backup is postponed AND it runs when I connect to Wi-Fi AND I see the notification "Waiting for Wi-Fi to back up"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 6: Sem internet** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 6: Sem internet” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que não tenho conexão de internet QUANDO o backup automático deveria executar ENTÃO o backup falha silenciosamente E será tentado novamente na próxima vez E posso ver "Último backup: há 2 dias (falhou)" nas configurações ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 6: No internet** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and interface where applicable.
+  - desired behavior: the “Scenario 6: No internet” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have no internet connection WHEN the automatic backup is due to run THEN the backup fails silently AND it will be attempted again next time AND I can see "Last backup: 2 days ago (failed)" in settings ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

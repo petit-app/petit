@@ -1,6 +1,6 @@
 ---
 spec: "0302"
-title: "Restaurar Backup"
+title: "Restore Backup"
 family: backup-recovery
 phase: 4
 status: On Hold
@@ -9,127 +9,127 @@ depends_on: ["0301"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Restaurar Backup
+# Spec: Restore Backup
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário logado,
-> Eu quero restaurar meus dados de um backup no Google Drive,
-> Para que eu possa recuperar meus dados em um novo celular ou após reinstalar o app.
+> As a signed-in user,
+> I want to restore my data from a backup in Google Drive,
+> So that I can recover my data on a new phone or after reinstalling the app.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Restaurar backup com sucesso
+### Scenario 1: Successfully restore a backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou logado com Google
-E tenho backups salvos no Google Drive
-QUANDO acesso "Backups salvos"
-E seleciono um backup para restaurar
-E confirmo a restauração
-ENTÃO vejo progresso de download
-E os dados são restaurados no banco local
-E vejo mensagem "Dados restaurados com sucesso"
+GIVEN I am signed in with Google
+AND I have backups saved in Google Drive
+WHEN I open "Saved backups"
+AND select a backup to restore
+AND confirm the restore
+THEN I see the download progress
+AND the data is restored to the local database
+AND I see the message "Data restored successfully"
 ```
 
-### Cenário 2: Restaurar em dispositivo novo
+### Scenario 2: Restore on a new device
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que instalei o app em um novo celular
-E fiz login com minha conta Google
-QUANDO acesso "Restaurar de backup"
-ENTÃO vejo lista de backups disponíveis
-E posso selecionar qual restaurar
+GIVEN I installed the app on a new phone
+AND signed in with my Google account
+WHEN I open "Restore from backup"
+THEN I see a list of available backups
+AND I can select which one to restore
 ```
 
-### Cenário 3: Restaurar substitui dados locais
+### Scenario 3: Restore replaces local data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho dados locais
-E restauro um backup
-QUANDO confirmo "Substituir dados locais"
-ENTÃO TODOS os dados locais são apagados
-E os dados do backup são importados
-E vejo os dados do backup na home
+GIVEN I have local data
+AND restore a backup
+WHEN I confirm "Replace local data"
+THEN ALL local data is deleted
+AND the backup data is imported
+AND I see the backup data on the home screen
 ```
 
-### Cenário 4: Restaurar com merge
+### Scenario 4: Restore with merge
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho dados locais
-E restauro um backup
-QUANDO escolho "Mesclar com dados locais"
-ENTÃO dados são mesclados (last-write-wins)
-E dados únicos de ambas fontes são mantidos
+GIVEN I have local data
+AND restore a backup
+WHEN I choose "Merge with local data"
+THEN the data is merged (last-write-wins)
+AND unique data from both sources is retained
 ```
 
-### Cenário 5: Restaurar sem backups
+### Scenario 5: Restore with no backups
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que não tenho backups no Google Drive
-QUANDO acesso "Backups salvos"
-ENTÃO vejo mensagem "Nenhum backup encontrado"
-E vejo sugestão para fazer primeiro backup
+GIVEN I have no backups in Google Drive
+WHEN I open "Saved backups"
+THEN I see the message "No backups found"
+AND I see a suggestion to create my first backup
 ```
 
-### Cenário 6: Erro de download
+### Scenario 6: Download error
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que seleciono um backup para restaurar
-QUANDO a conexão falha durante download
-ENTÃO vejo mensagem de erro
-E os dados locais não são alterados
-E posso tentar novamente
+GIVEN I select a backup to restore
+WHEN the connection fails during the download
+THEN I see an error message
+AND the local data is not changed
+AND I can try again
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios under **Functional requirements** are this spec's testable criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
 ### UI/UX
 
-### Tela: Lista de Backups
+### Screen: Backup List
 
 ```
 ┌────────────────────────────────┐
-│ ← Backups Salvos               │
+│ ← Saved Backups                │
 ├────────────────────────────────┤
 │                                │
-│ Selecione um backup para       │
-│ restaurar:                     │
+│ Select a backup to             │
+│ restore:                       │
 │                                │
 ├────────────────────────────────┤
 │ ┌────────────────────────────┐ │
@@ -151,32 +151,32 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 └────────────────────────────────┘
 ```
 
-### Dialog: Confirmar Restauração
+### Dialog: Confirm Restore
 
 ```
 ┌────────────────────────────────┐
-│      Restaurar Backup          │
+│       Restore Backup           │
 ├────────────────────────────────┤
 │                                │
-│ Backup de 18/03/2026 10:30     │
+│ Backup from 18/03/2026 10:30   │
 │ 2 pets • 15.4 KB              │
 │                                │
-│ ⚠️ Você tem dados locais.      │
-│ O que deseja fazer?            │
+│ ⚠️ You have local data.        │
+│ What would you like to do?     │
 │                                │
-│ ○ Substituir dados locais      │
-│   (apaga tudo e restaura)      │
+│ ○ Replace local data           │
+│   (deletes all and restores)   │
 │                                │
-│ ● Mesclar com dados locais     │
-│   (mantém dados mais recentes) │
+│ ● Merge with local data        │
+│   (keeps the latest data)      │
 │                                │
 │ ┌──────────┐  ┌──────────────┐ │
-│ │ CANCELAR │  │  RESTAURAR   │ │
+│ │  CANCEL  │  │   RESTORE    │ │
 │ └──────────┘  └──────────────┘ │
 └────────────────────────────────┘
 ```
 
-### Estado: Restaurando
+### State: Restoring
 
 ```
 ┌────────────────────────────────┐
@@ -186,32 +186,32 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 │         │  ████░░ │            │
 │         └─────────┘            │
 │                                │
-│      Restaurando backup...     │
-│      Baixando dados            │
+│      Restoring backup...       │
+│      Downloading data          │
 │                                │
-│      Não feche o app           │
+│      Do not close the app      │
 │                                │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Estado: Sem Backups
+### State: No Backups
 
 ```
 ┌────────────────────────────────┐
-│ ← Backups Salvos               │
+│ ← Saved Backups                │
 ├────────────────────────────────┤
 │                                │
 │                                │
 │         📭                     │
 │                                │
-│   Nenhum backup encontrado     │
+│   No backups found             │
 │                                │
-│   Faça seu primeiro backup     │
-│   para proteger seus dados.    │
+│   Create your first backup     │
+│   to protect your data.        │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │    FAZER BACKUP AGORA      │ │
+│ │        BACK UP NOW         │ │
 │ └────────────────────────────┘ │
 │                                │
 │                                │
@@ -220,18 +220,18 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 
 ---
 
-### Fluxo de Onboarding (Device Novo)
+### Onboarding Flow (New Device)
 
 ```kotlin
 class OnboardingViewModel(...) {
 
     fun checkForBackups() {
         viewModelScope.launch {
-            // Verificar se usuário tem backups
+            // Check whether the user has backups
             backupStorageRepository.listBackups()
                 .onSuccess { backups ->
                     if (backups.isNotEmpty()) {
-                        // Mostrar opção de restaurar
+                        // Show restore option
                         _showRestoreOption.value = true
                     }
                 }
@@ -242,23 +242,23 @@ class OnboardingViewModel(...) {
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted during the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, restricts quota, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the referenced APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical pricing, tier, provider, or timeline examples as current decisions.
+- Capabilities covered by the specs declared in `depends_on`.

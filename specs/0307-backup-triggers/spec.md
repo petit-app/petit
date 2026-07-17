@@ -1,6 +1,6 @@
 ---
 spec: "0307"
-title: "Gatilhos de Backup"
+title: "Backup Triggers"
 family: backup-recovery
 phase: 4
 status: On Hold
@@ -9,143 +9,143 @@ depends_on: ["0305", "0306"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Gatilhos de Backup
+# Spec: Backup Triggers
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário premium,
-> Eu quero que o backup seja feito automaticamente após eu fazer alterações importantes,
-> Para que meus dados mais recentes estejam sempre protegidos.
+> As a premium user,
+> I want a backup to run automatically after I make important changes,
+> So that my latest data is always protected.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. Product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Backup após criar pet
+### Scenario 1: Backup after creating a pet
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que backup automático está ativado
-E tenho conexão de internet
-QUANDO cadastro um novo pet
-ENTÃO após 5 minutos de inatividade
-O backup é executado automaticamente
-E inclui o novo pet
+GIVEN automatic backup is enabled
+AND I have an internet connection
+WHEN I add a new pet
+THEN after 5 minutes of inactivity
+the backup runs automatically
+AND includes the new pet
 ```
 
-### Cenário 2: Debounce de múltiplas alterações
+### Scenario 2: Debounce multiple changes
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que faço várias alterações em sequência:
-  - Adiciono pet Luna
-  - Adiciono pesagem 3.5kg
-  - Adiciono vacina V3
-  - Tudo em menos de 5 minutos
-ENTÃO apenas UM backup é executado
-(após 5 minutos da última alteração)
-E inclui todas as mudanças
+GIVEN I make several changes in succession:
+  - I add the pet Luna
+  - I add a 3.5kg weight record
+  - I add the V3 vaccine
+  - All in less than 5 minutes
+THEN only ONE backup runs
+(5 minutes after the last change)
+AND it includes all changes
 ```
 
-### Cenário 3: Backup após delete
+### Scenario 3: Backup after deletion
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que backup automático está ativado
-QUANDO deleto um pet
-ENTÃO após 5 minutos sem alterações
-O backup é executado
-E reflete a exclusão
+GIVEN automatic backup is enabled
+WHEN I delete a pet
+THEN after 5 minutes without changes
+the backup runs
+AND reflects the deletion
 ```
 
-### Cenário 4: Cancelar backup pendente
+### Scenario 4: Cancel pending backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que alterei dados e backup está pendente (em 3 min)
-QUANDO faço outra alteração
-ENTÃO o timer é resetado para 5 minutos novamente
-E apenas um backup será feito
+GIVEN I changed data and a backup is pending (in 3 min)
+WHEN I make another change
+THEN the timer is reset to 5 minutes again
+AND only one backup will run
 ```
 
-### Cenário 5: Não duplicar com backup periódico
+### Scenario 5: Do not duplicate periodic backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que um backup por alteração está pendente
-E o backup periódico deveria executar agora
-ENTÃO apenas um backup é feito
-E o timer de backup por alteração é cancelado
+GIVEN a change-triggered backup is pending
+AND the periodic backup is due to run now
+THEN only one backup runs
+AND the change-triggered backup timer is canceled
 ```
 
-### Cenário 6: App fechado após alteração
+### Scenario 6: App closed after a change
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que fiz alterações
-E fecho o app imediatamente
-ENTÃO o backup pendente ainda será executado
-(WorkManager persiste a tarefa)
+GIVEN I made changes
+AND I close the app immediately
+THEN the pending backup will still run
+(WorkManager persists the task)
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the interface, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional requirements** are this spec's testable criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
-### Triggers de Backup
+### Backup Triggers
 
-| Evento | Trigger? | Debounce |
+| Event | Trigger? | Debounce |
 |--------|----------|----------|
-| Criar pet | ✅ | 5 min |
-| Editar pet | ✅ | 5 min |
-| Deletar pet | ✅ | 5 min |
-| Adicionar pesagem | ✅ | 5 min |
-| Adicionar vacina | ✅ | 5 min |
-| Adicionar vermífugo | ✅ | 5 min |
-| Criar lembrete | ❌ | - |
-| Editar configurações | ❌ | - |
+| Create pet | ✅ | 5 min |
+| Edit pet | ✅ | 5 min |
+| Delete pet | ✅ | 5 min |
+| Add weight record | ✅ | 5 min |
+| Add vaccine | ✅ | 5 min |
+| Add dewormer | ✅ | 5 min |
+| Create reminder | ❌ | - |
+| Edit settings | ❌ | - |
 
 ---
 
-### UI Feedback (Opcional)
+### UI Feedback (Optional)
 
-### Indicador Sutil
+### Subtle Indicator
 
-Não mostrar nada visualmente. O backup por alteração é "invisível" para o usuário, apenas garante que dados estão protegidos.
+Do not show anything visually. The change-triggered backup is "invisible" to the user; it only ensures that data is protected.
 
-### Para Debug/Desenvolvimento
+### For Debugging/Development
 
 ```kotlin
-// Apenas em debug builds
+// Debug builds only
 if (BuildConfig.DEBUG && hasPendingBackup()) {
     Snackbar.make(
         view,
-        "Backup pendente em ${getRemainingTime()} min",
+        "Backup pending in ${getRemainingTime()} min",
         Snackbar.LENGTH_SHORT
     ).show()
 }
@@ -153,23 +153,23 @@ if (BuildConfig.DEBUG && hasPendingBackup()) {
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, enforces a quota, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Features covered by the specs declared in `depends_on`.

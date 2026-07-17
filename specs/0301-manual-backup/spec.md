@@ -1,6 +1,6 @@
 ---
 spec: "0301"
-title: "Backup Manual"
+title: "Manual Backup"
 family: backup-recovery
 phase: 4
 status: On Hold
@@ -9,161 +9,161 @@ depends_on: ["0201"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Backup Manual
+# Spec: Manual Backup
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário do app,
-> Eu quero fazer backup dos meus dados no Google Drive,
-> Para que eu possa recuperá-los em caso de perda do celular.
+> As an app user,
+> I want to back up my data to Google Drive,
+> So that I can recover it if I lose my phone.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Fazer backup com sucesso (usuário já logado)
+### Scenario 1: Successfully create a backup (user already signed in)
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou logado com Google
-E tenho conexão com internet
-QUANDO acesso Configurações > "Backup Google Drive"
-E toco em "Fazer backup agora"
-ENTÃO vejo indicador de progresso
-E o backup é enviado para o Google Drive (appDataFolder)
-E vejo mensagem "Backup realizado com sucesso"
-E vejo data/hora do último backup
+GIVEN I am signed in with Google
+AND I have an internet connection
+WHEN I open Settings > "Google Drive Backup"
+AND I tap "Back up now"
+THEN I see a progress indicator
+AND the backup is uploaded to Google Drive (appDataFolder)
+AND I see the message "Backup completed successfully"
+AND I see the date/time of the latest backup
 ```
 
-### Cenário 2: Backup sem internet
+### Scenario 2: Backup without internet access
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou sem conexão de internet
-QUANDO tento fazer backup
-ENTÃO vejo mensagem "Sem conexão. Conecte-se à internet para fazer backup."
-E o backup não é iniciado
+GIVEN I have no internet connection
+WHEN I try to create a backup
+THEN I see the message "No connection. Connect to the internet to create a backup."
+AND the backup does not start
 ```
 
-### Cenário 3: Backup sem estar logado (ativa login)
+### Scenario 3: Backup while signed out (triggers sign-in)
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que não estou logado
-QUANDO tento fazer backup
-ENTÃO vejo dialog explicando que é necessário login Google
-E tenho opção "Entrar com Google"
-QUANDO faço login com sucesso
-ENTÃO o backup é iniciado automaticamente
+GIVEN I am not signed in
+WHEN I try to create a backup
+THEN I see a dialog explaining that Google sign-in is required
+AND I have a "Sign in with Google" option
+WHEN I sign in successfully
+THEN the backup starts automatically
 ```
 
-### Cenário 4: Primeiro backup
+### Scenario 4: First backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que nunca fiz backup antes
-QUANDO faço meu primeiro backup
-ENTÃO o arquivo é criado no appDataFolder do Google Drive
-E o metadata é inicializado
-E vejo "Backup realizado com sucesso"
+GIVEN I have never created a backup before
+WHEN I create my first backup
+THEN the file is created in the Google Drive appDataFolder
+AND the metadata is initialized
+AND I see "Backup completed successfully"
 ```
 
-### Cenário 5: Backup subsequente
+### Scenario 5: Subsequent backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que já tenho backups anteriores
-QUANDO faço novo backup
-ENTÃO um novo arquivo é criado (não substitui o anterior)
-E o metadata é atualizado
-E backups antigos são mantidos (até o limite)
+GIVEN I already have previous backups
+WHEN I create a new backup
+THEN a new file is created (it does not replace the previous one)
+AND the metadata is updated
+AND old backups are retained (up to the limit)
 ```
 
-### Cenário 6: Erro durante backup
+### Scenario 6: Error during backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que inicio um backup
-QUANDO ocorre erro (rede cai, quota excedida, etc.)
-ENTÃO vejo mensagem de erro específica
-E o backup parcial é descartado
-E posso tentar novamente
+GIVEN I start a backup
+WHEN an error occurs (network drops, quota exceeded, etc.)
+THEN I see a specific error message
+AND the partial backup is discarded
+AND I can try again
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios under **Functional requirements** are this spec's testable criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
 ### UI/UX
 
-### Tela: Backup na Nuvem
+### Screen: Cloud Backup
 
 ```
 ┌────────────────────────────────┐
-│ ← Backup na Nuvem              │
+│ ← Cloud Backup                 │
 ├────────────────────────────────┤
 │                                │
 │ ☁️ GOOGLE DRIVE                 │
 │                                │
-│ Conectado como:                │
-│ pessoa-a@example.com           │
+│ Connected as:                  │
+│ person-a@example.com           │
 │                                │
 ├────────────────────────────────┤
 │                                │
-│ 📊 ÚLTIMO BACKUP               │
+│ 📊 LATEST BACKUP               │
 │ ┌────────────────────────────┐ │
-│ │ 18/03/2026 às 10:30        │ │
+│ │ 18/03/2026 at 10:30        │ │
 │ │ 2 pets • 15.4 KB          │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │    FAZER BACKUP AGORA      │ │
+│ │        BACK UP NOW         │ │
 │ └────────────────────────────┘ │
 │                                │
 ├────────────────────────────────┤
 │                                │
-│ 📂 BACKUPS SALVOS          ▶   │
+│ 📂 SAVED BACKUPS           ▶   │
 │ 3 backups (45.2 KB total)      │
 │                                │
 ├────────────────────────────────┤
 │                                │
-│ ℹ️ Os backups são armazenados  │
-│ no appDataFolder do Google    │
-│ Drive (oculto).               │
+│ ℹ️ Backups are stored in the   │
+│ Google Drive appDataFolder    │
+│ (hidden).                     │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Tela: Backup na Nuvem (Fazendo Backup)
+### Screen: Cloud Backup (Backing Up)
 
 ```
 ┌────────────────────────────────┐
-│ ← Backup na Nuvem              │
+│ ← Cloud Backup                 │
 ├────────────────────────────────┤
 │                                │
 │                                │
@@ -171,26 +171,26 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 │         │  ████░░ │            │
 │         └─────────┘            │
 │                                │
-│      Fazendo backup...         │
-│      Enviando dados            │
+│      Backing up...             │
+│      Uploading data            │
 │                                │
-│      Não feche o app           │
+│      Do not close the app      │
 │                                │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Estado: Sucesso
+### State: Success
 
 ```
 ┌────────────────────────────────┐
 │                                │
 │            ✅                  │
 │                                │
-│   Backup realizado com         │
-│   sucesso!                     │
+│   Backup completed             │
+│   successfully!               │
 │                                │
-│   18/03/2026 às 10:30          │
+│   18/03/2026 at 10:30          │
 │   15.4 KB                      │
 │                                │
 │   ┌────────────────────────┐   │
@@ -202,23 +202,23 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted during the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, restricts quota, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the referenced APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical pricing, tier, provider, or timeline examples as current decisions.
+- Capabilities covered by the specs declared in `depends_on`.

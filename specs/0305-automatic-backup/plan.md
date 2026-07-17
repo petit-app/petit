@@ -1,30 +1,30 @@
-# Plano: Backup Automático
+# Plan: Automatic Backup
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0301`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when necessary.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### AutoBackupWorker
 
@@ -39,27 +39,27 @@ class AutoBackupWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // Verificar premium
+        // Check premium status
         if (!premiumRepository.isPremium()) {
-            // Cancelar trabalho periódico
+            // Cancel periodic work
             WorkManager.getInstance(applicationContext)
                 .cancelUniqueWork(WORK_NAME)
             return Result.failure()
         }
 
-        // Verificar Wi-Fi se necessário
+        // Check Wi-Fi if necessary
         val wifiOnly = backupPreferences.isWifiOnly()
         if (wifiOnly && !isOnWifi()) {
-            return Result.retry()  // Tentar depois
+            return Result.retry()  // Try again later
         }
 
-        // Executar backup
+        // Run backup
         return backupUseCase()
             .map { backupInfo ->
-                // Atualizar timestamp
+                // Update timestamp
                 backupPreferences.setLastBackupTimestamp(System.currentTimeMillis())
 
-                // Notificar se configurado
+                // Notify if configured
                 if (backupPreferences.shouldNotifyOnSuccess()) {
                     notificationHelper.showBackupSuccessNotification(backupInfo)
                 }
@@ -86,7 +86,7 @@ class AutoBackupWorker(
 }
 ```
 
-### Scheduling do Backup Periódico
+### Periodic Backup Scheduling
 
 ```kotlin
 class BackupScheduler(
@@ -138,7 +138,7 @@ class BackupScheduler(
 }
 ```
 
-### WorkerFactory para Injeção de Dependência
+### WorkerFactory for Dependency Injection
 
 ```kotlin
 class PetitWorkerFactory(
@@ -204,67 +204,67 @@ class BackupPreferencesRepositoryImpl(
         val LAST_BACKUP_ERROR = stringPreferencesKey("last_backup_error")
     }
 
-    // Implementações...
+    // Implementations...
 }
 ```
 
 ---
 
-## Contexto agregado da proposta original
+## Consolidated context from the original proposal
 
-O conteúdo abaixo veio do README histórico da família. Ele é referência para reavaliação, não uma arquitetura aprovada.
+The content below came from the family's historical README. It is a reference for reassessment, not an approved architecture.
 
-### Visão histórica — Backup Automático (antiga Fase 4)
-
-
-## Objetivo
-
-Implementar **backup automático diário** dos dados para Google Drive (appDataFolder), agendado para 2h da madrugada, como funcionalidade **gratuita** para todos os usuários logados.
-
-## Escopo
-
-- ✅ Backup automático diário (2h da madrugada) - gratuito
-- ✅ Habilitar/desabilitar backup automático
-- ✅ Sync apenas em Wi-Fi (configurável)
-- ✅ Notificação de backup bem-sucedido (opcional)
-- ✅ Retenção automática: rolling window de 30 dias
-- ❌ Sync em tempo real entre dispositivos (Fase 5 - premium)
-- ❌ Resolução de conflitos multi-device (Fase 5 - premium)
+### Historical view — Automatic Backup (former Phase 4)
 
 
-## Pré-requisitos
+## Objective
 
-- Fase 3 completa (Backup manual Google Drive)
-- WorkManager configurado
-- Login Google ativo (backup requer login)
+Implement a **daily automatic backup** of data to Google Drive (appDataFolder), scheduled for 2:00 a.m., as a **free** feature for all signed-in users.
+
+## Scope
+
+- ✅ Daily automatic backup (2:00 a.m.) - free
+- ✅ Enable/disable automatic backup
+- ✅ Wi-Fi-only sync (configurable)
+- ✅ Successful backup notification (optional)
+- ✅ Automatic retention: 30-day rolling window
+- ❌ Real-time sync between devices (Phase 5 - premium)
+- ❌ Multi-device conflict resolution (Phase 5 - premium)
+
+
+## Prerequisites
+
+- Phase 3 complete (manual Google Drive backup)
+- WorkManager configured
+- Active Google sign-in (backup requires sign-in)
 
 
 ## User Stories
 
-| ID | Feature | Prioridade |
+| ID | Feature | Priority |
 |----|---------|------------|
-| [US-301](../0305-automatic-backup/spec.md) | Backup Automático | P0 |
-| [US-302](../0306-backup-settings/spec.md) | Configurações de Backup | P0 |
-| [US-303](../0307-backup-triggers/spec.md) | Triggers de Backup | P1 |
+| [US-301](../0305-automatic-backup/spec.md) | Automatic Backup | P0 |
+| [US-302](../0306-backup-settings/spec.md) | Backup Settings | P0 |
+| [US-303](../0307-backup-triggers/spec.md) | Backup Triggers | P1 |
 
 
-## Arquitetura
+## Architecture
 
-### WorkManager para Backup Diário
+### WorkManager for Daily Backup
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        WorkManager                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  PeriodicWorkRequest (24h, agendado para 2h da madrugada)    │
+│  PeriodicWorkRequest (24h, scheduled for 2:00 a.m.)         │
 │  ┌─────────────────────────────────────────────────────────┐     │
 │  │ AutoBackupWorker                                      │     │
 │  │                                                       │     │
-│  │ - Verifica Login Google                               │     │
-│  │ - Verifica Wi-Fi (se configurado)                     │     │
-│  │ - Executa backup para Google Drive                   │     │
-│  │ - Remove backups > 30 dias (rolling window)          │     │
+│  │ - Checks Google sign-in                              │     │
+│  │ - Checks Wi-Fi (if configured)                       │     │
+│  │ - Runs backup to Google Drive                        │     │
+│  │ - Removes backups > 30 days (rolling window)         │     │
 │  └─────────────────────────────────────────────────────────┘     │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
@@ -276,7 +276,7 @@ Implementar **backup automático diário** dos dados para Google Drive (appDataF
                     └─────────────────┘
 ```
 
-### Fluxo de Backup Automático
+### Automatic Backup Flow
 
 ```
 ┌────────────────┐     ┌────────────────┐     ┌────────────────┐
@@ -300,45 +300,45 @@ Implementar **backup automático diário** dos dados para Google Drive (appDataF
 ```
 
 
-## Estratégia de Backup
+## Backup Strategy
 
-### Backup Diário (2h da madrugada)
-- Agendado via WorkManager com PeriodicWorkRequest (24h)
-- Horário fixo: 2h da madrugada (horário ideal: usuário dormindo, device carregando, Wi-Fi ativo)
-- Executa em background via WorkManager
-- Respeita configuração de Wi-Fi only (padrão: ativo)
-- Somente executa se Login Google estiver ativo
+### Daily Backup (2:00 a.m.)
+- Scheduled via WorkManager with PeriodicWorkRequest (24h)
+- Fixed time: 2:00 a.m. (ideal time: user asleep, device charging, Wi-Fi enabled)
+- Runs in the background via WorkManager
+- Respects the Wi-Fi-only setting (default: enabled)
+- Runs only if Google sign-in is active
 
-### Retenção
-- Rolling window de 30 dias para backups automáticos
-- Backups manuais não contam neste limite (máx 10, gerenciado na Fase 3)
-- Auto-cleanup ao criar novo backup: remove automáticos com mais de 30 dias
-- Após exclusão de conta: purge permanente em 30 dias (LGPD)
+### Retention
+- 30-day rolling window for automatic backups
+- Manual backups do not count toward this limit (max. 10, managed in Phase 3)
+- Auto-cleanup when creating a new backup: removes automatic backups older than 30 days
+- After account deletion: permanent purge within 30 days (LGPD)
 
 
-## Critérios de Aceite Globais
+## Global Acceptance Criteria
 
-- [ ] Backup automático funciona em background
-- [ ] Agendamento às 2h da madrugada funciona corretamente
-- [ ] Opção Wi-Fi only é respeitada
+- [ ] Automatic backup works in the background
+- [ ] Scheduling at 2:00 a.m. works correctly
+- [ ] The Wi-Fi-only option is respected
 - [ ] Battery optimization handling (Doze mode)
-- [ ] Login Google é verificado antes do backup
-- [ ] Retenção de 30 dias funciona (auto-cleanup)
-- [ ] Notificações de backup (opcional)
-- [ ] Integração com sistema de backups existente
+- [ ] Google sign-in is checked before backup
+- [ ] 30-day retention works (auto-cleanup)
+- [ ] Backup notifications (optional)
+- [ ] Integration with the existing backup system
 
 
-## Riscos e validações
+## Risks and validation
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
 
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

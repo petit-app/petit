@@ -1,49 +1,49 @@
-# Tarefas: Restaurar Backup
+# Tasks: Restore Backup
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Restaurar backup com sucesso** (test-type: both)
+- [ ] **Scenario 1: Successfully restore a backup** (test-type: both)
   - blocked-by: spec 0301
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Restaurar backup com sucesso” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou logado com Google E tenho backups salvos no Google Drive QUANDO acesso "Backups salvos" E seleciono um backup para restaurar E confirmo a restauração ENTÃO vejo progresso de download E os dados são restaurados no banco local E vejo mensagem "Dados restaurados com sucesso"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 1: Successfully restore a backup” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am signed in with Google AND I have backups saved in Google Drive WHEN I open "Saved backups" AND select a backup to restore AND confirm the restore THEN I see the download progress AND the data is restored to the local database AND I see the message "Data restored successfully"
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Restaurar em dispositivo novo** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Restaurar em dispositivo novo” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que instalei o app em um novo celular E fiz login com minha conta Google QUANDO acesso "Restaurar de backup" ENTÃO vejo lista de backups disponíveis E posso selecionar qual restaurar
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Restore on a new device** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 2: Restore on a new device” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I installed the app on a new phone AND signed in with my Google account WHEN I open "Restore from backup" THEN I see a list of available backups AND I can select which one to restore
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Restaurar substitui dados locais** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Restaurar substitui dados locais” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho dados locais E restauro um backup QUANDO confirmo "Substituir dados locais" ENTÃO TODOS os dados locais são apagados E os dados do backup são importados E vejo os dados do backup na home
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Restore replaces local data** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 3: Restore replaces local data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have local data AND restore a backup WHEN I confirm "Replace local data" THEN ALL local data is deleted AND the backup data is imported AND I see the backup data on the home screen
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Restaurar com merge** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Restaurar com merge” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho dados locais E restauro um backup QUANDO escolho "Mesclar com dados locais" ENTÃO dados são mesclados (last-write-wins) E dados únicos de ambas fontes são mantidos
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Restore with merge** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 4: Restore with merge” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have local data AND restore a backup WHEN I choose "Merge with local data" THEN the data is merged (last-write-wins) AND unique data from both sources is retained
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Restaurar sem backups** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Restaurar sem backups” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que não tenho backups no Google Drive QUANDO acesso "Backups salvos" ENTÃO vejo mensagem "Nenhum backup encontrado" E vejo sugestão para fazer primeiro backup
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Restore with no backups** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 5: Restore with no backups” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have no backups in Google Drive WHEN I open "Saved backups" THEN I see the message "No backups found" AND I see a suggestion to create my first backup
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 6: Erro de download** (test-type: both)
-  - blocked-by: spec 0301; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 6: Erro de download” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que seleciono um backup para restaurar QUANDO a conexão falha durante download ENTÃO vejo mensagem de erro E os dados locais não são alterados E posso tentar novamente ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 6: Download error** (test-type: both)
+  - blocked-by: spec 0301; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 6: Download error” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I select a backup to restore WHEN the connection fails during the download THEN I see an error message AND the local data is not changed AND I can try again ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

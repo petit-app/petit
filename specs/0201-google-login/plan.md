@@ -1,30 +1,30 @@
-# Plano: Login com Google
+# Plan: Google Login
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
-- Specs: Nenhuma dependência entre specs.
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Specs: No dependencies between specs.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility where necessary.
+6. Run focused tests and the relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### AuthRepository
 
@@ -39,7 +39,7 @@ interface AuthRepository {
 }
 ```
 
-### Implementação com Credential Manager + Firebase Auth
+### Implementation with Credential Manager + Firebase Auth
 
 ```kotlin
 class AuthRepositoryImpl(
@@ -95,7 +95,7 @@ class AuthRepositoryImpl(
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
         } catch (e: Exception) {
-            // Ignorar erro de clear
+            // Ignore clear error
         }
     }
 }
@@ -124,10 +124,10 @@ class AuthViewModel(
                         _loginResult.emit(LoginResult.Success(user.userMetadata?.get("full_name")?.toString() ?: ""))
                     }
                     .onFailure { error ->
-                        _loginResult.emit(LoginResult.Error(error.message ?: "Erro desconhecido"))
+                        _loginResult.emit(LoginResult.Error(error.message ?: "Unknown error"))
                     }
             } catch (e: Exception) {
-                _loginResult.emit(LoginResult.Error(e.message ?: "Erro desconhecido"))
+                _loginResult.emit(LoginResult.Error(e.message ?: "Unknown error"))
             }
         }
     }
@@ -147,7 +147,7 @@ sealed class LoginResult {
 }
 ```
 
-### DataStore para Persistir Info Local
+### DataStore for Persisting Local Information
 
 ```kotlin
 data class UserPreferences(
@@ -162,11 +162,11 @@ data class UserPreferences(
 
 ---
 
-### Configuração do Projeto
+### Project Configuration
 
 ### Firebase
 
-Adicionar o arquivo `google-services.json` (baixado do Firebase Console) ao módulo app.
+Add the `google-services.json` file (downloaded from Firebase Console) to the app module.
 
 ### strings.xml
 
@@ -189,52 +189,52 @@ android {
 
 ---
 
-## Contexto agregado da proposta original
+## Aggregated context from the original proposal
 
-O conteúdo abaixo veio do README histórico da família. Ele é referência para reavaliação, não uma arquitetura aprovada.
+The content below came from the family's historical README. It is a reference for reassessment, not an approved architecture.
 
-### Visão histórica — Firebase Auth (antiga Fase N)
-
-
-> **Status**: Em holding — poderá ser reavaliada se houver demanda validada por login Google e backup na nuvem.
-
-## Motivo do Holding
-
-Firebase Auth e serviços cloud foram adiados porque:
-1. O app funciona 100% offline e atende às necessidades atuais
-2. A demanda imediata é compartilhamento local entre dispositivos da casa
-3. Firebase poderá ser reavaliado se houver demanda validada por backup na nuvem ou sync remoto
-
-## Specs Preservadas
-
-As specs abaixo foram migradas da Fase 2 original e serão adaptadas/atualizadas quando esta fase for retomada.
-
-- [US-N01: Login com Google](../0201-google-login/spec.md)
-- [US-N02: Gerenciamento de Conta](../0202-account-management/spec.md)
-- [US-N03: Vinculação de Dados](../0203-data-ownership/spec.md)
-- [US-N04: Gate Premium](../0204-premium-gate/spec.md)
+### Historical overview — Firebase Auth (former Phase N)
 
 
-## Pré-requisitos
+> **Status**: On Hold — may be reassessed if there is validated demand for Google Login and cloud backup.
 
-- Fase 1 completa
-- Google Cloud Console com OAuth configurado
-- Firebase project configurado (google-services.json)
+## Reason for Holding
+
+Firebase Auth and cloud services were postponed because:
+1. The app works 100% offline and meets current needs
+2. The immediate demand is local sharing between devices in the household
+3. Firebase may be reassessed if there is validated demand for cloud backup or remote sync
+
+## Preserved Specs
+
+The specs below were migrated from the original Phase 2 and will be adapted/updated when this phase resumes.
+
+- [US-N01: Google Login](../0201-google-login/spec.md)
+- [US-N02: Account Management](../0202-account-management/spec.md)
+- [US-N03: Data Ownership](../0203-data-ownership/spec.md)
+- [US-N04: Premium Gate](../0204-premium-gate/spec.md)
+
+
+## Prerequisites
+
+- Phase 1 complete
+- Google Cloud Console with OAuth configured
+- Firebase project configured (google-services.json)
 
 
 ## User Stories
 
-| ID | Feature | Prioridade |
+| ID | Feature | Priority |
 |----|---------|------------|
-| [US-101](../0201-google-login/spec.md) | Login com Google | P0 |
-| [US-102](../0202-account-management/spec.md) | Gerenciamento de Conta | P0 |
-| [US-103](../0203-data-ownership/spec.md) | Vinculação de Dados | P1 |
-| [US-104](../0204-premium-gate/spec.md) | Gate Premium | P1 |
+| [US-101](../0201-google-login/spec.md) | Google Login | P0 |
+| [US-102](../0202-account-management/spec.md) | Account Management | P0 |
+| [US-103](../0203-data-ownership/spec.md) | Data Ownership | P1 |
+| [US-104](../0204-premium-gate/spec.md) | Premium Gate | P1 |
 
 
-## Arquitetura
+## Architecture
 
-### Fluxo de Autenticação
+### Authentication Flow
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -256,12 +256,12 @@ As specs abaixo foram migradas da Fase 2 original e serão adaptadas/atualizadas
                                         └─────────────┘
 ```
 
-### Estados de Autenticação
+### Authentication States
 
 ```kotlin
 sealed class AuthState {
     object Loading : AuthState()
-    object Anonymous : AuthState()  // Usando sem login (free)
+    object Anonymous : AuthState()  // Using without login (free)
     data class Authenticated(
         val uid: String,
         val email: String,
@@ -273,16 +273,16 @@ sealed class AuthState {
 ```
 
 
-## Configuração Firebase
+## Firebase Configuration
 
 ### 1. Firebase Console
 
-1. Criar projeto no Firebase Console
-2. Habilitar Authentication > Google como provider
-3. Baixar e adicionar `google-services.json` ao módulo app
-4. Configurar Google Client ID para Credential Manager
+1. Create a project in Firebase Console
+2. Enable Authentication > Google as a provider
+3. Download and add `google-services.json` to the app module
+4. Configure the Google Client ID for Credential Manager
 
-### 2. Dependências
+### 2. Dependencies
 
 ```kotlin
 // build.gradle.kts (app)
@@ -291,7 +291,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:VERSION"))
     implementation("com.google.firebase:firebase-auth-ktx")
 
-    // Credential Manager (continua sendo usado para obter ID Token do Google)
+    // Credential Manager (still used to obtain the Google ID Token)
     implementation("androidx.credentials:credentials:1.2.x")
     implementation("androidx.credentials:credentials-play-services-auth:1.2.x")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.x.x")
@@ -299,28 +299,28 @@ dependencies {
 ```
 
 
-## Critérios de Aceite Globais
+## Global Acceptance Criteria
 
-- [ ] Login com Google funciona via Credential Manager + Firebase Auth
-- [ ] Usuário pode usar o app sem login (modo anônimo)
-- [ ] Logout limpa estado de autenticação mas mantém dados locais
-- [ ] Token Firebase Auth é renovado automaticamente
-- [ ] UI reflete estado de autenticação corretamente
-- [ ] Preparação para verificação de premium status
+- [ ] Google Login works through Credential Manager + Firebase Auth
+- [ ] Users can use the app without logging in (anonymous mode)
+- [ ] Logging out clears the authentication state but preserves local data
+- [ ] The Firebase Auth token is renewed automatically
+- [ ] The UI reflects the authentication state correctly
+- [ ] Preparation for premium status verification
 
 
-## Firebase Crashlytics (Complementar)
+## Firebase Crashlytics (Supplementary)
 
-Junto com a implementação do Firebase Auth, adicionar Firebase Crashlytics para monitoramento de crashes (serviço Firebase complementar gratuito).
+Alongside the Firebase Auth implementation, add Firebase Crashlytics for crash monitoring (a free supplementary Firebase service).
 
-### Motivação
+### Motivation
 
-- Detectar crashes em produção
-- Entender padrões de erros
-- Priorizar correções com base em impacto real
-- Ter visibilidade antes que usuários reportem
+- Detect production crashes
+- Understand error patterns
+- Prioritize fixes based on actual impact
+- Gain visibility before users report issues
 
-### Dependências Adicionais
+### Additional Dependencies
 
 ```kotlin
 // build.gradle.kts (project)
@@ -340,20 +340,20 @@ dependencies {
 }
 ```
 
-### Configuração ProGuard/R8
+### ProGuard/R8 Configuration
 
-Para que os stack traces sejam legíveis, configurar mapeamento no build:
+To make stack traces readable, configure mapping in the build:
 
 ```kotlin
 // build.gradle.kts (app)
 android {
     buildTypes {
         release {
-            // Já existente
+            // Already exists
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
-            // Adicionar para Crashlytics
+            // Add for Crashlytics
             firebaseCrashlytics {
                 mappingFileUploadEnabled = true
             }
@@ -362,9 +362,9 @@ android {
 }
 ```
 
-### Inicialização
+### Initialization
 
-Crashlytics inicia automaticamente. Para desabilitar coleta em debug:
+Crashlytics starts automatically. To disable collection in debug builds:
 
 ```kotlin
 // Application.kt
@@ -372,31 +372,31 @@ class PetitApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Desabilitar Crashlytics em debug
+        // Disable Crashlytics in debug builds
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
     }
 }
 ```
 
-### Critérios de Aceite
+### Acceptance Criteria
 
-- [ ] Crashlytics configurado e recebendo eventos
-- [ ] Stack traces são legíveis (não ofuscados)
-- [ ] Coleta desabilitada em build de debug
-- [ ] Dashboard Firebase mostra crashes corretamente
+- [ ] Crashlytics configured and receiving events
+- [ ] Stack traces are readable (not obfuscated)
+- [ ] Collection disabled in debug builds
+- [ ] Firebase dashboard displays crashes correctly
 
 
-## Riscos e validações
+## Risks and validations
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive-confirmation states.
 
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When there is a build: `./gradlew assembleDebug` followed by `./gradlew installDebug`

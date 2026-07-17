@@ -1,6 +1,6 @@
 ---
 spec: "0201"
-title: "Login com Google"
+title: "Google Login"
 family: identity-access
 phase: 3
 status: On Hold
@@ -9,180 +9,180 @@ depends_on: []
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Login com Google
+# Spec: Google Login
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário do app,
-> Eu quero fazer login com minha conta Google,
-> Para que eu possa fazer backup dos meus dados no Google Drive e acessar recursos premium.
+> As an app user,
+> I want to log in with my Google account,
+> So that I can back up my data to Google Drive and access premium features.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before it is approved.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Login bem-sucedido
+### Scenario 1: Successful login
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou usando o app sem login
-QUANDO toco em "Entrar com Google"
-ENTÃO vejo o seletor de contas Google do sistema
-QUANDO seleciono minha conta
-E autorizo o app
-ENTÃO sou autenticado com sucesso
-E vejo meu nome/foto na tela de configurações
-E o estado muda para "Authenticated"
+GIVEN that I am using the app without being logged in
+WHEN I tap "Sign in with Google"
+THEN I see the system Google account picker
+WHEN I select my account
+AND authorize the app
+THEN I am successfully authenticated
+AND I see my name/photo on the settings screen
+AND the state changes to "Authenticated"
 ```
 
-### Cenário 2: Primeiro login associa dados existentes
+### Scenario 2: First login associates existing data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho dados locais (pets, pesos, etc.)
-E nunca fiz login antes
-QUANDO faço login com Google pela primeira vez
-ENTÃO meus dados locais são associados ao meu userId
-E posso continuar usando normalmente
+GIVEN that I have local data (pets, weights, etc.)
+AND I have never logged in before
+WHEN I sign in with Google for the first time
+THEN my local data is associated with my userId
+AND I can continue using the app normally
 ```
 
-### Cenário 3: Login cancelado
+### Scenario 3: Login canceled
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que inicio o processo de login
-QUANDO cancelo o seletor de contas
-OU fecho o dialog
-ENTÃO volto ao estado anterior (anônimo)
-E não vejo mensagem de erro
-E posso tentar novamente
+GIVEN that I start the login process
+WHEN I cancel the account picker
+OR close the dialog
+THEN I return to the previous state (anonymous)
+AND I do not see an error message
+AND I can try again
 ```
 
-### Cenário 4: Erro de rede no login
+### Scenario 4: Network error during login
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou sem conexão de internet
-QUANDO tento fazer login
-ENTÃO vejo mensagem "Sem conexão. Tente novamente."
-E continuo no modo anônimo
-E o app continua funcionando normalmente offline
+GIVEN that I have no internet connection
+WHEN I try to log in
+THEN I see the message "No connection. Try again."
+AND I remain in anonymous mode
+AND the app continues to work normally offline
 ```
 
-### Cenário 5: Login ativado ao tentar backup
+### Scenario 5: Login triggered when attempting a backup
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou usando o app sem login
-E tenho dados locais (pets, pesos, etc.)
-QUANDO tento fazer "Backup para Google Drive"
-ENTÃO vejo dialog explicando que é necessário login
-E tenho opção "Entrar com Google"
-QUANDO faço login com sucesso
-ENTÃO o backup é iniciado automaticamente
+GIVEN that I am using the app without being logged in
+AND I have local data (pets, weights, etc.)
+WHEN I try to "Back up to Google Drive"
+THEN I see a dialog explaining that login is required
+AND I have a "Sign in with Google" option
+WHEN I log in successfully
+THEN the backup starts automatically
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the interface, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional requirements** are the testable criteria for this spec and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
 ### UI/UX
 
-### Tela de Configurações (Não Logado)
+### Settings Screen (Logged Out)
 
 ```
 ┌────────────────────────────────┐
-│ ← Configurações                │
+│ ← Settings                     │
 ├────────────────────────────────┤
 │                                │
-│ 👤 CONTA                       │
+│ 👤 ACCOUNT                     │
 │ ┌────────────────────────────┐ │
 │ │        🔒                  │ │
-│ │  Você não está logado      │ │
+│ │  You are not logged in     │ │
 │ │                            │ │
-│ │  Faça login para proteger  │ │
-│ │  seus dados e acessar      │ │
-│ │  recursos premium.         │ │
+│ │  Log in to protect your    │ │
+│ │  data and access premium   │ │
+│ │  features.                 │ │
 │ │                            │ │
 │ │ ┌────────────────────────┐ │ │
-│ │ │ 🔵 Entrar com Google   │ │ │
+│ │ │ 🔵 Sign in with Google│ │ │
 │ │ └────────────────────────┘ │ │
 │ └────────────────────────────┘ │
 │                                │
-│ 📦 DADOS                       │
+│ 📦 DATA                        │
 │ ...                            │
 └────────────────────────────────┘
 ```
 
-### Tela de Configurações (Logado)
+### Settings Screen (Logged In)
 
 ```
 ┌────────────────────────────────┐
-│ ← Configurações                │
+│ ← Settings                     │
 ├────────────────────────────────┤
 │                                │
-│ 👤 CONTA                       │
+│ 👤 ACCOUNT                     │
 │ ┌────────────────────────────┐ │
 │ │ ┌────┐                     │ │
-│ │ │ 📷 │ Pessoa A            │ │
+│ │ │ 📷 │ Person A            │ │
 │ │ └────┘ pessoa-a@example.com │ │
-│ │        Plano: Gratuito     │ │
+│ │        Plan: Free          │ │
 │ │                            │ │
-│ │ [Gerenciar conta]  [Sair]  │ │
+│ │ [Manage account] [Log out] │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ⭐ PREMIUM                     │
 │ ┌────────────────────────────┐ │
-│ │ Desbloqueie sync na nuvem, │ │
-│ │ backup automático e mais!  │ │
-│ │ [Ver planos]               │ │
+│ │ Unlock cloud sync,         │ │
+│ │ automatic backup, and more!│ │
+│ │ [View plans]              │ │
 │ └────────────────────────────┘ │
 └────────────────────────────────┘
 ```
 
-### Fluxo de Login
+### Login Flow
 
 ```
 ┌──────────────────────────────────────────────────┐
 │                                                  │
 │  ┌────────────────────────────────────────────┐  │
 │  │                                            │  │
-│  │  Escolha uma conta                         │  │
+│  │  Choose an account                         │  │
 │  │                                            │  │
 │  │  ┌────┐  pessoa-a@example.com              │  │
-│  │  │ 📷 │  Pessoa A                          │  │
+│  │  │ 📷 │  Person A                          │  │
 │  │  └────┘                                    │  │
 │  │                                            │  │
 │  │  ┌────┐  pessoa-b@example.com              │  │
-│  │  │ 📷 │  Pessoa B                          │  │
+│  │  │ 📷 │  Person B                          │  │
 │  │  └────┘                                    │  │
 │  │                                            │  │
 │  │  ┌────────────────────────────────────┐   │  │
-│  │  │ + Usar outra conta                 │   │  │
+│  │  │ + Use another account              │   │  │
 │  │  └────────────────────────────────────┘   │  │
 │  │                                            │  │
 │  └────────────────────────────────────────────┘  │
@@ -192,23 +192,23 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverges, is incomplete, or was created by different app versions.
+- The external provider is unavailable, limits quotas, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Functionality covered by the specs declared in `depends_on`.

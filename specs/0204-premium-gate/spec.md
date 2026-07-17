@@ -1,6 +1,6 @@
 ---
 spec: "0204"
-title: "Gate Premium"
+title: "Premium Gate"
 family: identity-access
 phase: 3
 status: On Hold
@@ -9,261 +9,261 @@ depends_on: ["0201"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Gate Premium
+# Spec: Premium Gate
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário do app,
-> Eu quero entender quais recursos são premium,
-> Para que eu possa decidir se vale a pena assinar.
+> As an app user,
+> I want to understand which features are premium,
+> So that I can decide whether a subscription is worthwhile.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before it is approved.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Ver indicador premium em feature bloqueada
+### Scenario 1: See a premium indicator on a locked feature
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou usuário gratuito
-QUANDO vejo a opção "Sincronização em tempo real" nas configurações
-ENTÃO vejo um ícone de ⭐ ou 🔒 indicando que é premium
-E ao tocar, vejo informação sobre o plano premium
+GIVEN that I am a free user
+WHEN I see the "Real-time synchronization" option in settings
+THEN I see a ⭐ or 🔒 icon indicating that it is premium
+AND when I tap it, I see information about the premium plan
 ```
 
-### Cenário 2: Tentar usar feature premium
+### Scenario 2: Try to use a premium feature
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou usuário gratuito
-QUANDO tento ativar "Sincronização em tempo real"
-ENTÃO vejo um bottom sheet ou dialog explicando:
-  - O que a feature faz
-  - Que é exclusiva para premium
-  - Botão para ver planos
+GIVEN that I am a free user
+WHEN I try to enable "Real-time synchronization"
+THEN I see a bottom sheet or dialog explaining:
+  - What the feature does
+  - That it is exclusive to premium users
+  - A button to view plans
 ```
 
-### Cenário 3: Listar benefícios premium
+### Scenario 3: List premium benefits
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou no app
-QUANDO acesso "Ver planos premium"
-ENTÃO vejo lista de benefícios:
-  - ☁️ Sincronização em tempo real na nuvem
-  - 📱 Múltiplos dispositivos sincronizados automaticamente
-  - 👨‍👩‍👧 Compartilhar com família
-  - 📄 Exportar PDF (futuro)
+GIVEN that I am in the app
+WHEN I open "View premium plans"
+THEN I see a list of benefits:
+  - ☁️ Real-time cloud synchronization
+  - 📱 Multiple devices synchronized automatically
+  - 👨‍👩‍👧 Share with family
+  - 📄 Export PDF (future)
 ```
 
-### Cenário 4: Verificar status premium
+### Scenario 4: Check premium status
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou usuário premium
-QUANDO acesso configurações
-ENTÃO vejo "Plano: Premium"
-E não vejo indicadores de bloqueio em features premium
-E as features premium estão liberadas
+GIVEN that I am a premium user
+WHEN I open settings
+THEN I see "Plan: Premium"
+AND I do not see lock indicators on premium features
+AND the premium features are available
 ```
 
-### Cenário 5: Funcionalidades gratuitas disponíveis sem login
+### Scenario 5: Free features available without login
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que não estou logado
-QUANDO uso o app
-ENTÃO posso cadastrar pets, pesar, vacinar, criar lembretes
-E posso exportar/importar JSON
-MAS não posso fazer backup no Google Drive (requer login)
-E não posso usar sync em tempo real (premium)
+GIVEN that I am not logged in
+WHEN I use the app
+THEN I can register pets, record weights and vaccinations, and create reminders
+AND I can export/import JSON
+BUT I cannot back up to Google Drive (requires login)
+AND I cannot use real-time synchronization (premium)
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the interface, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional requirements** are the testable criteria for this spec and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
-### Features por Tier
+### Features by Tier
 
-| Feature | Free (sem login) | Free (com login) | Premium |
+| Feature | Free (no login) | Free (with login) | Premium |
 |---------|------------------|------------------|---------|
-| Cadastro de pets | ✅ | ✅ | ✅ |
-| Pesagem + gráfico | ✅ | ✅ | ✅ |
-| Vacinação/Vermífugo | ✅ | ✅ | ✅ |
-| Lembretes locais | ✅ | ✅ | ✅ |
+| Pet registration | ✅ | ✅ | ✅ |
+| Weight tracking + chart | ✅ | ✅ | ✅ |
+| Vaccination/Deworming | ✅ | ✅ | ✅ |
+| Local reminders | ✅ | ✅ | ✅ |
 | Export/Import JSON | ✅ | ✅ | ✅ |
-| Login Google | ❌ | ✅ | ✅ |
-| Backup manual Google Drive | ❌ | ✅ | ✅ |
-| Backup automático Google Drive (2h da madrugada) | ❌ | ✅ | ✅ |
-| Restaurar backup do Google Drive | ❌ | ✅ | ✅ |
-| Transferência device-to-device (Nearby) | ✅ | ✅ | ✅ |
-| Sync em tempo real (Firebase Firestore) | 🔒 | 🔒 | ✅ |
-| Múltiplos devices sincronizados | 🔒 | 🔒 | ✅ |
-| Compartilhar com família | 🔒 | 🔒 | ✅ |
+| Google Login | ❌ | ✅ | ✅ |
+| Manual Google Drive backup | ❌ | ✅ | ✅ |
+| Automatic Google Drive backup (2 a.m.) | ❌ | ✅ | ✅ |
+| Restore Google Drive backup | ❌ | ✅ | ✅ |
+| Device-to-device transfer (Nearby) | ✅ | ✅ | ✅ |
+| Real-time synchronization (Firebase Firestore) | 🔒 | 🔒 | ✅ |
+| Multiple synchronized devices | 🔒 | 🔒 | ✅ |
+| Share with family | 🔒 | 🔒 | ✅ |
 
 ---
 
 ### UI/UX
 
-### Configurações com Gates
+### Settings with Gates
 
 ```
 ┌────────────────────────────────┐
-│ ← Configurações                │
+│ ← Settings                     │
 ├────────────────────────────────┤
 │                                │
-│ 📦 DADOS                       │
+│ 📦 DATA                        │
 │ ┌────────────────────────────┐ │
-│ │ 📤 Exportar dados          │ │
+│ │ 📤 Export data            │ │
 │ └────────────────────────────┘ │
 │ ┌────────────────────────────┐ │
-│ │ 📥 Importar dados          │ │
+│ │ 📥 Import data            │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ☁️ BACKUP (GOOGLE DRIVE)       │
 │ ┌────────────────────────────┐ │
-│ │ 💾 Backup manual            │ │
+│ │ 💾 Manual backup           │ │
 │ └────────────────────────────┘ │
 │ ┌────────────────────────────┐ │
-│ │ ⏰ Backup automático (2h)    │ │
+│ │ ⏰ Automatic backup (2 a.m.)│ │
 │ └────────────────────────────┘ │
 │                                │
-│ 📶 TRANSFERÊNCIA               │
+│ 📶 TRANSFER                    │
 │ ┌────────────────────────────┐ │
-│ │ 🔄 Compartilhar dados       │ │
+│ │ 🔄 Share data              │ │
 │ └────────────────────────────┘ │
 │                                │
 │ 🔒 PREMIUM                     │
 │ ┌────────────────────────────┐ │
-│ │ 🔄 Sync em tempo real      ⭐ │ │
+│ │ 🔄 Real-time sync         ⭐ │ │
 │ └────────────────────────────┘ │
 │ ┌────────────────────────────┐ │
-│ │ Desbloqueie sync            │ │
-│ │ automático multi-device!    │ │
-│ │ [Ver planos]               │ │
+│ │ Unlock automatic           │ │
+│ │ multi-device sync!         │ │
+│ │ [View plans]              │ │
 │ └────────────────────────────┘ │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Bottom Sheet: Feature Bloqueada
+### Bottom Sheet: Locked Feature
 
 ```
 ┌────────────────────────────────┐
 │                    ─────       │
 │                                │
 │         ⭐                     │
-│   Recurso Premium              │
+│   Premium Feature              │
 │                                │
-│   Sincronização em tempo real  │
-│   na nuvem                       │
+│   Real-time cloud              │
+│   synchronization              │
 │                                │
-│   Seus dados sincronizam         │
-│   automaticamente entre todos    │
-│   os seus dispositivos.          │
+│   Your data synchronizes       │
+│   automatically across all     │
+│   your devices.                │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │      VER PLANOS            │ │
+│ │       VIEW PLANS           │ │
 │ └────────────────────────────┘ │
 │                                │
-│        Agora não               │
+│        Not now                 │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Tela: Planos Premium
+### Screen: Premium Plans
 
 ```
 ┌────────────────────────────────┐
-│ ← Petit Premium                  │
+│ ← Petit Premium                │
 ├────────────────────────────────┤
 │                                │
 │         ⭐ PREMIUM             │
 │                                │
-│ Cuide melhor dos seus pets     │
+│ Take better care of your pets  │
 │                                │
 ├────────────────────────────────┤
 │                                │
-│ ✅ Sincronização em tempo real │
-│ ✅ Múltiplos dispositivos       │
-│ ✅ Compartilhar com família    │
-│ ✅ Suporte prioritário         │
+│ ✅ Real-time synchronization   │
+│ ✅ Multiple devices            │
+│ ✅ Share with family           │
+│ ✅ Priority support            │
 │                                │
 ├────────────────────────────────┤
 │                                │
 │ ┌────────────────────────────┐ │
-│ │       MENSAL               │ │
-│ │       R$ 9,90/mês          │ │
+│ │       MONTHLY              │ │
+│ │       R$ 9,90/month        │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │       ANUAL                │ │
-│ │       R$ 79,90/ano         │ │
-│ │       (economize 33%)      │ │
+│ │       ANNUAL               │ │
+│ │       R$ 79,90/year        │ │
+│ │       (save 33%)           │ │
 │ └────────────────────────────┘ │
 │                                │
-│ Cancele quando quiser.         │
-│ Seus dados locais são seus.    │
+│ Cancel anytime.                │
+│ Your local data is yours.      │
 │                                │
 └────────────────────────────────┘
 ```
 
 ---
 
-### Nota sobre Billing
+### Note on Billing
 
-A implementação com Google Play Billing (compra de assinatura) era uma hipótese posterior do roadmap antigo. Caso essa hipótese seja validada, o escopo proposto seria:
+The implementation using Google Play Billing (subscription purchase) was a later hypothesis in the old roadmap. If this hypothesis is validated, the proposed scope would be:
 
-1. ✅ Exibir gates visuais
-2. ✅ Verificar status premium via Firebase Firestore
-3. ✅ Bloquear features premium via código
-4. ⏳ Integração com Google Play Billing (implementação futura)
+1. ✅ Display visual gates
+2. ✅ Check premium status via Firebase Firestore
+3. ✅ Lock premium features in code
+4. ⏳ Integrate with Google Play Billing (future implementation)
 
-O status premium pode ser definido manualmente no Firebase Console para testes.
+Premium status can be set manually in Firebase Console for testing.
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverges, is incomplete, or was created by different app versions.
+- The external provider is unavailable, limits quotas, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Functionality covered by the specs declared in `depends_on`.

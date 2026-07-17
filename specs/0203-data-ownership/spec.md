@@ -1,6 +1,6 @@
 ---
 spec: "0203"
-title: "Vinculação de Dados"
+title: "Data Ownership"
 family: identity-access
 phase: 3
 status: On Hold
@@ -9,112 +9,112 @@ depends_on: ["0201"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Vinculação de Dados
+# Spec: Data Ownership
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário que acabou de fazer login,
-> Eu quero que meus dados locais sejam vinculados à minha conta,
-> Para que futuramente eu possa sincronizá-los na nuvem.
+> As a user who has just logged in,
+> I want my local data to be linked to my account,
+> So that I can synchronize it to the cloud in the future.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before it is approved.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Primeiro login vincula dados existentes
+### Scenario 1: First login links existing data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho 2 pets cadastrados localmente
-E nunca fiz login antes
-QUANDO faço login com "pessoa-a@example.com"
-ENTÃO meus 2 pets são marcados com ownerId = meu userId
-E posso continuar usando normalmente
+GIVEN that I have 2 pets registered locally
+AND I have never logged in before
+WHEN I log in with "pessoa-a@example.com"
+THEN my 2 pets are marked with ownerId = my userId
+AND I can continue using the app normally
 ```
 
-### Cenário 2: Dados criados após login já vêm vinculados
+### Scenario 2: Data created after login is linked automatically
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou logado como "pessoa-a@example.com"
-QUANDO cadastro um novo pet "Luna"
-ENTÃO Luna é criada com ownerId = meu userId
+GIVEN that I am logged in as "pessoa-a@example.com"
+WHEN I register a new pet named "Luna"
+THEN Luna is created with ownerId = my userId
 ```
 
-### Cenário 3: Dados em modo anônimo não têm owner
+### Scenario 3: Data created in anonymous mode has no owner
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou usando sem login
-QUANDO cadastro um pet "Simba"
-ENTÃO Simba é criado com ownerId = null
+GIVEN that I am using the app without being logged in
+WHEN I register a pet named "Simba"
+THEN Simba is created with ownerId = null
 ```
 
-### Cenário 4: Logout não remove vinculação
+### Scenario 4: Logging out does not remove ownership
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho pets vinculados ao meu userId
-QUANDO faço logout
-ENTÃO os pets continuam com o ownerId preenchido
-E continuam visíveis no app
+GIVEN that I have pets linked to my userId
+WHEN I log out
+THEN the pets retain their ownerId
+AND remain visible in the app
 ```
 
-### Cenário 5: Login com conta diferente
+### Scenario 5: Log in with a different account
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is fulfilled and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho pets do "user-a" no dispositivo
-E faço login como "pessoa-b@example.com" (user-b)
-ENTÃO vejo os pets da Pessoa A (dados locais)
-MAS eles continuam com ownerId = user-a
-E novos dados criados terão ownerId = user-b
-(gestão de múltiplos owners é tratada em sync futuro)
+GIVEN that I have pets belonging to "user-a" on the device
+AND I log in as "pessoa-b@example.com" (user-b)
+THEN I see Person A's pets (local data)
+BUT they retain ownerId = user-a
+AND new data will have ownerId = user-b
+(management of multiple owners is handled in a future sync)
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transfer, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the interface, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional requirements** are the testable criteria for this spec and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
-### Visualização de Dados
+### Data Display
 
-### Fase 2: Mostrar todos os dados locais
+### Phase 2: Show all local data
 
 ```kotlin
-// Por enquanto, mostrar todos os dados locais independente do owner
+// For now, show all local data regardless of owner
 fun getAllPets(): Flow<List<PetEntity>> {
-    return petDao.getAllPets()  // Sem filtro por owner
+    return petDao.getAllPets()  // No owner filter
 }
 ```
 
-### Fase futura (5): Filtrar por owner para sync
+### Future phase (5): Filter by owner for sync
 
 ```kotlin
-// Quando implementar sync, filtrar por owner
+// When implementing sync, filter by owner
 fun getPetsForSync(userId: String): Flow<List<PetEntity>> {
     return petDao.getPetsForUser(userId)
 }
@@ -122,23 +122,23 @@ fun getPetsForSync(userId: String): Flow<List<PetEntity>> {
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverges, is incomplete, or was created by different app versions.
+- The external provider is unavailable, limits quotas, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Functionality covered by the specs declared in `depends_on`.
