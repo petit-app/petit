@@ -2,12 +2,20 @@
 spec: "0001"
 title: Pet management
 family: pet-care
-status: Implemented
+status: Completed
 owner: woliveiras
 depends_on: []
 ---
 
 # Spec: Pet management
+
+## Current state
+
+Pet creation, editing, sorted active queries, profiles, and soft deletion are
+implemented with deterministic validation and Room regression coverage. Photos
+from the picker or camera are validated by MIME type, size, and file signature,
+then copied into private app storage so the saved profile does not depend on an
+external URI permission.
 
 ## Context and motivation
 
@@ -38,10 +46,6 @@ Unit tests cover validation and mappings; integration tests cover Room, CRUD, pe
 - Reject future birth dates and field values that exceed their limits.
 - Preserve deleted pets in the database without displaying them in active queries.
 - Handle missing or lost access to the photo URI without corrupting other data.
-
-## Known limitation
-
-The app selects images from the gallery, but camera capture and explicit validation of the 5 MB limit have not yet been verified in the implementation.
 
 ## Out of scope
 

@@ -30,8 +30,7 @@ class PetRepositoryImpl @Inject constructor(private val petDao: PetDao) : PetRep
   }
 
   override suspend fun savePet(pet: Pet) {
-    val updatedPet = pet.copy(updatedAt = System.currentTimeMillis())
-    petDao.insertPet(updatedPet.toEntity())
+    petDao.insertPet(pet.toEntity())
   }
 
   override suspend fun deletePet(id: String) {

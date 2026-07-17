@@ -4,11 +4,11 @@ Spec: [spec.md](./spec.md)
 
 ## Sequence
 
-1. Model `PetEntity`, the domain, and mappers with creation, update, deletion, and synchronization metadata.
-2. Expose CRUD operations and active queries through `PetDao` and `PetRepository`.
-3. Implement validation and state in the ViewModels.
-4. Integrate the list, details, form, deletion confirmation, and pet selection into navigation.
-5. Integrate photo selection/capture and local storage.
+1. [x] Model `PetEntity`, the domain, and mappers with creation, update, deletion, and synchronization metadata.
+2. [x] Expose CRUD operations and active queries through `PetDao` and `PetRepository`.
+3. [x] Implement validation and state in the ViewModels.
+4. [x] Integrate the list, details, form, deletion confirmation, and pet selection into navigation.
+5. [x] Integrate photo selection/capture and local storage.
 
 ## Architecture
 
@@ -20,4 +20,4 @@ Spec: [spec.md](./spec.md)
 ## Dependencies and risks
 
 - Foundation for all other specs in the `pet-care` family.
-- Photo URIs require persistent permissions and handling for unavailable content.
+- Picker content is validated and copied into narrowly exposed private storage; unavailable content must leave the prior photo unchanged.

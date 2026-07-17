@@ -65,6 +65,10 @@
   <string name="pet_form_title_edit">Editar Pet</string>
   <string name="pet_form_photo">Foto</string>
   <string name="pet_form_add_photo">Adicionar foto</string>
+  <string name="pet_photo_choose_title">Escolher origem da foto</string>
+  <string name="pet_photo_gallery">Galeria de fotos</string>
+  <string name="pet_photo_camera">Câmera</string>
+  <string name="pet_photo_error">Não foi possível usar esta foto. Escolha um JPG ou PNG de até 5 MB.</string>
   <string name="pet_form_name">Nome *</string>
   <string name="pet_form_name_placeholder">Ex: Luna</string>
   <string name="pet_form_name_error_required">Nome é obrigatório</string>

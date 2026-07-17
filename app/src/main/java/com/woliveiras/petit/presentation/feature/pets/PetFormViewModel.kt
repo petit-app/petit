@@ -1,20 +1,26 @@
 package com.woliveiras.petit.presentation.feature.pets
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.R
+import com.woliveiras.petit.data.media.PendingCameraPhoto
+import com.woliveiras.petit.data.media.PetPhotoStore
 import com.woliveiras.petit.data.repository.PetRepository
+import com.woliveiras.petit.di.IoDispatcher
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.Sex
 import com.woliveiras.petit.domain.model.SyncStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.Clock
 import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -22,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** UI State for Pet Form screen. */
 data class PetFormUiState(
@@ -52,6 +59,8 @@ sealed class PetFormEvent {
   data class PetSaved(val petId: String) : PetFormEvent()
 
   data class Error(val message: String) : PetFormEvent()
+
+  data class LaunchCamera(val uri: Uri) : PetFormEvent()
 }
 
 @HiltViewModel
@@ -61,9 +70,13 @@ constructor(
   savedStateHandle: SavedStateHandle,
   @ApplicationContext private val context: Context,
   private val petRepository: PetRepository,
+  private val photoStorage: PetPhotoStore,
+  private val clock: Clock,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
   private val petId: String? = savedStateHandle["petId"]
+  private var pendingCameraPhoto: PendingCameraPhoto? = null
 
   private val _uiState = MutableStateFlow(PetFormUiState())
   val uiState: StateFlow<PetFormUiState> = _uiState.asStateFlow()
@@ -152,6 +165,39 @@ constructor(
     _uiState.value = _uiState.value.copy(photoUri = uri)
   }
 
+  fun importPhoto(uri: Uri) {
+    viewModelScope.launch {
+      withContext(ioDispatcher) { photoStorage.importFromPicker(uri) }
+        .onSuccess { storedUri -> _uiState.value = _uiState.value.copy(photoUri = storedUri) }
+        .onFailure { _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error))) }
+    }
+  }
+
+  fun startCameraCapture() {
+    viewModelScope.launch {
+      withContext(ioDispatcher) { photoStorage.createCameraPhoto() }
+        .onSuccess { pending ->
+          pendingCameraPhoto = pending
+          _events.emit(PetFormEvent.LaunchCamera(pending.uri))
+        }
+        .onFailure { _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error))) }
+    }
+  }
+
+  fun completeCameraCapture(success: Boolean) {
+    val pending = pendingCameraPhoto ?: return
+    pendingCameraPhoto = null
+    viewModelScope.launch {
+      withContext(ioDispatcher) { photoStorage.completeCameraPhoto(pending, success) }
+        .onSuccess { storedUri -> _uiState.value = _uiState.value.copy(photoUri = storedUri) }
+        .onFailure {
+          if (success) {
+            _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error)))
+          }
+        }
+    }
+  }
+
   fun savePet() {
     val state = _uiState.value
     val alphanumericRegex = Regex("^[a-zA-Z0-9\\s\\-]*$")
@@ -225,7 +271,7 @@ constructor(
       hasError = true
     }
 
-    if (state.birthDate != null && state.birthDate.isAfter(LocalDate.now())) {
+    if (state.birthDate != null && state.birthDate.isAfter(LocalDate.now(clock))) {
       _uiState.value =
         _uiState.value.copy(
           birthDateError = context.getString(R.string.pet_validation_birth_date_future)
@@ -239,7 +285,7 @@ constructor(
       _uiState.value = state.copy(isSaving = true)
 
       try {
-        val now = System.currentTimeMillis()
+        val now = clock.millis()
         val petToSave =
           if (state.isEditMode && state.petId != null) {
             // Edit existing pet

@@ -24,12 +24,12 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: select an image from the gallery and display it in the form, list, and profile.
   - acceptance criteria: the selected URI remains associated after saving.
   - verification: `./gradlew test`
-- [ ] **Complete photo capture and validation** (test-type: integration)
+- [x] **Complete photo capture and validation** (test-type: integration)
   - blocked-by: select and display the pet's local photo
   - desired behavior: provide camera capture and reject files larger than 5 MB or in an unsupported format.
   - acceptance criteria: the camera and picker accept only JPG/PNG files within the limit.
   - verification: `./gradlew test`
-- [ ] **Cover the flow with automated tests** (test-type: both)
+- [x] **Cover the flow with automated tests** (test-type: both)
   - blocked-by: soft-delete a pet, complete photo capture and validation
   - desired behavior: protect validation, the DAO, soft delete, and navigation against regressions.
   - acceptance criteria: DAO unit tests and basic UI tests run successfully.

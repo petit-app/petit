@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
@@ -152,6 +153,7 @@ fun PetFormScreen(
   var showSexDropdown by remember { mutableStateOf(false) }
   var showBreedDropdown by remember { mutableStateOf(false) }
   var showColorDropdown by remember { mutableStateOf(false) }
+  var showPhotoSourceDialog by remember { mutableStateOf(false) }
 
   // Track if user explicitly selected "Other"
   var isBreedOther by remember { mutableStateOf(false) }
@@ -160,18 +162,15 @@ fun PetFormScreen(
   // Reset breed "Other" state when petType changes
   LaunchedEffect(uiState.petType) { isBreedOther = false }
 
-  // Photo picker launcher
   val photoPickerLauncher =
     rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) {
       uri: Uri? ->
-      uri?.let {
-        // Take persistable permission so we can access the image later
-        context.contentResolver.takePersistableUriPermission(
-          it,
-          android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
-        )
-        viewModel.updatePhotoUri(it.toString())
-      }
+      uri?.let(viewModel::importPhoto)
+    }
+
+  val cameraLauncher =
+    rememberLauncherForActivityResult(contract = ActivityResultContracts.TakePicture()) { success ->
+      viewModel.completeCameraCapture(success)
     }
 
   val snackbarHostState = remember { SnackbarHostState() }
@@ -183,8 +182,44 @@ fun PetFormScreen(
         is PetFormEvent.Error -> {
           snackbarHostState.showSnackbar(event.message)
         }
+        is PetFormEvent.LaunchCamera -> cameraLauncher.launch(event.uri)
       }
     }
+  }
+
+  if (showPhotoSourceDialog) {
+    AlertDialog(
+      onDismissRequest = { showPhotoSourceDialog = false },
+      title = { Text(stringResource(R.string.pet_photo_choose_title)) },
+      text = {
+        Column {
+          TextButton(
+            onClick = {
+              showPhotoSourceDialog = false
+              photoPickerLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+              )
+            }
+          ) {
+            Text(stringResource(R.string.pet_photo_gallery))
+          }
+          TextButton(
+            onClick = {
+              showPhotoSourceDialog = false
+              viewModel.startCameraCapture()
+            }
+          ) {
+            Text(stringResource(R.string.pet_photo_camera))
+          }
+        }
+      },
+      confirmButton = {},
+      dismissButton = {
+        TextButton(onClick = { showPhotoSourceDialog = false }) {
+          Text(stringResource(R.string.action_cancel))
+        }
+      },
+    )
   }
 
   // Date Picker Dialog
@@ -250,11 +285,7 @@ fun PetFormScreen(
           // Photo Picker
           Surface(
             modifier =
-              Modifier.size(120.dp).clip(CircleShape).clickable {
-                photoPickerLauncher.launch(
-                  PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-              },
+              Modifier.size(120.dp).clip(CircleShape).clickable { showPhotoSourceDialog = true },
             color = MaterialTheme.colorScheme.primaryContainer,
           ) {
             Box(contentAlignment = Alignment.Center) {
