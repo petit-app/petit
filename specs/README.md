@@ -50,16 +50,16 @@ PRD: [Pet health management in Petit](../docs/prds/2026-07-17-petit-pet-health-m
 | Spec | Title | Phase | Status | Depends on / Origin |
 | --- | --- | --- | --- | --- |
 | [0101](0101-device-pairing/spec.md) | Device pairing | 2 | In Progress | Petit PRD |
-| [0102](0102-one-shot-transfer/spec.md) | One-time data transfer | 2 | In Progress | 0101 |
+| [0102](0102-one-shot-transfer/spec.md) | One-shot data transfer | 2 | In Progress | 0101 |
 | [0103](0103-family-group/spec.md) | Local family group | 2 | In Progress | 0101 |
-| [0104](0104-local-network-sync/spec.md) | Local network synchronization | 2 | Draft | 0101, 0103 |
+| [0104](0104-local-network-sync/spec.md) | Local network sync | 2 | Draft | 0101, 0103 |
 | [0105](0105-local-conflict-resolution/spec.md) | Local conflict resolution | 2 | In Progress | 0102 |
 
 ### identity-access
 
 | Spec | Title | Phase | Status | Depends on / Origin |
 | --- | --- | --- | --- | --- |
-| [0201](0201-google-login/spec.md) | Sign in with Google | 3 | On Hold | Historical roadmap |
+| [0201](0201-google-login/spec.md) | Google Login | 3 | On Hold | Historical roadmap |
 | [0202](0202-account-management/spec.md) | Account management | 3 | On Hold | 0201 |
 | [0203](0203-data-ownership/spec.md) | Data ownership | 3 | On Hold | 0201 |
 | [0204](0204-premium-gate/spec.md) | Premium gate | 3 | On Hold | 0201 |
@@ -69,8 +69,8 @@ PRD: [Pet health management in Petit](../docs/prds/2026-07-17-petit-pet-health-m
 | Spec | Title | Phase | Status | Depends on / Origin |
 | --- | --- | --- | --- | --- |
 | [0301](0301-manual-backup/spec.md) | Manual backup | 4 | On Hold | 0201 |
-| [0302](0302-restore-backup/spec.md) | Backup restoration | 4 | On Hold | 0301 |
-| [0303](0303-manage-backups/spec.md) | Backup management | 4 | On Hold | 0301 |
+| [0302](0302-restore-backup/spec.md) | Restore Backup | 4 | On Hold | 0301 |
+| [0303](0303-manage-backups/spec.md) | Manage Backups | 4 | On Hold | 0301 |
 | [0304](0304-device-transfer/spec.md) | Device-to-device transfer | 4 | On Hold | 0101 |
 | [0305](0305-automatic-backup/spec.md) | Automatic backup | 4 | On Hold | 0301 |
 | [0306](0306-backup-settings/spec.md) | Backup settings | 4 | On Hold | 0305 |
@@ -80,8 +80,8 @@ PRD: [Pet health management in Petit](../docs/prds/2026-07-17-petit-pet-health-m
 
 | Spec | Title | Phase | Status | Depends on / Origin |
 | --- | --- | --- | --- | --- |
-| [0401](0401-realtime-cloud-sync/spec.md) | Real-time synchronization | 5 | On Hold | 0201 |
-| [0402](0402-multi-device-sync/spec.md) | Multi-device synchronization | 5 | On Hold | 0401 |
+| [0401](0401-realtime-cloud-sync/spec.md) | Real-Time Sync | 5 | On Hold | 0201 |
+| [0402](0402-multi-device-sync/spec.md) | Multi-Device Sync | 5 | On Hold | 0401 |
 | [0403](0403-cloud-conflict-resolution/spec.md) | Cloud conflict resolution | 5 | On Hold | 0401 |
-| [0404](0404-offline-cloud-sync/spec.md) | Offline-first synchronization | 5 | On Hold | 0401 |
+| [0404](0404-offline-cloud-sync/spec.md) | Offline-First Sync | 5 | On Hold | 0401 |
 | [0405](0405-cloud-family-sharing/spec.md) | Cloud family sharing | 5 | On Hold | 0201, 0401 |
