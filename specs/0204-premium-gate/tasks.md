@@ -1,42 +1,49 @@
-# Tasks: Premium Gate
+# Tasks: Petit Cloud Gate
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Spec status: **On Hold**. All tasks remain pending until explicit approval.
+> Spec status: **Draft**. All tasks remain pending until explicit approval.
 
 ## Tasks
 
-- [ ] **Scenario 1: See a premium indicator on a locked feature** (test-type: both)
-  - blocked-by: spec 0201
-  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
-  - desired behavior: the “Scenario 1: See a premium indicator on a locked feature” flow works end to end without compromising local data.
-  - acceptance criteria: GIVEN that I am a free user WHEN I see the "Real-time synchronization" option in settings THEN I see a ⭐ or 🔒 icon indicating that it is premium AND when I tap it, I see information about the premium plan
+- [ ] **Keep Petit Local available without an account** (test-type: both)
+  - blocked-by: spec approval
+  - summary: classify and expose all on-device capabilities as free without requiring identity or entitlement.
+  - desired behavior: local pet care, JSON/PDF export, and local sharing remain available without a Petit account.
+  - acceptance criteria: Scenario 1 in `spec.md`.
   - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Scenario 2: Try to use a premium feature** (test-type: both)
-  - blocked-by: spec 0201; previous task in this spec
-  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
-  - desired behavior: the “Scenario 2: Try to use a premium feature” flow works end to end without compromising local data.
-  - acceptance criteria: GIVEN that I am a free user WHEN I try to enable "Real-time synchronization" THEN I see a bottom sheet or dialog explaining: - What the feature does - That it is exclusive to premium users - A button to view plans
+- [ ] **Connect Google Drive independently from Petit Cloud** (test-type: both)
+  - blocked-by: previous task; specs 0301–0307
+  - summary: model Drive authorization separately and keep backup, restore, management, and automation free.
+  - desired behavior: connecting Drive never requests a purchase or activates a Petit Cloud entitlement.
+  - acceptance criteria: Scenario 2 in `spec.md`.
   - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Scenario 3: List premium benefits** (test-type: both)
-  - blocked-by: spec 0201; previous task in this spec
-  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
-  - desired behavior: the “Scenario 3: List premium benefits” flow works end to end without compromising local data.
-  - acceptance criteria: GIVEN that I am in the app WHEN I open "View premium plans" THEN I see a list of benefits: - ☁️ Real-time cloud synchronization - 📱 Multiple devices synchronized automatically - 👨‍👩‍👧 Share with family - 📄 Export PDF (future)
+- [ ] **Gate only Petit-managed cloud capabilities** (test-type: both)
+  - blocked-by: first task; specs 0401–0405
+  - summary: show a Petit Cloud gate only where Petit operates the hosted infrastructure.
+  - desired behavior: real-time sync, automatic multi-device sync, and remote family collaboration are gated while local and Drive capabilities remain available.
+  - acceptance criteria: Scenarios 3, 4, and 7 in `spec.md`.
   - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Scenario 4: Check premium status** (test-type: both)
-  - blocked-by: spec 0201; previous task in this spec
-  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
-  - desired behavior: the “Scenario 4: Check premium status” flow works end to end without compromising local data.
-  - acceptance criteria: GIVEN that I am a premium user WHEN I open settings THEN I see "Plan: Premium" AND I do not see lock indicators on premium features AND the premium features are available
+- [ ] **Resolve and display Petit Cloud entitlement** (test-type: both)
+  - blocked-by: spec 0201; previous task
+  - summary: resolve hosted-service access from persistent Petit identity and an independent active entitlement.
+  - desired behavior: settings show the correct Petit Cloud state without inferring it from Drive authorization.
+  - acceptance criteria: Scenario 5 in `spec.md`.
   - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Scenario 5: Free features available without login** (test-type: both)
-  - blocked-by: spec 0201; previous task in this spec
-  - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
-  - desired behavior: the “Scenario 5: Free features available without login” flow works end to end without compromising local data.
-  - acceptance criteria: GIVEN that I am not logged in WHEN I use the app THEN I can register pets, record weights and vaccinations, and create reminders AND I can export/import JSON BUT I cannot back up to Google Drive (requires login) AND I cannot use real-time synchronization (premium) ---
+- [ ] **Handle Petit Cloud expiration without local data loss** (test-type: both)
+  - blocked-by: previous task; approved hosted-data retention policy
+  - summary: stop paid hosted operations while preserving all local and user-owned-cloud capabilities.
+  - desired behavior: expiration never deletes or hides Room data and does not disable an authorized Google Drive connection.
+  - acceptance criteria: Scenario 6 in `spec.md`.
   - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
+
+- [ ] **Verify independent service states end to end** (test-type: integration)
+  - blocked-by: all previous tasks
+  - summary: cover combinations of local access, Drive authorization, Petit identity, entitlement, expiration, and provider failures.
+  - desired behavior: every service-model boundary remains correct across restarts, offline use, revoked authorization, and expired entitlement.
+  - acceptance criteria: all scenarios and edge cases in `spec.md` have traceable automated coverage.
+  - verification: `./gradlew test`, `./gradlew connectedDebugAndroidTest`, and `./gradlew spotlessCheck`

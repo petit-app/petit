@@ -212,7 +212,7 @@ The specs below will be adapted and updated if work on this family resumes.
 - [US-N01: Google Login](../0201-google-login/spec.md)
 - [US-N02: Account Management](../0202-account-management/spec.md)
 - [US-N03: Data Ownership](../0203-data-ownership/spec.md)
-- [US-N04: Premium Gate](../0204-premium-gate/spec.md)
+- [US-N04: Petit Cloud Gate](../0204-premium-gate/spec.md)
 
 
 ## Prerequisites
@@ -229,7 +229,7 @@ The specs below will be adapted and updated if work on this family resumes.
 | [US-101](../0201-google-login/spec.md) | Google Login | P0 |
 | [US-102](../0202-account-management/spec.md) | Account Management | P0 |
 | [US-103](../0203-data-ownership/spec.md) | Data Ownership | P1 |
-| [US-104](../0204-premium-gate/spec.md) | Premium Gate | P1 |
+| [US-104](../0204-premium-gate/spec.md) | Petit Cloud Gate | P1 |
 
 
 ## Architecture

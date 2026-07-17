@@ -1,162 +1,60 @@
-# Plan: Premium Gate
+# Plan: Petit Cloud Gate
 
 Spec: [spec.md](./spec.md)
 
 ## Status
 
-This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
+This plan is **Draft**. No step authorizes implementation until the spec has
+been explicitly approved.
 
 ## Dependencies
 
-- Specs: `0201`
-- Revalidate demand, privacy, costs, provider terms, and the availability model.
+- Spec `0201` for persistent Petit identity when a hosted service requires it.
+- Specs `0301`–`0307` for user-owned Google Drive backup and recovery.
+- Specs `0401`–`0405` for Petit-hosted synchronization and collaboration.
+- Validation of hosted-provider costs, data retention, billing policy, and
+  entitlement lifecycle before implementation.
 
 ## Proposed sequence
 
-1. Revalidate the spec scenarios against the current product and update obsolete decisions.
-2. Create contract tests and domain rules for the first vertical slice.
-3. Implement the minimum integration behind repository abstractions, keeping Room as the local source.
-4. Deliver UI states and error recovery for the same slice.
-5. Repeat the cycle for each task, including migration and compatibility where necessary.
-6. Run focused tests and the relevant Android suites before updating the status.
+1. Define a provider-independent capability catalog with the service models
+   `Petit Local`, `User-owned cloud`, and `Petit Cloud`.
+2. Represent Google Drive authorization, Petit authentication, and Petit Cloud
+   entitlement as independent states.
+3. Apply the classification to settings and capability entry points without
+   gating local or user-owned-cloud behavior.
+4. Add the Petit Cloud explanation and gate only to hosted synchronization,
+   multi-device synchronization, and remote family collaboration.
+5. Implement entitlement activation, refresh, expiration, and recovery without
+   changing the Room local source of truth.
+6. Add billing only after the hosted costs, retention policy, and purchase
+   mechanism have been separately validated and approved.
+7. Verify local, Drive-connected, active-cloud, inactive-cloud, expired-cloud,
+   offline, and provider-failure journeys.
 
-## Historical technical notes
+## Design boundaries
 
-The class names, APIs, dependencies, and code snippets below must be reviewed against the current code and versions before use.
-
-### Technical Requirements
-
-### PremiumStatus
-
-```kotlin
-enum class PremiumTier {
-    FREE,
-    PREMIUM_MONTHLY,
-    PREMIUM_YEARLY
-}
-
-data class PremiumStatus(
-    val tier: PremiumTier,
-    val expiresAt: Long?,
-    val isActive: Boolean
-) {
-    companion object {
-        val FREE = PremiumStatus(PremiumTier.FREE, null, false)
-    }
-}
-```
-
-### PremiumRepository
-
-```kotlin
-interface PremiumRepository {
-    val premiumStatus: StateFlow<PremiumStatus>
-
-    suspend fun checkPremiumStatus(): PremiumStatus
-    fun isPremium(): Boolean
-}
-
-class PremiumRepositoryImpl(
-    private val authRepository: AuthRepository,
-    private val firestore: FirebaseFirestore  // or Billing client
-) : PremiumRepository {
-
-    private val _premiumStatus = MutableStateFlow(PremiumStatus.FREE)
-    override val premiumStatus: StateFlow<PremiumStatus> = _premiumStatus.asStateFlow()
-
-    override suspend fun checkPremiumStatus(): PremiumStatus {
-        val userId = authRepository.getCurrentUser()?.id ?: return PremiumStatus.FREE
-
-        // Check in Firebase Firestore or through Google Play Billing
-        val snapshot = firestore.collection("users")
-            .document(userId).get().await()
-        val userProfile = snapshot.toObject(UserProfile::class.java)
-
-        val premiumUntil = userProfile?.premiumUntil ?: 0
-
-        val status = when {
-            premiumUntil > System.currentTimeMillis() -> PremiumStatus(
-                tier = PremiumTier.PREMIUM_MONTHLY,  // or check which plan
-                expiresAt = premiumUntil,
-                isActive = true
-            )
-            else -> PremiumStatus.FREE
-        }
-
-        _premiumStatus.value = status
-        return status
-    }
-
-    override fun isPremium(): Boolean = _premiumStatus.value.isActive
-}
-```
-
-### Feature Gate Composable
-
-```kotlin
-@Composable
-fun PremiumFeatureGate(
-    feature: PremiumFeature,
-    premiumStatus: PremiumStatus,
-    onShowPremiumInfo: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    if (premiumStatus.isActive) {
-        content()
-    } else {
-        Box(
-            modifier = Modifier
-                .clickable { onShowPremiumInfo() }
-                .alpha(0.6f)
-        ) {
-            content()
-            Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = "Premium",
-                modifier = Modifier.align(Alignment.TopEnd),
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
-
-enum class PremiumFeature {
-    CLOUD_BACKUP,
-    CLOUD_SYNC,
-    FAMILY_SHARING,
-    PDF_EXPORT
-}
-```
-
-### Check before action
-
-```kotlin
-class BackupUseCase(
-    private val premiumRepository: PremiumRepository
-) {
-    suspend operator fun invoke(): Result<Unit> {
-        if (!premiumRepository.isPremium()) {
-            return Result.failure(PremiumRequiredException("Backup requires a premium plan"))
-        }
-
-        // Perform backup...
-        return Result.success(Unit)
-    }
-}
-
-class PremiumRequiredException(message: String) : Exception(message)
-```
-
----
-
+- Feature availability depends on its service model, not on a generic
+  `isPremium` flag.
+- Google Drive authorization cannot activate Petit Cloud.
+- Petit Cloud expiration cannot disable local capabilities or Google Drive
+  backup.
+- UI language must explain whether the user is authorizing their own provider
+  or purchasing infrastructure operated by Petit.
+- Hosted-provider types and billing SDKs remain behind interfaces until their
+  selection is approved.
 
 ## Risks and validations
 
-- Dependency on external services, authentication, quotas, and contractual changes.
-- Privacy and the lifecycle of personal and pet health data.
-- Database migrations and compatibility with data created offline or in older versions.
-- Concurrency, idempotency, conflicts, and recovery after interruptions.
-- Accessibility and clarity of error, waiting, and destructive-confirmation states.
+- Hosted-service costs may vary with reads, writes, storage, traffic, active
+  users, or provider policy changes.
+- A generic premium flag could accidentally gate free capabilities.
+- Reusing the same Google identity for Drive and Petit Cloud could make two
+  distinct consent states appear equivalent.
+- Subscription expiration requires an explicit hosted-data retention,
+  portability, and deletion policy.
+- Remote family collaboration requires participant identity, access control,
+  revocation, and auditable ownership rules.
 
 ## Planned verification
 

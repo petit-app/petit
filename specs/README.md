@@ -65,7 +65,7 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 | [0201](0201-google-login/spec.md) | Google Login | On Hold | — |
 | [0202](0202-account-management/spec.md) | Account management | On Hold | 0201 |
 | [0203](0203-data-ownership/spec.md) | Data ownership | On Hold | 0201 |
-| [0204](0204-premium-gate/spec.md) | Premium gate | On Hold | 0201 |
+| [0204](0204-premium-gate/spec.md) | Petit Cloud gate | Draft | 0201 |
 
 ### backup-recovery
 

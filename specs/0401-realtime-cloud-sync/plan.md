@@ -408,7 +408,7 @@ service cloud.firestore {
 - [ ] Offline-first principle is maintained (Room is the source of truth)
 - [ ] Conflicts are resolved automatically (last-write-wins)
 - [ ] Sync works in the background
-- [ ] Premium gate is enforced
+- [ ] Petit Cloud gate is enforced
 - [ ] Sync does not block the UI
 - [ ] Sync errors are handled gracefully
 - [ ] Visual sync status indicator
