@@ -29,3 +29,9 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: cover preference-based dates, linked-task cancellation, custom tasks, filters, completion, and WorkManager scheduling.
   - acceptance criteria: all acceptance criteria have automated coverage, including offline one-shot notification behavior at the appropriate boundary.
   - verification: `./gradlew test`
+
+- [x] **Cover automatic vaccination tasks with an E2E journey** (test-type: integration)
+  - blocked-by: create automatic care tasks
+  - desired behavior: save a vaccination with a next dose and persist its linked automatic task.
+  - acceptance criteria: the vaccination appears in history and Room contains one pending vaccination task linked to that record.
+  - verification: `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.woliveiras.petit.e2e.VaccinationTaskJourneyTest`
