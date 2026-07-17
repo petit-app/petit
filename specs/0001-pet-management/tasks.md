@@ -34,3 +34,9 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: protect validation, the DAO, soft delete, and navigation against regressions.
   - acceptance criteria: DAO unit tests and basic UI tests run successfully.
   - verification: `./gradlew test`
+
+- [x] **Cover the pet CRUD E2E journey** (test-type: integration)
+  - blocked-by: soft-delete a pet
+  - desired behavior: exercise registration, editing, and deletion through the real Activity and local database.
+  - acceptance criteria: a pet appears after creation, reflects its edited name, and disappears from Home after confirmed deletion.
+  - verification: `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.woliveiras.petit.e2e.PetCrudJourneyTest`
