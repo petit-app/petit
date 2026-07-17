@@ -59,7 +59,6 @@ import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -180,7 +179,7 @@ fun DewormingFormScreen(
           onClick = {
             datePickerState.selectedDateMillis?.let { millis ->
               val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-              if (!date.isAfter(LocalDate.now())) {
+              if (!date.isAfter(uiState.today)) {
                 viewModel.updateApplicationDate(date)
               }
             }

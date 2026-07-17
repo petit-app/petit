@@ -7,12 +7,16 @@ import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.DewormingEntryRepository
 import com.woliveiras.petit.data.repository.PetRepository
+import com.woliveiras.petit.domain.model.DewormingDraft
 import com.woliveiras.petit.domain.model.DewormingEntry
 import com.woliveiras.petit.domain.model.DewormingType
+import com.woliveiras.petit.domain.model.DewormingValidationError
 import com.woliveiras.petit.domain.model.SyncStatus
+import com.woliveiras.petit.domain.model.validate
 import com.woliveiras.petit.worker.AutoTaskService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.Clock
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -30,6 +34,7 @@ import kotlinx.coroutines.launch
 data class DewormingUiState(
   val petId: String = "",
   val petName: String = "",
+  val today: LocalDate = LocalDate.now(),
   val isLoading: Boolean = true,
   val latestDewormings: List<DewormingEntry> = emptyList(),
   val allDewormings: List<DewormingEntry> = emptyList(),
@@ -44,6 +49,7 @@ data class DewormingUiState(
 data class DewormingFormState(
   val isEditMode: Boolean = false,
   val editingEntryId: String? = null,
+  val editingCreatedAt: Long? = null,
   val dewormingType: DewormingType = DewormingType.INTERNAL,
   val medication: String = "",
   val applicationDate: LocalDate = LocalDate.now(),
@@ -83,11 +89,19 @@ constructor(
   private val petRepository: PetRepository,
   private val dewormingRepository: DewormingEntryRepository,
   private val autoTaskService: AutoTaskService,
+  private val clock: Clock,
 ) : ViewModel() {
 
   private val petId: String = savedStateHandle.get<String>("petId") ?: ""
 
-  private val _uiState = MutableStateFlow(DewormingUiState(petId = petId))
+  private val _uiState =
+    MutableStateFlow(
+      DewormingUiState(
+        petId = petId,
+        today = LocalDate.now(clock),
+        form = DewormingFormState(applicationDate = LocalDate.now(clock)),
+      )
+    )
   val uiState: StateFlow<DewormingUiState> = _uiState.asStateFlow()
 
   private val _events = MutableSharedFlow<DewormingEvent>()
@@ -211,6 +225,7 @@ constructor(
                 .copy(
                   isEditMode = true,
                   editingEntryId = entry.id,
+                  editingCreatedAt = entry.createdAt,
                   dewormingType = entry.type,
                   medication = entry.medication ?: "",
                   applicationDate = entry.applicationDate,
@@ -225,69 +240,23 @@ constructor(
   }
 
   fun resetForm() {
-    _uiState.update { it.copy(form = DewormingFormState()) }
+    _uiState.update { it.copy(form = DewormingFormState(applicationDate = LocalDate.now(clock))) }
   }
 
   fun saveDeworming() {
-    val state = _uiState.value
-    val form = state.form
+    val form = _uiState.value.form
 
-    // Validation
-    if (form.medication.isBlank()) {
-      _uiState.update {
-        it.copy(
-          form =
-            it.form.copy(
-              medicationError = context.getString(R.string.deworming_error_medication_required)
-            )
+    val validationErrors =
+      DewormingDraft(
+          type = form.dewormingType,
+          medication = form.medication,
+          applicationDate = form.applicationDate,
+          nextDueDate = form.nextDueDate,
+          note = form.note,
         )
-      }
-      return
-    }
-
-    if (form.medication.length > 100) {
-      _uiState.update {
-        it.copy(
-          form =
-            it.form.copy(
-              medicationError = context.getString(R.string.deworming_error_medication_max_length)
-            )
-        )
-      }
-      return
-    }
-
-    if (form.applicationDate.isAfter(LocalDate.now())) {
-      _uiState.update {
-        it.copy(
-          form =
-            it.form.copy(
-              applicationDateError = context.getString(R.string.deworming_error_date_future)
-            )
-        )
-      }
-      return
-    }
-
-    if (form.nextDueDate != null && !form.nextDueDate.isAfter(form.applicationDate)) {
-      _uiState.update {
-        it.copy(
-          form =
-            it.form.copy(
-              applicationDateError = context.getString(R.string.deworming_error_next_dose_after)
-            )
-        )
-      }
-      return
-    }
-
-    if (form.note.length > 500) {
-      _uiState.update {
-        it.copy(
-          form =
-            it.form.copy(noteError = context.getString(R.string.deworming_error_note_max_length))
-        )
-      }
+        .validate(clock)
+    if (validationErrors.isNotEmpty()) {
+      applyValidationErrors(validationErrors)
       return
     }
 
@@ -295,11 +264,7 @@ constructor(
       _uiState.update { it.copy(form = it.form.copy(isSaving = true)) }
 
       try {
-        val now = System.currentTimeMillis()
-        val existingEntry =
-          if (form.isEditMode) {
-            state.allDewormings.find { it.id == form.editingEntryId }
-          } else null
+        val now = clock.millis()
 
         val entry =
           DewormingEntry(
@@ -310,7 +275,7 @@ constructor(
             applicationDate = form.applicationDate,
             nextDueDate = form.nextDueDate,
             note = form.note.trim().ifBlank { null },
-            createdAt = existingEntry?.createdAt ?: now,
+            createdAt = form.editingCreatedAt ?: now,
             updatedAt = now,
             syncStatus = SyncStatus.LOCAL_ONLY,
           )
@@ -324,7 +289,9 @@ constructor(
           // DB saved but auto-task failed — non-critical
         }
 
-        _uiState.update { it.copy(form = DewormingFormState()) }
+        _uiState.update {
+          it.copy(form = DewormingFormState(applicationDate = LocalDate.now(clock)))
+        }
 
         _events.emit(DewormingEvent.DewormingSaved(petId))
       } catch (e: Exception) {
@@ -334,6 +301,36 @@ constructor(
       } finally {
         _uiState.update { it.copy(form = it.form.copy(isSaving = false)) }
       }
+    }
+  }
+
+  private fun applyValidationErrors(errors: List<DewormingValidationError>) {
+    _uiState.update { state ->
+      state.copy(
+        form =
+          state.form.copy(
+            medicationError =
+              when {
+                DewormingValidationError.MEDICATION_REQUIRED in errors ->
+                  context.getString(R.string.deworming_error_medication_required)
+                DewormingValidationError.MEDICATION_TOO_LONG in errors ->
+                  context.getString(R.string.deworming_error_medication_max_length)
+                else -> null
+              },
+            applicationDateError =
+              when {
+                DewormingValidationError.APPLICATION_DATE_IN_FUTURE in errors ->
+                  context.getString(R.string.deworming_error_date_future)
+                DewormingValidationError.NEXT_DUE_DATE_NOT_AFTER_APPLICATION in errors ->
+                  context.getString(R.string.deworming_error_next_dose_after)
+                else -> null
+              },
+            noteError =
+              context.getString(R.string.deworming_error_note_max_length).takeIf {
+                DewormingValidationError.NOTE_TOO_LONG in errors
+              },
+          )
+      )
     }
   }
 

@@ -4,11 +4,11 @@ Spec: [spec.md](./spec.md)
 
 ## Sequence
 
-1. Add unit tests for validation, status boundaries, and category projection.
-2. Make date-dependent logic deterministic and complete all per-record indicators.
-3. Select the latest applicable record for internal and external categories, including `BOTH` in each.
-4. Display the two category summaries while preserving descending history, editing, and soft delete.
-5. Add Room and Compose coverage for ordering, categories, status, and deletion.
+1. [x] Add unit tests for validation, status boundaries, and category projection.
+2. [x] Make date-dependent logic deterministic and complete all per-record indicators.
+3. [x] Select the latest applicable record for internal and external categories, including `BOTH` in each.
+4. [x] Display the two category summaries while preserving descending history, editing, and soft delete.
+5. [x] Add Room and Compose coverage for ordering, categories, status, and deletion.
 
 ## Architecture
 

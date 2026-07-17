@@ -14,7 +14,11 @@ interface DewormingEntryDao {
 
   /** Get all deworming entries for a pet, ordered by application date (newest first). */
   @Query(
-    "SELECT * FROM deworming_entries WHERE petId = :petId AND deletedAt IS NULL ORDER BY applicationDate DESC"
+    """
+      SELECT * FROM deworming_entries
+      WHERE petId = :petId AND deletedAt IS NULL
+      ORDER BY applicationDate DESC, updatedAt DESC, id DESC
+    """
   )
   fun getDewormingEntriesForPet(petId: String): Flow<List<DewormingEntryEntity>>
 
@@ -24,12 +28,18 @@ interface DewormingEntryDao {
         SELECT * FROM deworming_entries d1
         WHERE petId = :petId 
         AND deletedAt IS NULL
-        AND applicationDate = (
-            SELECT MAX(applicationDate) FROM deworming_entries d2 
-            WHERE d2.petId = d1.petId 
-            AND d2.type = d1.type 
+        AND NOT EXISTS (
+            SELECT 1 FROM deworming_entries d2
+            WHERE d2.petId = d1.petId
+            AND d2.type = d1.type
             AND d2.deletedAt IS NULL
+            AND (
+              d2.applicationDate > d1.applicationDate
+              OR (d2.applicationDate = d1.applicationDate AND d2.updatedAt > d1.updatedAt)
+              OR (d2.applicationDate = d1.applicationDate AND d2.updatedAt = d1.updatedAt AND d2.id > d1.id)
+            )
         )
+        ORDER BY applicationDate DESC, updatedAt DESC, id DESC
     """
   )
   fun getLatestDewormingsForPet(petId: String): Flow<List<DewormingEntryEntity>>
@@ -45,11 +55,16 @@ interface DewormingEntryDao {
         WHERE deletedAt IS NULL
         AND nextDueDate IS NOT NULL
         AND nextDueDate < :today
-        AND applicationDate = (
-            SELECT MAX(applicationDate) FROM deworming_entries d2 
-            WHERE d2.petId = d1.petId 
-            AND d2.type = d1.type 
+        AND NOT EXISTS (
+            SELECT 1 FROM deworming_entries d2
+            WHERE d2.petId = d1.petId
+            AND d2.type = d1.type
             AND d2.deletedAt IS NULL
+            AND (
+              d2.applicationDate > d1.applicationDate
+              OR (d2.applicationDate = d1.applicationDate AND d2.updatedAt > d1.updatedAt)
+              OR (d2.applicationDate = d1.applicationDate AND d2.updatedAt = d1.updatedAt AND d2.id > d1.id)
+            )
         )
     """
   )
@@ -62,11 +77,16 @@ interface DewormingEntryDao {
         WHERE deletedAt IS NULL
         AND nextDueDate IS NOT NULL
         AND nextDueDate BETWEEN :today AND :futureDate
-        AND applicationDate = (
-            SELECT MAX(applicationDate) FROM deworming_entries d2 
-            WHERE d2.petId = d1.petId 
-            AND d2.type = d1.type 
+        AND NOT EXISTS (
+            SELECT 1 FROM deworming_entries d2
+            WHERE d2.petId = d1.petId
+            AND d2.type = d1.type
             AND d2.deletedAt IS NULL
+            AND (
+              d2.applicationDate > d1.applicationDate
+              OR (d2.applicationDate = d1.applicationDate AND d2.updatedAt > d1.updatedAt)
+              OR (d2.applicationDate = d1.applicationDate AND d2.updatedAt = d1.updatedAt AND d2.id > d1.id)
+            )
         )
         ORDER BY nextDueDate ASC
     """

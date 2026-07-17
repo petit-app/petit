@@ -40,7 +40,7 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 | [0001](0001-pet-management/spec.md) | Pet management | Implemented | — |
 | [0002](0002-weight-tracking/spec.md) | Weight tracking | Implemented | 0001 |
 | [0003](0003-vaccination/spec.md) | Vaccination records | Completed | 0001 |
-| [0004](0004-deworming/spec.md) | Deworming records | Approved | 0001 |
+| [0004](0004-deworming/spec.md) | Deworming records | Completed | 0001 |
 | [0005](0005-reminders/spec.md) | Local tasks and reminders | Approved | 0001 |
 | [0006](0006-export-import/spec.md) | JSON export and import | Approved | 0001–0005 |
 | [0007](0007-home-dashboard/spec.md) | Home dashboard | Approved | 0001–0005 |

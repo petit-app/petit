@@ -1,9 +1,7 @@
 package com.woliveiras.petit.presentation.feature.deworming
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -39,8 +36,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
+import com.woliveiras.petit.domain.model.DewormingCategory
 import com.woliveiras.petit.domain.model.DewormingEntry
+import com.woliveiras.petit.domain.model.HealthStatus
+import com.woliveiras.petit.domain.model.dewormingCategorySummaries
+import com.woliveiras.petit.domain.model.sortedDewormingHistory
 import com.woliveiras.petit.presentation.components.EmptyState
+import com.woliveiras.petit.presentation.components.HealthStatusBadge
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
 import java.time.LocalDate
@@ -99,6 +101,7 @@ fun DewormingRecordsScreen(
     } else {
       DewormingTimeline(
         dewormings = uiState.allDewormings,
+        today = uiState.today,
         onEditEntry = { onNavigateToEditEntry(it.id) },
         modifier = Modifier.padding(padding),
       )
@@ -107,18 +110,20 @@ fun DewormingRecordsScreen(
 }
 
 @Composable
-private fun DewormingTimeline(
+internal fun DewormingTimeline(
   dewormings: List<DewormingEntry>,
+  today: LocalDate,
   onEditEntry: (DewormingEntry) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val monthFormatter = remember { DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()) }
+  val categorySummaries = remember(dewormings) { dewormings.dewormingCategorySummaries() }
 
   // Group dewormings by YearMonth, sorted descending (most recent first)
   val groupedByMonth =
     remember(dewormings) {
       dewormings
-        .sortedByDescending { it.applicationDate }
+        .sortedDewormingHistory()
         .groupBy { YearMonth.from(it.applicationDate) }
         .toSortedMap(compareByDescending { it })
     }
@@ -128,6 +133,14 @@ private fun DewormingTimeline(
     contentPadding = PaddingValues(16.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
+    items(categorySummaries, key = { "category_${it.category}" }) { summary ->
+      DewormingCategorySummaryCard(
+        category = summary.category,
+        latest = summary.latest,
+        status = summary.latest.status(today),
+      )
+    }
+
     groupedByMonth.entries.forEachIndexed { index, (yearMonth, entries) ->
       // Month header
       item(key = "header_$yearMonth") {
@@ -145,8 +158,55 @@ private fun DewormingTimeline(
 
       // Deworming cards for this month
       items(entries, key = { it.id }) { deworming ->
-        DewormingTimelineCard(deworming = deworming, onEdit = { onEditEntry(deworming) })
+        DewormingTimelineCard(
+          deworming = deworming,
+          status = deworming.status(today),
+          onEdit = { onEditEntry(deworming) },
+        )
       }
+    }
+  }
+}
+
+@Composable
+private fun DewormingCategorySummaryCard(
+  category: DewormingCategory,
+  latest: DewormingEntry,
+  status: HealthStatus,
+) {
+  val categoryLabel =
+    stringResource(
+      when (category) {
+        DewormingCategory.INTERNAL -> R.string.deworming_internal
+        DewormingCategory.EXTERNAL -> R.string.deworming_external
+      }
+    )
+  val summaryDescription =
+    listOfNotNull(
+        categoryLabel,
+        latest.medication?.takeIf { it.isNotBlank() },
+        status.localizedName(),
+      )
+      .joinToString(", ")
+  Card(
+    modifier = Modifier.fillMaxWidth().semantics { contentDescription = summaryDescription },
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    shape = RoundedCornerShape(16.dp),
+  ) {
+    Row(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Column(modifier = Modifier.weight(1f)) {
+        Text(categoryLabel, style = MaterialTheme.typography.titleMedium)
+        Text(
+          latest.medication.orEmpty(),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      HealthStatusBadge(status = status)
     }
   }
 }
@@ -154,16 +214,17 @@ private fun DewormingTimeline(
 @Composable
 private fun DewormingTimelineCard(
   deworming: DewormingEntry,
+  status: HealthStatus,
   onEdit: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-  val isOverdue = deworming.nextDueDate?.isBefore(LocalDate.now()) == true
   val cardDescription =
     listOfNotNull(
         deworming.medication,
         deworming.type.localizedName(),
         deworming.applicationDate.format(dateFormatter),
+        status.localizedName(),
       )
       .joinToString(", ")
 
@@ -191,21 +252,7 @@ private fun DewormingTimelineCard(
           modifier = Modifier.weight(1f),
         )
 
-        if (isOverdue) {
-          Box(
-            modifier =
-              Modifier.clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.errorContainer)
-                .padding(horizontal = 12.dp, vertical = 4.dp)
-          ) {
-            Text(
-              text = stringResource(R.string.health_status_overdue),
-              style = MaterialTheme.typography.labelMedium,
-              color = MaterialTheme.colorScheme.error,
-              fontWeight = FontWeight.Medium,
-            )
-          }
-        }
+        HealthStatusBadge(status = status)
       }
 
       // Application date

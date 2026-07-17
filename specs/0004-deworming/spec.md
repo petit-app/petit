@@ -2,7 +2,7 @@
 spec: "0004"
 title: Deworming records
 family: pet-care
-status: In Progress
+status: Completed
 owner: woliveiras
 depends_on: ["0001"]
 ---
@@ -15,7 +15,10 @@ The caregiver needs to record dewormers and external antiparasitic treatments to
 
 ## Current state
 
-Deworming records can be created, edited, listed in descending date order, and soft-deleted. Status is calculated per record, but the UI does not yet present all three visual states or aggregate health separately for internal and external categories.
+Deworming records can be created, edited, listed in deterministic descending
+date order, and soft-deleted. Status is clock-controlled and rendered with an
+accessible visual indicator. Internal and external summaries select the latest
+applicable treatment independently, counting `BOTH` in both categories.
 
 ## Functional requirements
 
@@ -56,4 +59,4 @@ Compose tests cover the form, category summaries, and all status indicators.
 
 ## Known limitation
 
-The current API calculates status per record; displaying every status and aggregating health by category remain pending. In particular, `BOTH` is not yet represented in both internal and external category summaries.
+- Status shown by an already-open screen is refreshed when the screen is recreated; it does not run a midnight ticker.
