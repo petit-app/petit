@@ -9,10 +9,10 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: validate and persist `INTERNAL`, `EXTERNAL`, or `BOTH`, with soft delete.
   - acceptance criteria: required medication, valid dates, and descending history.
   - verification: `./gradlew test`
-- [x] **Calculate and display per-record status** (test-type: unit)
+- [ ] **Calculate and display per-record status** (test-type: both)
   - blocked-by: record, edit, and delete deworming treatments
   - desired behavior: classify each next dose and display its indicator.
-  - acceptance criteria: states `OK`, `SCHEDULED`, and `OVERDUE` follow the dates.
+  - acceptance criteria: states `OK`, `SCHEDULED`, and `OVERDUE` follow the dates and each has a visible indicator.
   - verification: `./gradlew test`
 - [ ] **Separate health status by category** (test-type: both)
   - blocked-by: calculate and display per-record status

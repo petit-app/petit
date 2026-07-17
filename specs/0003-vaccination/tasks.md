@@ -4,15 +4,15 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
 ## Tasks
 
-- [x] **Record and edit a vaccination** (test-type: both)
+- [ ] **Record and edit a vaccination** (test-type: both)
   - blocked-by: 0001
   - desired behavior: validate dates, type by species, `OTHER`, and traceability details.
-  - acceptance criteria: a valid record is persisted, and editing updates `updatedAt`.
+  - acceptance criteria: a valid record is persisted, `OTHER` requires a custom name, and editing updates `updatedAt`.
   - verification: `./gradlew test`
-- [x] **Calculate and display the dose status** (test-type: unit)
+- [ ] **Calculate and display the dose status** (test-type: both)
   - blocked-by: record and edit a vaccination
-  - desired behavior: classify the next dose as `OK`, `SCHEDULED`, or `OVERDUE`.
-  - acceptance criteria: the 30-day thresholds and absence of a next dose follow the spec.
+  - desired behavior: classify the next dose as `OK`, `SCHEDULED`, or `OVERDUE` and render every state in the history.
+  - acceptance criteria: the 30-day thresholds and absence of a next dose follow the spec, and each state has a visible indicator.
   - verification: `./gradlew test`
 - [x] **Display and delete vaccination history** (test-type: both)
   - blocked-by: calculate and display the dose status

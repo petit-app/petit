@@ -2,7 +2,7 @@
 spec: "0003"
 title: Vaccination records
 family: pet-care
-status: Implemented
+status: In Progress
 owner: woliveiras
 depends_on: ["0001"]
 ---
@@ -12,6 +12,10 @@ depends_on: ["0001"]
 ## Context and motivation
 
 The pet owner needs to maintain the vaccination schedule and traceability of the pet's doses.
+
+## Current state
+
+Vaccination records can be created, edited, listed, and soft-deleted. Status is calculated from the next-dose date, but the form does not yet require a name for `OTHER`, and the history UI only renders an explicit visual state for overdue doses.
 
 ## Functional requirements
 
@@ -40,6 +44,8 @@ Unit tests cover status and validation; integration tests cover persistence, gro
 - The next dose must be after the administration date; the administration date cannot be in the future.
 - Rabies and `OTHER` are general options; all other types must match the pet's species.
 
-## Known limitation
+## Known limitations
 
-The implemented full history is grouped by month; the originally described presentation grouped by type has not yet been verified.
+- The form accepts `OTHER` without the required custom name.
+- The history only highlights `OVERDUE`; `OK` and `SCHEDULED` are not displayed as visual states.
+- The full history is grouped by month rather than by vaccine type.

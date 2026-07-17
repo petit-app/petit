@@ -4,10 +4,10 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
 ## Tasks
 
-- [x] **Export all domains to JSON** (test-type: both)
+- [ ] **Export all domains to JSON** (test-type: both)
   - blocked-by: 0001, 0002, 0003, 0004, 0005
   - desired behavior: generate a versioned bundle and write it to the selected URI.
-  - acceptance criteria: the date-named file contains metadata and all domains.
+  - acceptance criteria: the date-named file contains metadata and complete history for all domains, including pending and completed tasks.
   - verification: `./gradlew test`
 - [x] **Analyze and import a backup** (test-type: both)
   - blocked-by: export all domains to JSON

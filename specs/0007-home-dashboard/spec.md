@@ -2,7 +2,7 @@
 spec: "0007"
 title: Home dashboard
 family: pet-care
-status: Implemented
+status: In Progress
 owner: woliveiras
 depends_on: ["0001", "0002", "0003", "0004", "0005"]
 ---
@@ -12,6 +12,10 @@ depends_on: ["0001", "0002", "0003", "0004", "0005"]
 ## Context and motivation
 
 The caregiver needs a quick view of the pets' health and the care that requires attention.
+
+## Current state
+
+The home screen supports the empty state, pet cards, upcoming tasks, recent activity, Quick Add, settings navigation, and refresh. Overall health is calculated in the view model but is not carried into or displayed by the pet cards.
 
 ## Functional requirements
 
@@ -35,5 +39,6 @@ Unit tests cover aggregation and the empty state; integration tests cover reposi
 
 ## Known limitations
 
+- Pet cards do not display the calculated overall health status.
 - The “All good” banner and a separate alerts section have not been implemented.
 - Quick Add replaced the original Speed Dial.

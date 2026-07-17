@@ -2,7 +2,7 @@
 spec: "0006"
 title: JSON export and import
 family: pet-care
-status: Implemented
+status: In Progress
 owner: woliveiras
 depends_on: ["0001", "0002", "0003", "0004", "0005"]
 ---
@@ -13,9 +13,13 @@ depends_on: ["0001", "0002", "0003", "0004", "0005"]
 
 The caregiver needs to create a manual backup and restore their data on another device or after reinstalling the app.
 
+## Current state
+
+Versioned JSON export/import, document selection, conflict analysis, and merge strategies are implemented. The export currently includes only pending tasks, so it does not yet preserve completed-task history as required for a complete backup.
+
 ## Functional requirements
 
-- Export pets, weights, vaccinations, deworming treatments, and tasks to JSON through a user-selected URI.
+- Export pets, weights, vaccinations, deworming treatments, and the complete task history to JSON through a user-selected URI.
 - Include the app version, export date, and schema version; name the file `petit_backup_YYYY-MM-DD.json`.
 - Read and validate the backup, then present counts and conflicts before confirmation.
 - Resolve conflicts by replacing, keeping, or merging based on the latest `updatedAt`.
@@ -36,5 +40,6 @@ Unit tests cover serialization, parsing, and merge; integration tests cover Cont
 
 ## Known limitations
 
+- Full export omits completed tasks and therefore does not yet contain the entire task domain history.
 - `exportForPet(petId)` exists, but there is no corresponding entry point in the pet profile.
 - The current format uses the `tasks` key; legacy backups containing only `reminders` require explicit conversion.

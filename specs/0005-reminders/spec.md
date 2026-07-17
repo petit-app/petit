@@ -2,7 +2,7 @@
 spec: "0005"
 title: Local tasks and reminders
 family: pet-care
-status: Implemented
+status: In Progress
 owner: woliveiras
 depends_on: ["0001"]
 ---
@@ -13,9 +13,13 @@ depends_on: ["0001"]
 
 The caregiver needs reminders about pending care even while offline. The original reminder concept evolved into one-shot tasks.
 
+## Current state
+
+Custom and health-linked tasks, WorkManager scheduling, completion, deletion, filters, and reminder preferences are present. Automatic vaccination and deworming tasks are currently scheduled for the next-dose date instead of applying the configured advance-notice interval.
+
 ## Functional requirements
 
-- Create automatic tasks for upcoming vaccinations, deworming treatments, and enabled periodic weigh-ins.
+- Create automatic tasks for upcoming vaccinations, deworming treatments, and enabled periodic weigh-ins, applying the configured advance notice and interval preferences.
 - Create and edit a custom task, optionally associated with a pet.
 - Schedule a local notification with WorkManager and complete or delete tasks.
 - Cancel the schedule and soft-delete the linked task when the health record is deleted.
@@ -38,3 +42,7 @@ Unit tests cover preferences, dates, and mappings; integration tests cover Room,
 ## Out of scope
 
 - Automatic task recurrence and notification snooze.
+
+## Known limitation
+
+The configured vaccination advance notice is used in task copy but is not applied to the task's scheduled date. Automatic care tasks therefore do not yet fully honor reminder preferences.
