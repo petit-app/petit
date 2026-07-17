@@ -1,42 +1,42 @@
-# Tarefas: Sincronização entre Múltiplos Dispositivos
+# Tasks: Multi-Device Sync
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Segundo dispositivo recebe dados** (test-type: both)
+- [ ] **Scenario 1: Second Device Receives Data** (test-type: both)
   - blocked-by: spec 0401
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Segundo dispositivo recebe dados” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho dados no dispositivo A E instalo o app no dispositivo B QUANDO faço login no dispositivo B E ativo a sincronização ENTÃO todos os meus dados são baixados do Firestore E vejo os mesmos pets que no dispositivo A
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 1: Second Device Receives Data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have data on device A AND I install the app on device B WHEN I sign in on device B AND enable sync THEN all my data is downloaded from Firestore AND I see the same pets as on device A
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Edição aparece em tempo real** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Edição aparece em tempo real” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho o app aberto no dispositivo A e B QUANDO edito o nome do pet para "Luninha" no dispositivo A ENTÃO em poucos segundos, o dispositivo B mostra "Luninha" Sem precisar atualizar manualmente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Edits Appear in Real Time** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 2: Edits Appear in Real Time” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have the app open on devices A and B WHEN I change the pet's name to "Lulu" on device A THEN within a few seconds, device B shows "Lulu" without requiring a manual refresh
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Criar em um, ver em outro** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Criar em um, ver em outro” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que adiciono um novo pet "Simba" no dispositivo A QUANDO o sync completa ENTÃO o dispositivo B recebe "Simba" automaticamente E Simba aparece na lista de pets
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Create on One Device, View on Another** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 3: Create on One Device, View on Another” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I add a new pet named "Simba" on device A WHEN sync completes THEN device B receives "Simba" automatically AND Simba appears in the pet list
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Deletar em um, reflete em outro** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Deletar em um, reflete em outro” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que deleto o pet "Simba" no dispositivo A QUANDO o sync completa ENTÃO o dispositivo B também não mostra mais "Simba"
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Delete on One Device, Reflect on Another** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 4: Delete on One Device, Reflect on Another” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I delete the pet "Simba" on device A WHEN sync completes THEN device B no longer shows "Simba" either
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Dispositivo offline vs online** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Dispositivo offline vs online” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que dispositivo A está offline E dispositivo B adiciona pet "Mia" QUANDO dispositivo A volta online ENTÃO dispositivo A recebe "Mia" automaticamente ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Offline Device vs. Online Device** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 5: Offline Device vs. Online Device” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN device A is offline AND device B adds a pet named "Mia" WHEN device A comes back online THEN device A receives "Mia" automatically ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

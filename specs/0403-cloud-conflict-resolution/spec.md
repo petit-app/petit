@@ -1,6 +1,6 @@
 ---
 spec: "0403"
-title: "Resolução de Conflitos na Nuvem"
+title: "Cloud Conflict Resolution"
 family: cloud-sync
 phase: 5
 status: On Hold
@@ -9,145 +9,145 @@ depends_on: ["0401"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Resolução de Conflitos na Nuvem
+# Spec: Cloud Conflict Resolution
 
-## Contexto e motivação
+## Context and Motivation
 
-> Como usuário com múltiplos dispositivos,
-> Eu quero que conflitos de edição sejam resolvidos automaticamente,
-> Para que eu não perca dados e não precise resolver conflitos manualmente.
+> As a user with multiple devices,
+> I want edit conflicts to be resolved automatically,
+> So that I do not lose data or have to resolve conflicts manually.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional Requirements
 
-### Cenário 1: Last-write-wins básico
+### Scenario 1: Basic Last-Write-Wins
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que o pet "Luna" tem updatedAt = 1000 no dispositivo A
-E o dispositivo B edita Luna (updatedAt = 1500)
-QUANDO o dispositivo A recebe a mudança do snapshot listener do Firestore
-ENTÃO a versão do dispositivo B (mais recente) é mantida
-E o dispositivo A mostra as alterações do B
+GIVEN the pet "Luna" has updatedAt = 1000 on device A
+AND device B edits Luna (updatedAt = 1500)
+WHEN device A receives the change from the Firestore snapshot listener
+THEN device B's version (the newer one) is retained
+AND device A shows B's changes
 ```
 
-### Cenário 2: Edição offline mais antiga
+### Scenario 2: Older Offline Edit
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que dispositivo A está offline e edita Luna (updatedAt = 1000)
-E dispositivo B edita Luna online (updatedAt = 1500)
-QUANDO dispositivo A volta online e tenta sync
-ENTÃO a versão do dispositivo B vence (updatedAt maior)
-E as alterações do dispositivo A são descartadas
-E o dispositivo A atualiza para a versão do B
+GIVEN device A is offline and edits Luna (updatedAt = 1000)
+AND device B edits Luna online (updatedAt = 1500)
+WHEN device A comes back online and attempts to sync
+THEN device B's version wins (higher updatedAt)
+AND device A's changes are discarded
+AND device A updates to B's version
 ```
 
-### Cenário 3: Edição offline mais recente
+### Scenario 3: Newer Offline Edit
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que dispositivo A está offline e edita Luna (updatedAt = 2000)
-E a versão no Firestore tem updatedAt = 1500
-QUANDO dispositivo A volta online e faz sync
-ENTÃO a versão do dispositivo A vence (updatedAt maior)
-E o Firestore é atualizado com a versão do A
-E outros dispositivos recebem a versão do A
+GIVEN device A is offline and edits Luna (updatedAt = 2000)
+AND the Firestore version has updatedAt = 1500
+WHEN device A comes back online and syncs
+THEN device A's version wins (higher updatedAt)
+AND Firestore is updated with A's version
+AND other devices receive A's version
 ```
 
-### Cenário 4: Delete vs Edit
+### Scenario 4: Delete vs. Edit
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que dispositivo A deleta Luna (deletedAt = 1500)
-E dispositivo B editou Luna (updatedAt = 1600) antes de receber o delete
-QUANDO o sync acontece
-ENTÃO se a edição é mais recente que o delete, Luna é restaurada
-OU se o delete é mais recente, Luna permanece deletada
+GIVEN device A deletes Luna (deletedAt = 1500)
+AND device B edited Luna (updatedAt = 1600) before receiving the deletion
+WHEN sync occurs
+THEN if the edit is newer than the deletion, Luna is restored
+OR if the deletion is newer, Luna remains deleted
 ```
 
-### Cenário 5: Campos diferentes editados
+### Scenario 5: Different Fields Edited
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que dispositivo A edita o nome de Luna para "Luninha"
-E dispositivo B edita o peso de Luna ao mesmo tempo
-QUANDO o sync acontece
-ENTÃO ambas as mudanças são mantidas (se a estratégia for field-level)
-OU a versão mais recente vence completamente (se document-level)
+GIVEN device A changes Luna's name to "Lulu"
+AND device B edits Luna's weight at the same time
+WHEN sync occurs
+THEN both changes are retained (if the strategy is field-level)
+OR the newer version wins completely (if it is document-level)
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-Functional Requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit’s local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transmission, and deletion.
+- [ ] Provide accessible, understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test Strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance Criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional Requirements** are this spec’s testable acceptance criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved Product Notes
 
-### Estratégia de Resolução
+### Resolution Strategy
 
-### Document-Level (Implementação Atual)
+### Document-Level (Current Implementation)
 
 ```
-Regra: Last-Write-Wins baseado em updatedAt
+Rule: Last-Write-Wins based on updatedAt
 
 Local:  { id: "1", name: "Luna",    updatedAt: 1000 }
-Remote: { id: "1", name: "Luninha", updatedAt: 1500 }
+Remote: { id: "1", name: "Lulu", updatedAt: 1500 }
 
-Resultado: Remote vence (1500 > 1000)
-           Local é substituído por Remote
+Result: Remote wins (1500 > 1000)
+        Local is replaced by Remote
 ```
 
-### Field-Level (Futura Melhoria)
+### Field-Level (Future Improvement)
 
 ```
 Local:  { id: "1", name: "Luna",    weight: 3.5, updatedAt: 1000, weightUpdatedAt: 1000 }
-Remote: { id: "1", name: "Luninha", weight: 3.4, updatedAt: 1500, weightUpdatedAt: 900 }
+Remote: { id: "1", name: "Lulu", weight: 3.4, updatedAt: 1500, weightUpdatedAt: 900 }
 
-Resultado: Merge
-           name: "Luninha" (remote mais recente)
-           weight: 3.5 (local mais recente)
+Result: Merge
+        name: "Lulu" (remote is newer)
+        weight: 3.5 (local is newer)
 ```
 
 ---
 
-### Casos Edge
+### Edge Cases
 
-### 1. Timestamps Iguais
+### 1. Equal Timestamps
 ```kotlin
-// Se timestamps são exatamente iguais (raro), preferir remoto
-// Isso evita loops de sync
+// If timestamps are exactly equal (rare), prefer remote
+// This prevents sync loops
 if (remote.updatedAt == local.updatedAt && local.syncStatus == "SYNCED") {
-    return Resolution.KeepLocal  // Já está sincronizado
+    return Resolution.KeepLocal  // Already synced
 }
 ```
 
-### 2. Clock Drift Grande
+### 2. Large Clock Drift
 ```kotlin
-// Se a diferença de timestamp for absurda (> 1 ano), algo está errado
-val MAX_REASONABLE_DIFF = 365L * 24 * 60 * 60 * 1000  // 1 ano em ms
+// If the timestamp difference is unreasonable (> 1 year), something is wrong
+val MAX_REASONABLE_DIFF = 365L * 24 * 60 * 60 * 1000  // 1 year in ms
 
 if (abs(remote.updatedAt - local.updatedAt) > MAX_REASONABLE_DIFF) {
     Log.w("Sync", "Suspicious timestamp difference, preferring local")
@@ -155,9 +155,9 @@ if (abs(remote.updatedAt - local.updatedAt) > MAX_REASONABLE_DIFF) {
 }
 ```
 
-### 3. Dados Corrompidos
+### 3. Corrupted Data
 ```kotlin
-// Validar dados antes de aceitar
+// Validate data before accepting it
 if (!remote.isValid()) {
     Log.e("Sync", "Invalid remote data, keeping local")
     return Resolution.KeepLocal
@@ -166,23 +166,23 @@ if (!remote.isValid()) {
 
 ---
 
-## Casos extremos
+## Edge Cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, enforces quota limits, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need validation. |
+| External technology | Not decided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of Scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Capabilities covered by the specs declared in `depends_on`.

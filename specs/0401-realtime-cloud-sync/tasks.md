@@ -1,42 +1,42 @@
-# Tarefas: Sincronização em Tempo Real
+# Tasks: Real-Time Sync
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Sync após criar dados** (test-type: both)
+- [ ] **Scenario 1: Sync after creating data** (test-type: both)
   - blocked-by: spec 0201
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Sync após criar dados” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que sou usuário premium com sync ativado E tenho conexão de internet QUANDO cadastro um novo pet "Luna" ENTÃO Luna é salva no Room imediatamente (syncStatus = PENDING) E após alguns segundos, Luna é enviada para o Firestore E o syncStatus muda para SYNCED E vejo indicador de sync ✓
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI when applicable.
+  - desired behavior: the “Scenario 1: Sync after creating data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am a premium user with sync enabled AND I have an internet connection WHEN I add a new pet named "Luna" THEN Luna is saved to Room immediately (syncStatus = PENDING) AND after a few seconds, Luna is sent to Firestore AND syncStatus changes to SYNCED AND I see the sync indicator ✓
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Sync em tempo real recebendo dados** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Sync em tempo real recebendo dados” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho o app aberto E alguém (ou outro dispositivo) adiciona dados no Firestore QUANDO a mudança é detectada pelo snapshot listener do Firestore ENTÃO os novos dados são baixados automaticamente E salvos no Room local E aparecem na UI sem precisar atualizar manualmente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Real-time sync receiving data** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI when applicable.
+  - desired behavior: the “Scenario 2: Real-time sync receiving data” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have the app open AND someone (or another device) adds data to Firestore WHEN the change is detected by the Firestore snapshot listener THEN the new data is downloaded automatically AND saved to the local Room database AND appears in the UI without requiring a manual refresh
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Sync sem internet (queue)** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Sync sem internet (queue)” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou sem internet QUANDO cadastro um novo pet ENTÃO o pet é salvo no Room (syncStatus = PENDING) E o pet aparece na UI normalmente E quando a internet voltar, o sync acontece automaticamente
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Sync without internet access (queue)** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI when applicable.
+  - desired behavior: the “Scenario 3: Sync without internet access (queue)” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have no internet connection WHEN I add a new pet THEN the pet is saved to Room (syncStatus = PENDING) AND the pet appears in the UI as usual AND when the internet connection is restored, sync occurs automatically
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Ativar sync pela primeira vez** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Ativar sync pela primeira vez” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho dados locais E nunca sincronizei antes QUANDO ativo "Sincronização na nuvem" nas configurações ENTÃO todos os dados locais são enviados para o Firestore E vejo progresso "Sincronizando X de Y itens..." E ao final, todos estão com syncStatus = SYNCED
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Enable sync for the first time** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI when applicable.
+  - desired behavior: the “Scenario 4: Enable sync for the first time” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have local data AND I have never synced before WHEN I enable "Cloud sync" in settings THEN all local data is sent to Firestore AND I see the progress message "Syncing X of Y items..." AND when the operation is complete, all items have syncStatus = SYNCED
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Premium expira** (test-type: both)
-  - blocked-by: spec 0201; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Premium expira” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que meu premium expira QUANDO isso acontece ENTÃO o snapshot listener do Firestore é desconectado E novos dados são salvos apenas localmente (syncStatus = LOCAL_ONLY) E os dados já sincronizados permanecem no dispositivo E vejo aviso "Sincronização pausada - Renove seu premium" ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Premium expires** (test-type: both)
+  - blocked-by: spec 0201; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI when applicable.
+  - desired behavior: the “Scenario 5: Premium expires” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN my premium subscription expires WHEN this happens THEN the Firestore snapshot listener is disconnected AND new data is saved locally only (syncStatus = LOCAL_ONLY) AND previously synced data remains on the device AND I see the warning "Sync paused - Renew your premium subscription" ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

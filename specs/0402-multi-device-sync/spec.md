@@ -1,6 +1,6 @@
 ---
 spec: "0402"
-title: "Sincronização entre Múltiplos Dispositivos"
+title: "Multi-Device Sync"
 family: cloud-sync
 phase: 5
 status: On Hold
@@ -9,171 +9,171 @@ depends_on: ["0401"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Sincronização entre Múltiplos Dispositivos
+# Spec: Multi-Device Sync
 
-## Contexto e motivação
+## Context and Motivation
 
-> Como usuário premium com múltiplos dispositivos,
-> Eu quero que meus dados estejam disponíveis em todos eles,
-> Para que eu possa acessar e editar de qualquer lugar.
+> As a premium user with multiple devices,
+> I want my data to be available on all of them,
+> So that I can access and edit it from anywhere.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional Requirements
 
-### Cenário 1: Segundo dispositivo recebe dados
+### Scenario 1: Second Device Receives Data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho dados no dispositivo A
-E instalo o app no dispositivo B
-QUANDO faço login no dispositivo B
-E ativo a sincronização
-ENTÃO todos os meus dados são baixados do Firestore
-E vejo os mesmos pets que no dispositivo A
+GIVEN I have data on device A
+AND I install the app on device B
+WHEN I sign in on device B
+AND enable sync
+THEN all my data is downloaded from Firestore
+AND I see the same pets as on device A
 ```
 
-### Cenário 2: Edição aparece em tempo real
+### Scenario 2: Edits Appear in Real Time
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho o app aberto no dispositivo A e B
-QUANDO edito o nome do pet para "Luninha" no dispositivo A
-ENTÃO em poucos segundos, o dispositivo B mostra "Luninha"
-Sem precisar atualizar manualmente
+GIVEN I have the app open on devices A and B
+WHEN I change the pet's name to "Lulu" on device A
+THEN within a few seconds, device B shows "Lulu"
+Without requiring a manual refresh
 ```
 
-### Cenário 3: Criar em um, ver em outro
+### Scenario 3: Create on One Device, View on Another
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que adiciono um novo pet "Simba" no dispositivo A
-QUANDO o sync completa
-ENTÃO o dispositivo B recebe "Simba" automaticamente
-E Simba aparece na lista de pets
+GIVEN I add a new pet named "Simba" on device A
+WHEN sync completes
+THEN device B receives "Simba" automatically
+AND Simba appears in the pet list
 ```
 
-### Cenário 4: Deletar em um, reflete em outro
+### Scenario 4: Delete on One Device, Reflect on Another
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que deleto o pet "Simba" no dispositivo A
-QUANDO o sync completa
-ENTÃO o dispositivo B também não mostra mais "Simba"
+GIVEN I delete the pet "Simba" on device A
+WHEN sync completes
+THEN device B no longer shows "Simba" either
 ```
 
-### Cenário 5: Dispositivo offline vs online
+### Scenario 5: Offline Device vs. Online Device
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que dispositivo A está offline
-E dispositivo B adiciona pet "Mia"
-QUANDO dispositivo A volta online
-ENTÃO dispositivo A recebe "Mia" automaticamente
+GIVEN device A is offline
+AND device B adds a pet named "Mia"
+WHEN device A comes back online
+THEN device A receives "Mia" automatically
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-Functional Requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit’s local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transmission, and deletion.
+- [ ] Provide accessible, understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test Strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance Criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional Requirements** are this spec’s testable acceptance criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved Product Notes
 
 ### UI/UX
 
-### Indicador de Dispositivos
+### Device Indicator
 
 ```
 ┌────────────────────────────────┐
-│ ← Sincronização                │
+│ ← Sync                         │
 ├────────────────────────────────┤
 │                                │
-│ 📱 DISPOSITIVOS CONECTADOS     │
+│ 📱 CONNECTED DEVICES           │
 │ ┌────────────────────────────┐ │
-│ │ 📱 Este dispositivo        │ │
+│ │ 📱 This device            │ │
 │ │    Galaxy S24 • Online     │ │
 │ │                            │ │
-│ │ 📱 Outro dispositivo       │ │
-│ │    Pixel 8 • Há 5 min      │ │
+│ │ 📱 Another device         │ │
+│ │    Pixel 8 • 5 min ago    │ │
 │ └────────────────────────────┘ │
 │                                │
-│ ℹ️ Seus dados são sincronizados│
-│ automaticamente entre todos   │
-│ os dispositivos logados.      │
+│ ℹ️ Your data is synced         │
+│ automatically across all      │
+│ signed-in devices.            │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Primeiro Sync em Novo Dispositivo
+### First Sync on a New Device
 
 ```
 ┌────────────────────────────────┐
 │                                │
 │         ☁️ ↓                   │
 │                                │
-│   Sincronizando seus dados...  │
+│   Syncing your data...         │
 │                                │
 │   ████████░░░░░░  60%          │
 │                                │
-│   Baixando: 2 pets            │
-│             15 pesagens        │
-│             8 vacinas          │
+│   Downloading: 2 pets          │
+│                15 weigh-ins    │
+│                8 vaccinations │
 │                                │
-│   Mantenha a conexão ativa     │
+│   Keep the connection active   │
 │                                │
 └────────────────────────────────┘
 ```
 
 ---
 
-### Resolução de Conflitos Multi-Device
+### Multi-Device Conflict Resolution
 
-Quando dois dispositivos editam o mesmo dado simultaneamente:
+When two devices edit the same data simultaneously:
 
 ```kotlin
 suspend fun handleIncomingChange(remote: PetFirestoreModel) {
     val local = petDao.getPetById(remote.id)
 
     when {
-        // Novo remotamente
+        // New remote record
         local == null -> {
             petDao.insertPet(remote.toEntity())
         }
-        // Remoto mais recente: aceitar
+        // Remote record is newer: accept it
         remote.updatedAt > local.updatedAt -> {
             petDao.updatePet(remote.toEntity())
         }
-        // Local mais recente: manter local e re-upload
+        // Local record is newer: keep it and upload it again
         local.updatedAt > remote.updatedAt && local.syncStatus == "SYNCED" -> {
-            // Local é mais recente mas já foi marcado como synced
-            // Isso significa que a mudança local ainda não foi enviada
-            // Manter local e enviar para nuvem
+            // The local record is newer but has already been marked as synced
+            // This means the local change has not been uploaded yet
+            // Keep the local record and upload it to the cloud
             uploadToFirestore(local)
         }
-        // Mesmo timestamp: considerar empate, manter local
+        // Same timestamp: treat as a tie and keep the local record
         else -> {
-            // Não fazer nada, local já está correto
+            // Do nothing; the local record is already correct
         }
     }
 }
@@ -181,23 +181,23 @@ suspend fun handleIncomingChange(remote: PetFirestoreModel) {
 
 ---
 
-## Casos extremos
+## Edge Cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, enforces quota limits, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need validation. |
+| External technology | Not decided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of Scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Capabilities covered by the specs declared in `depends_on`.

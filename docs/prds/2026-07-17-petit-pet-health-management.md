@@ -1,141 +1,143 @@
-# PRD: Gestão de saúde dos pets no Petit
+# PRD: Pet Health Management in Petit
 
-**Status:** Ativo
+**Status:** Active
 
-**Origem:** `getmiw/specs-miw@09b4497`, adaptado para o Petit
+**Origin:** `getmiw/specs-miw@09b4497`, adapted for Petit
 
-**Última reconciliação:** 2026-07-17
+**Last reconciliation:** 2026-07-17
 
-## Problema
+## Problem
 
-Pessoas responsáveis por pets precisam lembrar cuidados recorrentes e manter o
-histórico de saúde de cada animal em um lugar fácil de consultar e compartilhar
-com profissionais veterinários.
+Pet caregivers need to remember recurring care tasks and keep each animal's
+health history in one place that is easy to review and share with veterinary
+professionals.
 
-## Objetivos
+## Objectives
 
-1. Evitar que cuidados básicos sejam esquecidos.
-2. Centralizar o histórico de saúde de um ou mais pets.
-3. Manter os dados acessíveis offline e exportáveis quando necessário.
+1. Prevent basic care tasks from being forgotten.
+2. Centralize the health history of one or more pets.
+3. Keep data available offline and exportable when needed.
 
-## Documento de requisitos original
+## Original requirements document
 
-## Especificação Técnica:
+## Technical Specification:
 
-* **offline-first de verdade**
-* **notificações e lembretes locais**
-* **sincronização posterior**
-* **sincronização via Firebase/Google Cloud Platform**
-* **Android only**, pelo menos por enquanto
-* domínio simples, mas com bastante estado local e regras de datas
+* **true offline-first behavior**
+* **local notifications and reminders**
+* **synchronization at a later stage**
+* **synchronization through Firebase/Google Cloud Platform**
+* **Android only**, at least for now
+* a simple domain with substantial local state and date-based rules
 
-## Stack Tecnológico:
+## Technology Stack:
 
-- Android nativo em Kotlin
+- Native Android in Kotlin
 - Jetpack Compose
-- Banco local: Room
-- Configurações pequenas / flags / preferências: DataStore
-- Jobs de sincronização e lembretes: WorkManager
-- Compartilhamento local: Nearby Connections API (pareamento + transferência P2P)
-- Sync na rede local: NSD (Network Service Discovery / mDNS) + TCP Sockets
-- Transferência device-to-device: Nearby Connections API (P2P_POINT_TO_POINT)
+- Local database: Room
+- Small settings / flags / preferences: DataStore
+- Synchronization and reminder jobs: WorkManager
+- Local sharing: Nearby Connections API (pairing + P2P transfer)
+- Local network synchronization: NSD (Network Service Discovery / mDNS) + TCP Sockets
+- Device-to-device transfer: Nearby Connections API (P2P_POINT_TO_POINT)
 
-> **Firebase e serviços cloud estão em holding** até que haja demanda de usuários.
-> Quando retomados: Firebase Auth, Google Drive API, Firestore, Analytics, Crashlytics, FCM, Remote Config.
+> **Firebase and cloud services are on hold** until there is user demand.
+> When resumed: Firebase Auth, Google Drive API, Firestore, Analytics, Crashlytics, FCM, Remote Config.
 
-## Fases
+## Phases
 
-Fase 1: sem backend obrigatório, tudo local, export/import manual, sem login, sem sincronização, apenas para ter um app funcional o mais rápido possível ✅ CONCLUÍDA
+Phase 1: no required backend; everything is local, with manual export/import,
+no sign-in, and no synchronization, solely to deliver a functional app as
+quickly as possible ✅ COMPLETED
 
-Fase 2: compartilhamento local entre dispositivos da casa (grupo familiar) —
-pareamento via Nearby Connections, transferência one-shot, grupo familiar
-local e sync contínuo na rede local via NSD. Está **parcialmente implementada**;
-consulte as [specs da família local-sharing](../../specs/README.md#local-sharing).
+Phase 2: local sharing between household devices (family group) — pairing via
+Nearby Connections, one-shot transfer, a local family group, and continuous
+local network synchronization via NSD. It is **partially implemented**; see the
+[local-sharing family specs](../../specs/README.md#local-sharing).
 
-> **Fases abaixo estão em holding até que haja demanda de usuários:**
+> **The phases below are on hold until there is user demand:**
 >
-> Fase N: Firebase Auth (login Google opcional)
-> Fase N+1: Backup Google Drive (manual + automático)
-> Fase N+2: Sync cloud (Firestore, premium)
+> Phase N: Firebase Auth (optional Google sign-in)
+> Phase N+1: Google Drive backup (manual + automatic)
+> Phase N+2: Cloud synchronization (Firestore, premium)
 
 ---
 
-## Arquitetura alvo
+## Target Architecture
 
-**Android nativo + Room + WorkManager + Firebase/Google Cloud Platform**
+**Native Android + Room + WorkManager + Firebase/Google Cloud Platform**
 
-### Posição de cada peça
+### Role of each component
 
-* **Room** = fonte de verdade local
-* **WorkManager** = trabalhos em background e notificações de tarefas
-* **Nearby Connections API** = pareamento de dispositivos + transferência P2P local
-* **NSD (mDNS) + TCP** = discovery e sync contínuo na rede local (Wi-Fi de casa)
-* **Export/Import JSON** = fallback universal gratuito
+* **Room** = local source of truth
+* **WorkManager** = background work and task notifications
+* **Nearby Connections API** = device pairing + local P2P transfer
+* **NSD (mDNS) + TCP** = discovery and continuous synchronization over the local network (home Wi-Fi)
+* **JSON Export/Import** = free universal fallback
 
-> **Componentes em holding (Firebase/Cloud):**
+> **Components on hold (Firebase/Cloud):**
 > Firebase Auth, Google Drive API, Firestore, Analytics, Crashlytics, FCM, Remote Config
 
 ---
 
-## Modelagem de Produto:
+## Product Model:
 
-Modelo freemium
+Freemium model
 
-### Gratuito
+### Free
 
-- cadastro dos pets
-- pesagem
-- gráfico de peso
-- vacinação
-- desparasitação
-- lembretes locais
-- exportação JSON
-- importação JSON
-- compartilhamento local entre dispositivos da casa (grupo familiar)
-- sync contínuo na rede local (Wi-Fi de casa)
-- transferência de dados entre dispositivos (nearby, one-shot)
+- pet registration
+- weight logging
+- weight chart
+- vaccination
+- deworming
+- local reminders
+- JSON export
+- JSON import
+- local sharing between household devices (family group)
+- continuous synchronization over the local network (home Wi-Fi)
+- data transfer between devices (nearby, one-shot)
 
-### Premium (futuro — quando houver demanda)
+### Premium (future — when there is demand)
 
-- sincronização em tempo real na nuvem (Firebase Firestore)
-- sincronização automática multi-device remoto
-- backup Google Drive
-- compartilhamento de dados com veterinário (opcional mais tarde)
-- exportação PDF (opcional mais tarde)
-
----
-
-# Arquitetura funcional
-
-## Princípio central
-
-O app deve ser **local-first**, não “cloud-first com cache”.
-
-Ou seja:
-
-1. usuário salva tudo no banco local
-2. UI sempre lê do banco local
-3. sync remoto acontece depois
-4. ausência de internet não bloqueia nada
-5. conflitos são resolvidos em background
-
-Esse padrão segue a arquitetura offline-first recomendada pelo Android.
+- real-time cloud synchronization (Firebase Firestore)
+- automatic remote multi-device synchronization
+- Google Drive backup
+- data sharing with a veterinarian (optional at a later stage)
+- PDF export (optional at a later stage)
 
 ---
 
-## Domínios principais
+# Functional Architecture
+
+## Core Principle
+
+The app must be **local-first**, not “cloud-first with a cache.”
+
+In other words:
+
+1. the user saves everything to the local database
+2. the UI always reads from the local database
+3. remote synchronization happens afterward
+4. lack of internet access does not block anything
+5. conflicts are resolved in the background
+
+This pattern follows Android's recommended offline-first architecture.
+
+---
+
+## Core Domains
 
 * **Pet**
 * **WeightEntry**
 * **VaccinationEntry**
 * **DewormingEntry**
-* **Task** (inclui lembretes)
+* **Task** (includes reminders)
 * **ExportBundle**
 * **SyncStatus**
 
 ---
 
-## Estrutura de dados sugerida
+## Suggested Data Structure
 
 ### Pet
 
@@ -143,13 +145,13 @@ Esse padrão segue a arquitetura offline-first recomendada pelo Android.
 * `name`
 * `petType` (`CAT`, `DOG`, `RABBIT`, `BIRD`, `HAMSTER`, `OTHER`)
 * `birthDate`
-* `sex` opcional
-* `breed` opcional
-* `microchip` opcional
-* `passport` opcional
+* optional `sex`
+* optional `breed`
+* optional `microchip`
+* optional `passport`
 * `createdAt`
 * `updatedAt`
-* `deletedAt` opcional
+* optional `deletedAt`
 * `syncStatus`
 
 ### WeightEntry
@@ -158,7 +160,7 @@ Esse padrão segue a arquitetura offline-first recomendada pelo Android.
 * `petId`
 * `date`
 * `weightGrams`
-* `note` opcional
+* optional `note`
 * `createdAt`
 * `updatedAt`
 * `deletedAt`
@@ -169,10 +171,10 @@ Esse padrão segue a arquitetura offline-first recomendada pelo Android.
 * `id`
 * `petId`
 * `vaccineType`
-* `customVaccineTypeName` opcional
+* optional `customVaccineTypeName`
 * `applicationDate`
 * `nextDueDate`
-* `status` calculado (`OK`, `SCHEDULED`, `OVERDUE`)
+* calculated `status` (`OK`, `SCHEDULED`, `OVERDUE`)
 * `note`
 * `createdAt`
 * `updatedAt`
@@ -184,7 +186,7 @@ Esse padrão segue a arquitetura offline-first recomendada pelo Android.
 * `id`
 * `petId`
 * `type` (`INTERNAL`, `EXTERNAL`, `BOTH`)
-* `medication` opcional
+* optional `medication`
 * `applicationDate`
 * `nextDueDate`
 * `note`
@@ -197,353 +199,362 @@ Esse padrão segue a arquitetura offline-first recomendada pelo Android.
 
 * `id`
 * `kind` (`WEIGHT`, `VACCINATION`, `DEWORMING`, `MEDICATION`, `CUSTOM`)
-* `petId` opcional
+* optional `petId`
 * `referenceEntityId`
 * `title`
-* `description` opcional
+* optional `description`
 * `scheduledFor`
 * `status` (`PENDING`, `COMPLETED`)
 
 ---
 
-# Estratégia de sincronização
+# Synchronization Strategy
 
-## Para o MVP
+## For the MVP
 
-* toda entidade tem:
+* every entity has:
 
-  * `id` UUID
+  * UUID `id`
   * `updatedAt`
   * `deletedAt`
   * `syncStatus`
 
-### Fluxo
+### Flow
 
-1. salva local
-2. marca como `PENDING_SYNC`
-3. WorkManager tenta sync quando houver rede
-4. se der certo, marca como `SYNCED`
-5. se falhar, mantém pendente
+1. save locally
+2. mark as `PENDING_SYNC`
+3. WorkManager attempts synchronization when a network is available
+4. if successful, mark as `SYNCED`
+5. if it fails, keep it pending
 
-## Resolução de conflitos
+## Conflict Resolution
 
-* **last-write-wins** por `updatedAt`
+* **last-write-wins** based on `updatedAt`
 
-Para seu domínio pessoal/familiar isso é suficiente no MVP.
+For this personal/family domain, that is sufficient for the MVP.
 
-### Onde conflitos podem acontecer
+### Where conflicts may occur
 
-* mesmo usuário usando dois celulares
-* import manual em cima de dados mais novos
-* restore de backup antigo
+* the same user using two phones
+* a manual import overwriting newer data
+* restoration of an old backup
 
-### Como reduzir dor
+### How to reduce friction
 
-* mostrar “última sincronização”
-* permitir “forçar upload local” ou “forçar download remoto”
-* logs simples de sync
+* display “last synchronized”
+* allow “force local upload” or “force remote download”
+* keep simple synchronization logs
 
 ---
 
-# Estratégia de export/import
+# Export/Import Strategy
 
-## Formato
+## Format
 
-Um único arquivo JSON é o formato oficial atual. O objeto raiz contém
+A single JSON file is the current official format. The root object contains
 `metadata`, `pets`, `weightEntries`, `vaccinationEntries`,
-`dewormingEntries` e `tasks`.
+`dewormingEntries`, and `tasks`.
 
-## Por que não CSV como formato principal
+## Why CSV is not the primary format
 
-* CSV quebra fácil em relacionamentos
-* JSON preserva estrutura
-* futuro backup/sync fica mais alinhado
+* CSV breaks down easily when representing relationships
+* JSON preserves structure
+* it aligns better with future backup/synchronization
 
-## Regras
+## Rules
 
-* export gratuito sempre disponível
-* import com validação de schema + versão
-* manter compatibilidade de versões por migração
+* free export is always available
+* imports include schema + version validation
+* preserve version compatibility through migration
 
 ---
 
-# Lembretes e notificações
+# Reminders and Notifications
 
-## Pesagem
+## Weighing
 
-Não vamos ter um componente ou tela de calendário visível no app, então os lembretes precisam ser mais proativos.
+The app will not have a visible calendar component or screen, so reminders
+need to be more proactive.
 
-### Abordagem
+### Approach
 
-Na home page o usuário vê todos os dados de saúde dos pets, e ali tem algo como:
+On the home page, the user sees all pet health data, including sections such as:
 
-* lista “**Para pesar em breve**”
-* lista “**Atrasados**”
-* lembrete local por periodicidade configurável:
+* “**Due for weighing soon**” list
+* “**Overdue**” list
+* local reminders at a configurable frequency:
 
-  * a cada 15 dias
-  * mensal
-  * bimestral
+  * every 15 days
+  * monthly
+  * every two months
 
-Porém, vamos agregar nessa tela todos os dados de saúde, não só peso, para ser o dashboard operacional do app.
+However, this screen will aggregate all health data, not only weight, so that
+it serves as the app's operational dashboard.
 
-Os gráficos de peso ficam na tela de pesagem normal, mas os lembretes ficam nesse dashboard geral.
+Weight charts remain on the standard weighing screen, while reminders appear
+on this general dashboard.
 
-### Regra sugerida
+### Suggested rule
 
-Cada pet tem (exemplo para pesagem, mas mesma lógica para vacina e desparasitação):
+Each pet has the following fields (using weighing as an example, with the same
+logic applying to vaccination and deworming):
 
 * `weightReminderEnabled`
 * `weightReminderFrequencyDays`
 
-O app calcula a partir da última pesagem.
+The app calculates the next date from the latest weight entry.
 
 ---
 
-## Vacinação
+## Vaccination
 
-### Tela
+### Screen
 
-* “Próximas vacinas”
-* “Atrasadas”
-* “Concluídas recentemente”
+* “Upcoming vaccinations”
+* “Overdue”
+* “Recently completed”
 
-### Regra
+### Rule
 
-Status derivado:
+Derived status:
 
-* `OK` → falta bastante tempo
-* `SCHEDULED` → janela próxima
-* `OVERDUE` → passou da data
+* `OK` → plenty of time remains
+* `SCHEDULED` → approaching the due window
+* `OVERDUE` → past the due date
 
-Mesma lógica para desparasitação.
+The same logic applies to deworming.
 
 ---
 
-# Estrutura de telas
+# Screen Structure
 
 ## 1. Home Page
 
-Home como dashboard operacional, onde o usuário vê tudo o que precisa fazer e o status geral dos pets.
+The Home screen is an operational dashboard where the user can see everything
+that needs attention and the overall health status of their pets.
 
-Se o usuário ainda não tiver cadastrado nenhum pet, a home é um convite para cadastrar o primeiro.
+If the user has not registered any pets, the Home screen prompts them to
+register their first pet.
 
-Se o usuário tiver pets cadastrados, a home é um dashboard geral, com lembretes e status de saúde.
+If the user has registered pets, the Home screen is a general dashboard with
+reminders and health status information.
 
-Se o usuário tiver cadastrado um pet, mas não tiver registrado peso ou vacina, a home é um convite para registrar o primeiro peso/vacina.
+If the user has registered a pet but has not logged a weight or vaccination,
+the Home screen prompts them to add the first weight/vaccination record.
 
-### Conteúdo
+### Content
 
-* resumo dos pets
-* próximos lembretes
-* próximas vacinas
-* próximas desparasitações
-* último peso de cada pet
-* CTA para cadastrar algo rapidamente
+* pet summary
+* upcoming reminders
+* upcoming vaccinations
+* upcoming deworming treatments
+* latest weight for each pet
+* CTA to add a record quickly
 
-### Se usuário não pareado
+### If the user has not paired a device
 
-* banner discreto na Home:
+* subtle banner on the Home screen:
 
-  * "Compartilhe dados com sua família"
-  * "Conecte outro dispositivo"
-  * Toca → abre tab Perfil > seção Grupo Familiar
-
----
-
-## 2. Profile Page (ex-Settings)
-
-A tab \"Perfil\" no bottom nav (ícone Person) é o hub pessoal do usuário.
-
-### Seções do Profile (em ordem)
-
-1. **Grupo Familiar** — status do grupo ou card de onboarding se não pareado
-2. **Configurações** — tema (sistema/claro/escuro), idioma (sistema/pt-BR/en/es)
-3. **Dados** — exportar, importar, apagar todos os dados
-4. **Sobre** — versão do app
-
-### Se usuário não pareado (seção Grupo Familiar)
-
-* card de onboarding:
-  * \"Compartilhe os dados dos seus pets com sua família\"
-  * \"Funciona sem internet!\"
-* botão \"Parear dispositivo\"
-* botão \"Entrar em grupo familiar\"
-
-### Se usuário pareado (seção Grupo Familiar)
-
-* nome do dispositivo parceiro e status de sync
-* link \"Gerenciar Grupo\" → tela de gerenciamento
-
-### Regra
-
-* explicar claramente:
-  * compartilhamento funciona apenas na rede local
-  * dados permanecem nos dispositivos, sem nuvem
-
-Isso é importante para a confiança do usuário.
+  * "Share data with your family"
+  * "Connect another device"
+  * Tap → opens the Profile tab > Family Group section
 
 ---
 
-## 3. Cadastro de Pets
+## 2. Profile Page (formerly Settings)
 
-* nome
-* nascimento
-* microchip opcional
-* passaporte opcional
-* foto opcional depois
-* frequência desejada de pesagem
-* observações
+The "Profile" tab in the bottom navigation (Person icon) is the user's personal hub.
 
----
+### Profile sections (in order)
 
-## 4. Pesagem
+1. **Family Group** — group status or onboarding card if no device is paired
+2. **Settings** — theme (system/light/dark), language (system/pt-BR/en/es)
+3. **Data** — export, import, delete all data
+4. **About** — app version
 
-### Lista
+### If the user has not paired a device (Family Group section)
 
-* histórico por pet
-* peso atual
-* delta em relação à pesagem anterior
-* data da última pesagem
+* onboarding card:
+  * "Share your pets' data with your family"
+  * "Works without internet access!"
+* "Pair device" button
+* "Join family group" button
 
-### Cadastro
+### If the user has paired a device (Family Group section)
 
-* selecionar pet
-* data
-* peso
-* observação opcional
+* partner device name and synchronization status
+* "Manage Group" link → management screen
 
-### Gráfico
+### Rule
 
-* linha temporal por pet
-* eixo Y em gramas ou kg
-* opção de ver 3 meses / 6 meses / 1 ano
+* clearly explain that:
+  * sharing works only on the local network
+  * data remains on the devices, with no cloud storage
+
+This is important for user trust.
 
 ---
 
-## 5. Desparasitação
+## 3. Pet Registration
 
-### Cadastro
+* name
+* date of birth
+* optional microchip
+* optional passport
+* optional photo at a later stage
+* preferred weighing frequency
+* notes
+
+---
+
+## 4. Weighing
+
+### List
+
+* history by pet
+* current weight
+* change from the previous weighing
+* date of the latest weighing
+
+### Entry
+
+* select pet
+* date
+* weight
+* optional note
+
+### Chart
+
+* timeline for each pet
+* Y-axis in grams or kilograms
+* option to view 3 months / 6 months / 1 year
+
+---
+
+## 5. Deworming
+
+### Entry
 
 * pet
-* tipo interna/externa
-* medicação
-* data da aplicação
-* próxima aplicação
+* internal/external type
+* medication
+* application date
+* next application
 
-### Lista
+### List
 
-* próximas
-* atrasadas
-* histórico
+* upcoming
+* overdue
+* history
 
 ---
 
-## 6. Vacinação
+## 6. Vaccination
 
-### Cadastro
+### Entry
 
 * pet
-* vacina
-* data da aplicação
-* próxima aplicação
+* vaccine
+* application date
+* next application
 
-### Lista
+### List
 
-* próximas
-* atrasadas
-* histórico
-
----
-
-## 7. Exportação / Importação
-
-* exportar arquivo local
-* importar arquivo local
-* restaurar do backup cloud
-* backup manual agora
-* última data de export/sync
+* upcoming
+* overdue
+* history
 
 ---
 
-# Fases de entrega
+## 7. Export / Import
 
-## Fase 1
+* export local file
+* import local file
+* restore from cloud backup
+* create a manual backup now
+* date of latest export/synchronization
 
-Perfeita como MVP.
+---
 
-### Entrega técnica
+# Delivery Phases
+
+## Phase 1
+
+Ideal for an MVP.
+
+### Technical deliverables
 
 * Pet
 * WeightEntry
 * Export/Import
-* Home simples
-* lembrete local de pesagem
-* gráfico de peso
-* Room + WorkManager base
-* arquitetura pronta para sync futuro
+* simple Home screen
+* local weighing reminder
+* weight chart
+* foundational Room + WorkManager setup
+* architecture ready for future synchronization
 
-### Meta de produto
+### Product goal
 
-Validar:
+Validate:
 
-* fluxo offline
-* modelo de dados
-* UX de cadastro e histórico
-* qualidade dos lembretes
+* offline flow
+* data model
+* registration and history UX
+* reminder quality
 
 ---
 
-## Fase 2
+## Phase 2
 
-### Desparasitação
+### Deworming
 
-Aqui já reaproveita bastante da estrutura de dados e telas da vacinação, então é um bom próximo passo.:
+This phase can reuse much of the vaccination data structure and screens, making
+it a good next step:
 
-* padrão de cadastro
-* lista de próximas datas
-* reminder local
+* entry pattern
+* list of upcoming dates
+* local reminder
 * export/import
 
 ---
 
-## Fase 3
+## Phase 3
 
-### Vacinação
+### Vaccination
 
-Mesmo padrão da fase 2, com um pouco mais de semântica por tipo de vacina.
+The same pattern as Phase 2, with slightly more semantics for each vaccine type.
 
 ---
 
-# Decisões técnicas importantes
+# Important Technical Decisions
 
-## 1. Banco local como source of truth
+## 1. Local database as the source of truth
 
-Essa é a decisão mais importante do projeto.
-Nada de UI lendo da nuvem diretamente.
+This is the project's most important decision.
+The UI must never read directly from the cloud.
 
-## 2. Datas sempre em UTC internamente
+## 2. Store dates internally in UTC
 
-* guardar ISO UTC / epoch
-* formatar localmente para o usuário
+* store ISO UTC / epoch values
+* format them locally for the user
 
-## 3. Peso em gramas, não float em kg
+## 3. Store weight in grams, not as a float in kilograms
 
-Para evitar problemas de precisão:
+To prevent precision issues:
 
-* guardar `3600`
-* exibir `3,60 kg`
+* store `3600`
+* display `3.60 kg`
 
 ## 4. Soft delete
 
-Para sincronização ficar consistente:
+To keep synchronization consistent:
 
-* `deletedAt`
-* não apagar imediatamente do banco
+* use `deletedAt`
+* do not immediately delete records from the database
 
-## 5. Versionamento de schema de export
+## 5. Export schema versioning
 
-O arquivo exportado deve ter:
+The exported file must include:
 
 * `appVersion`
 * `schemaVersion`
@@ -551,71 +562,71 @@ O arquivo exportado deve ter:
 
 ---
 
-# Segurança e privacidade
+# Security and Privacy
 
-Como é um app de dados de pets, o risco é baixo, mas eu ainda faria:
+The risk is low because this is a pet data app, but I would still include:
 
-* banco local criptografado depois, se quiser evoluir
-* token de auth guardado em storage seguro (Firebase Auth token management automático)
-* nada sensível em prefs simples
-* Firebase Storage com Firestore Security Rules para isolar dados por usuário
-* Firebase Auth com Firestore Security Rules
-
----
-
-# O que **não** será feito no começo
-
-* multiusuário
-* colaboração em tempo real
-* backend como fonte primária
-* Drive como banco principal
-* pricing complicado
-* iOS simultaneamente
-* calendário visual
-* integração com veterinário
-* monitoramento de saúde baseado em AI
+* an encrypted local database later, if the product evolves
+* authentication tokens stored securely (automatic Firebase Auth token management)
+* no sensitive data in basic preferences
+* Firebase Storage with Firestore Security Rules to isolate data by user
+* Firebase Auth with Firestore Security Rules
 
 ---
 
-# Documentação técnica inicial
+# What Will **Not** Be Built Initially
 
-Abaixo está um esqueleto de documentação que eu usaria como base do projeto.
+* multiple users
+* real-time collaboration
+* a backend as the primary source
+* Drive as the primary database
+* complicated pricing
+* simultaneous iOS development
+* a visual calendar
+* veterinarian integration
+* AI-based health monitoring
 
-## 1. Visão do produto
+---
 
-**Nome provisório:** Petit - The Pet Health Tracker
-**Objetivo:** permitir que usuários acompanhem peso, vacinação e desparasitação de pets offline, com backup/sync opcional
+# Initial Technical Documentation
 
-## 2. Requisitos funcionais
+Below is a documentation outline that I would use as the project foundation.
 
-* cadastrar pets
-* registrar pesagens
-* visualizar evolução de peso
-* registrar vacinações
-* listar próximas vacinações
-* registrar desparasitações
-* listar próximas desparasitações
-* exportar dados
-* importar dados
-* login Google opcional
-* sincronização cloud opcional (Firebase Firestore)
-* backup no Firebase Storage opcional
-* notificações locais para pesagem e eventos próximos
+## 1. Product Vision
 
-## 3. Requisitos não funcionais
+**Working name:** Petit - The Pet Health Tracker
+**Objective:** enable users to track pet weight, vaccination, and deworming offline, with optional backup/synchronization
 
-* funcionar offline
-* sincronizar quando houver internet
-* startup rápido
-* UI simples
-* sem dependência de calendário visual
-* persistência local confiável
-* migração de schema suportada
-* observabilidade básica de erros
+## 2. Functional Requirements
 
-## 4. Arquitetura
+* register pets
+* log weights
+* view weight trends
+* record vaccinations
+* list upcoming vaccinations
+* record deworming treatments
+* list upcoming deworming treatments
+* export data
+* import data
+* optional Google sign-in
+* optional cloud synchronization (Firebase Firestore)
+* optional backup to Firebase Storage
+* local notifications for weighing and upcoming events
 
-Camadas:
+## 3. Non-functional Requirements
+
+* work offline
+* synchronize when internet access is available
+* fast startup
+* simple UI
+* no dependency on a visual calendar
+* reliable local persistence
+* supported schema migration
+* basic error observability
+
+## 4. Architecture
+
+Layers:
 
 * UI
 * ViewModel
@@ -625,7 +636,7 @@ Camadas:
 * Remote Data Source
 * Sync Engine
 
-## 5. Modelo de dados
+## 5. Data Model
 
 * Pet
 * WeightEntry
@@ -634,37 +645,37 @@ Camadas:
 * Task
 * SyncMetadata
 
-## 6. Estratégia offline-first
+## 6. Offline-first Strategy
 
-* Room como fonte de verdade
-* WorkManager para sync
-* filas de mudança local
-* retry exponencial
-* last-write-wins no MVP
+* Room as the source of truth
+* WorkManager for synchronization
+* local change queues
+* exponential retry
+* last-write-wins in the MVP
 
-## 7. Estratégia de monetização
+## 7. Monetization Strategy
 
-* free: tudo local
-* premium: login + nuvem (Firebase) + backups automáticos
+* free: all local functionality
+* premium: sign-in + cloud (Firebase) + automatic backups
 
 ## 8. Roadmap
 
-> **Registro legado:** a lista abaixo é uma decomposição anterior à organização
-> por fases apresentada no início deste documento. Ela foi preservada como
-> contexto histórico e não representa o roadmap vigente.
+> **Legacy record:** the list below is an earlier breakdown that predates the
+> phase structure presented at the beginning of this document. It is retained
+> as historical context and does not represent the current roadmap.
 
-* Fase 1: cadastro do pet, peso, gráfico, offline-first
-* Fase 2: desparasitação
-* Fase 3: vacinação
-* Fase 4: export/import
-* Fase 5: login/sync cloud (Firebase)
+* Phase 1: pet registration, weight, chart, offline-first
+* Phase 2: deworming
+* Phase 3: vaccination
+* Phase 4: export/import
+* Phase 5: cloud sign-in/synchronization (Firebase)
 
 ---
 
-# Execução
+# Execution
 
-1. **definir o modelo de dados e regras de status**
-2. **desenhar a arquitetura offline-first**
-3. **fazer a documentação técnica do MVP**
-4. **desenhar as telas da Fase 1**
-5. **quebrar em backlog técnico**
+1. **define the data model and status rules**
+2. **design the offline-first architecture**
+3. **write the MVP technical documentation**
+4. **design the Phase 1 screens**
+5. **break the work down into a technical backlog**

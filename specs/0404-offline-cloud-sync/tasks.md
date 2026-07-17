@@ -1,42 +1,42 @@
-# Tarefas: Sincronização Offline-First
+# Tasks: Offline-First Sync
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Criar dados offline** (test-type: both)
+- [ ] **Scenario 1: Create Data Offline** (test-type: both)
   - blocked-by: spec 0401
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Criar dados offline” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou sem internet QUANDO cadastro um novo pet "Mia" ENTÃO Mia é salva no Room (syncStatus = PENDING_SYNC) E Mia aparece na lista normalmente E vejo indicador "Pendente de sync" no item
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 1: Create Data Offline” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have no internet connection WHEN I register a new pet named "Mia" THEN Mia is saved in Room (syncStatus = PENDING_SYNC) AND Mia appears in the list as usual AND I see a "Pending sync" indicator on the item
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Sync automático ao reconectar** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Sync automático ao reconectar” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que tenho dados pendentes de sync E estou offline QUANDO a internet volta ENTÃO o sync é iniciado automaticamente E os dados pendentes são enviados E o syncStatus muda para SYNCED E o indicador de pendente desaparece
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Automatic Sync on Reconnection** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 2: Automatic Sync on Reconnection” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I have data pending sync AND I am offline WHEN the internet connection returns THEN sync starts automatically AND the pending data is uploaded AND syncStatus changes to SYNCED AND the pending indicator disappears
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Múltiplas edições offline** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Múltiplas edições offline” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que estou offline QUANDO faço várias edições: - Adiciono pet Mia - Adiciono pesagem para Mia - Edito nome de Luna para Luninha ENTÃO todas as edições são salvas localmente E todas ficam como PENDING_SYNC E ao reconectar, todas são enviadas
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Multiple Offline Edits** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 3: Multiple Offline Edits” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I am offline WHEN I make several edits: - Add the pet Mia - Add a weigh-in for Mia - Change Luna's name to Lulu THEN all edits are saved locally AND all of them remain PENDING_SYNC AND upon reconnection, all of them are uploaded
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Conflito após voltar online** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Conflito após voltar online” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que editei Luna offline (updatedAt = 1000) E outro dispositivo editou Luna online (updatedAt = 1500) QUANDO volto online e sincronizo ENTÃO a resolução de conflito acontece E a versão mais recente (1500) vence
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Conflict After Coming Back Online** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 4: Conflict After Coming Back Online” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I edited Luna offline (updatedAt = 1000) AND another device edited Luna online (updatedAt = 1500) WHEN I come back online and sync THEN conflict resolution occurs AND the newer version (1500) wins
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Queue de sync persiste após fechar app** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Queue de sync persiste após fechar app” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que fiz edições offline E fecho o app E reabro o app (ainda offline) ENTÃO as edições ainda estão PENDING_SYNC E ao reconectar, serão sincronizadas ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Sync Queue Persists After the App Is Closed** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 5: Sync Queue Persists After the App Is Closed” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN I made edits offline AND I close the app AND I reopen the app (still offline) THEN the edits are still PENDING_SYNC AND they will be synced upon reconnection ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

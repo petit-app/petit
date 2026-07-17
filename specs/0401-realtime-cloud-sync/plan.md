@@ -1,30 +1,30 @@
-# Plano: Sincronização em Tempo Real
+# Plan: Real-Time Sync
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0201`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when necessary.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical requirements
 
 ### SyncEngine
 
@@ -78,12 +78,12 @@ class SyncEngineImpl(
 
         _syncState.value = SyncState.Idle
 
-        // Upload pendentes primeiro
+        // Upload pending items first
         scope.launch {
             uploadPending()
         }
 
-        // Iniciar Firestore snapshot listeners para cada coleção
+        // Start Firestore snapshot listeners for each collection
         startPetsListener(userId)
         startWeightsListener(userId)
         startVaccinationsListener(userId)
@@ -112,7 +112,7 @@ class SyncEngineImpl(
         val remotePet = document.toPetEntity() ?: return
         val localPet = petDao.getPetById(remotePet.id)
 
-        // Last-write-wins: atualizar se remoto for mais recente
+        // Last-write-wins: update if the remote item is newer
         if (localPet == null || remotePet.updatedAt > localPet.updatedAt) {
             petDao.insertPet(remotePet.copy(syncStatus = "SYNCED"))
         }
@@ -131,7 +131,7 @@ class SyncEngineImpl(
 
         var uploadedCount = 0
 
-        // Upload pets pendentes
+        // Upload pending pets
         petDao.getPendingSyncPets().collect { pets ->
             pets.forEach { pet ->
                 try {
@@ -143,12 +143,12 @@ class SyncEngineImpl(
                     petDao.updateSyncStatus(pet.id, "SYNCED")
                     uploadedCount++
                 } catch (e: Exception) {
-                    // Manter como PENDING para tentar depois
+                    // Keep as PENDING to retry later
                 }
             }
         }
 
-        // Similar para outras entidades...
+        // Similar handling for other entities...
 
         return Result.success(uploadedCount)
     }
@@ -234,67 +234,67 @@ interface PetDao {
 
 ---
 
-## Contexto agregado da proposta original
+## Additional context from the original proposal
 
-O conteúdo abaixo veio do README histórico da família. Ele é referência para reavaliação, não uma arquitetura aprovada.
+The content below came from the family’s historical README. It is a reference for reevaluation, not an approved architecture.
 
-### Visão histórica — Cloud Sync (antiga Fase N+2)
-
-
-> **Status**: Em holding — poderá ser reavaliada se houver demanda validada por sync remoto em tempo real.
-
-## Motivo do Holding
-
-Cloud sync foi adiado porque:
-1. A Fase 2 (Compartilhamento Familiar local) atende a demanda atual de compartilhamento
-2. Requer Firebase Auth e infraestrutura cloud (custos operacionais)
-3. Sync local via NSD na rede Wi-Fi de casa é suficiente para uso doméstico
-4. A hipótese de oferecê-lo como recurso premium só poderá ser considerada após validação de demanda e sustentabilidade
-
-## Specs Preservadas (ex-Fase 5)
-
-- [US-N21: Sync em Tempo Real](../0401-realtime-cloud-sync/spec.md)
-- [US-N22: Múltiplos Dispositivos](../0402-multi-device-sync/spec.md)
-- [US-N23: Resolução de Conflitos Cloud](../0403-cloud-conflict-resolution/spec.md)
-- [US-N24: Sync Offline-First](../0404-offline-cloud-sync/spec.md)
-- [US-N25: Compartilhamento Família (cloud)](../0405-cloud-family-sharing/spec.md)
+### Historical overview — Cloud Sync (formerly Phase N+2)
 
 
-## Pré-requisitos
+> **Status**: On Hold — may be reevaluated if there is validated demand for real-time remote sync.
 
-- Fase 2 completa (Firebase Auth)
-- Fase 3/4 completas (Backup Google Drive funciona como fallback)
-- Coleções configuradas no Firestore com Security Rules
-- Usuário premium ativo
+## Reason for being On Hold
+
+Cloud sync was deferred because:
+1. Phase 2 (local Family Sharing) meets the current sharing demand
+2. It requires Firebase Auth and cloud infrastructure (operating costs)
+3. Local sync via NSD on the home Wi-Fi network is sufficient for household use
+4. The hypothesis of offering it as a premium feature can only be considered after validating demand and sustainability
+
+## Preserved specs (formerly Phase 5)
+
+- [US-N21: Real-Time Sync](../0401-realtime-cloud-sync/spec.md)
+- [US-N22: Multiple Devices](../0402-multi-device-sync/spec.md)
+- [US-N23: Cloud Conflict Resolution](../0403-cloud-conflict-resolution/spec.md)
+- [US-N24: Offline-First Sync](../0404-offline-cloud-sync/spec.md)
+- [US-N25: Family Sharing (cloud)](../0405-cloud-family-sharing/spec.md)
+
+
+## Prerequisites
+
+- Phase 2 complete (Firebase Auth)
+- Phases 3/4 complete (Google Drive Backup works as a fallback)
+- Collections configured in Firestore with Security Rules
+- Active premium user
 
 
 ## User Stories
 
-| ID | Feature | Prioridade |
+| ID | Feature | Priority |
 |----|---------|------------|
-| [US-401](../0401-realtime-cloud-sync/spec.md) | Sincronização em Tempo Real | P0 |
-| [US-402](../0402-multi-device-sync/spec.md) | Múltiplos Dispositivos | P0 |
-| [US-403](../0403-cloud-conflict-resolution/spec.md) | Resolução de Conflitos | P0 |
-| [US-404](../0404-offline-cloud-sync/spec.md) | Sync Offline-First | P1 |
-| [US-405](../0405-cloud-family-sharing/spec.md) | Compartilhamento Família | P2 |
+| [US-401](../0401-realtime-cloud-sync/spec.md) | Real-Time Sync | P0 |
+| [US-402](../0402-multi-device-sync/spec.md) | Multiple Devices | P0 |
+| [US-403](../0403-cloud-conflict-resolution/spec.md) | Conflict Resolution | P0 |
+| [US-404](../0404-offline-cloud-sync/spec.md) | Offline-First Sync | P1 |
+| [US-405](../0405-cloud-family-sharing/spec.md) | Family Sharing | P2 |
 
 
-## Arquitetura
+## Architecture
 
-### Modelo de Sync
+### Sync model
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Device A                              │
 │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐   │
 │  │    Room     │◀───▶│  SyncEngine │◀───▶│  Firestore  │   │
-│  │  (verdade)  │     │             │     │  (Firebase) │   │
+│  │   (truth)   │     │             │     │  (Firebase) │   │
 │  └─────────────┘     └─────────────┘     └─────────────┘   │
 │                                                  │           │
 └─────────────────────────────────────────────────────────────┘
                                                    │
                     ┌──────────────────────────────┴──────────┐
-                    │     Firebase Firestore (com Security Rules) │
+                    │    Firebase Firestore (with Security Rules) │
                     │  ┌─────────────────────────────────────┐ │
                     │  │ pets (userId, Security Rules)          │ │
                     │  │ weight_entries (userId, Security Rules)│ │
@@ -307,20 +307,20 @@ Cloud sync foi adiado porque:
 │                        Device B                              │
 │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐   │
 │  │    Room     │◀───▶│  SyncEngine │◀───▶│  Firestore  │   │
-│  │  (verdade)  │     │             │     │  (Firebase) │   │
+│  │   (truth)   │     │             │     │  (Firebase) │   │
 │  └─────────────┘     └─────────────┘     └─────────────┘   │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Estrutura do Firestore (Firebase)
+### Firestore structure (Firebase)
 
 ```
-// Coleções no Firestore (cada uma com Security Rules)
+// Firestore collections (each with Security Rules)
 
 // pets/{petId}
 {
-  "userId": "uid-do-usuario",
+  "userId": "user-uid",
   "name": "Luna",
   "birthDate": 1700000000000,
   "sex": "F",
@@ -334,7 +334,7 @@ Cloud sync foi adiado porque:
 }
 
 // weight_entries/{entryId}, vaccination_entries/{entryId}, deworming_entries/{entryId}
-// (estrutura similar com userId + petId + Security Rules)
+// (similar structure with userId + petId + Security Rules)
 
 // sync_metadata/{userId}
 {
@@ -343,7 +343,7 @@ Cloud sync foi adiado porque:
 }
 ```
 
-### Fluxo de Sync
+### Sync flow
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -385,7 +385,7 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // Compartilhamento família (futuro)
+    // Family sharing (future)
     match /families/{familyId} {
       allow read: if request.auth != null && request.auth.uid in resource.data.memberIds;
       allow write: if request.auth != null && request.auth.uid == resource.data.createdBy;
@@ -402,30 +402,30 @@ service cloud.firestore {
 ```
 
 
-## Critérios de Aceite Globais
+## Global acceptance criteria
 
-- [ ] Dados sincronizam em tempo real entre dispositivos
-- [ ] Princípio offline-first mantido (Room é verdade)
-- [ ] Conflitos resolvidos automaticamente (last-write-wins)
-- [ ] Sync funciona em background
-- [ ] Premium gate aplicado
-- [ ] Sync não bloqueia UI
-- [ ] Erros de sync tratados graciosamente
-- [ ] Indicador visual de status de sync
-- [ ] Firestore Security Rules garantem isolamento de dados por usuário
+- [ ] Data syncs between devices in real time
+- [ ] Offline-first principle is maintained (Room is the source of truth)
+- [ ] Conflicts are resolved automatically (last-write-wins)
+- [ ] Sync works in the background
+- [ ] Premium gate is enforced
+- [ ] Sync does not block the UI
+- [ ] Sync errors are handled gracefully
+- [ ] Visual sync status indicator
+- [ ] Firestore Security Rules ensure per-user data isolation
 
 
-## Riscos e validações
+## Risks and validations
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or by older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
 
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

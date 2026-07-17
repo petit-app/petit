@@ -1,30 +1,30 @@
-# Plano: Compartilhamento Familiar na Nuvem
+# Plan: Cloud Family Sharing
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0201`, `0401`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when necessary.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical technical notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### FamilyRepository
 
@@ -62,13 +62,13 @@ enum class MemberRole {
 }
 ```
 
-### Firestore Security Rules para Família
+### Firestore Security Rules for Families
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Família: membros podem ler, admin pode escrever
+    // Family: members can read, admin can write
     match /families/{familyId} {
       allow read: if request.auth != null &&
         request.auth.uid in resource.data.memberIds;
@@ -83,7 +83,7 @@ service cloud.firestore {
       }
     }
 
-    // Membros podem ler/escrever pets compartilhados
+    // Members can read/write shared pets
     match /pets/{petId} {
       allow read, write: if request.auth != null && (
         request.auth.uid == resource.data.userId ||
@@ -92,7 +92,7 @@ service cloud.firestore {
       );
     }
 
-    // Convites: qualquer autenticado pode ler para entrar
+    // Invitations: any authenticated user can read them to join
     match /invites/{code} {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
@@ -101,7 +101,7 @@ service cloud.firestore {
 }
 ```
 
-### Sync com Suporte a Família
+### Sync with Family Support
 
 ```kotlin
 class FamilySyncEngine(
@@ -115,29 +115,29 @@ class FamilySyncEngine(
     fun startSync() {
         val userId = authRepository.getCurrentUser()?.id ?: return
 
-        // Sync dados pessoais
+        // Sync personal data
         startPersonalSync(userId)
 
-        // Sync dados da família (se houver)
+        // Sync family data (if any)
         familyRepository.currentFamily.value?.let { family ->
             startFamilySync(family.id)
         }
     }
 
     private fun startFamilySync(familyId: String) {
-        // Firestore snapshot listener para pets compartilhados
+        // Firestore snapshot listener for shared pets
         val registration = firestore.collection("pets")
             .whereEqualTo("familyId", familyId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
-                // Processar mudanças dos pets da família
+                // Process changes to the family's pets
             }
         listenerRegistrations.add(registration)
     }
 }
 ```
 
-### Pet com FamilyId
+### Pet with FamilyId
 
 ```kotlin
 @Entity(tableName = "pets")
@@ -145,12 +145,12 @@ data class PetEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val ownerId: String? = null,
-    val familyId: String? = null,  // Se compartilhado com família
+    val familyId: String? = null,  // Set when shared with a family
     val name: String,
     // ...
 )
 
-// Query para listar pets (pessoais + família)
+// Query to list pets (personal + family)
 @Query("""
     SELECT * FROM pets
     WHERE (ownerId = :userId OR familyId = :familyId)
@@ -188,20 +188,20 @@ class InviteManager(
             .document(code).get().await()
 
         if (!inviteDoc.exists()) {
-            return Result.failure(Exception("Código inválido"))
+            return Result.failure(Exception("Invalid code"))
         }
 
         val expiresAt = inviteDoc.getLong("expiresAt") ?: 0
         if (System.currentTimeMillis() > expiresAt) {
-            return Result.failure(Exception("Código expirado"))
+            return Result.failure(Exception("Expired code"))
         }
 
         val familyId = inviteDoc.getString("familyId")
-            ?: return Result.failure(Exception("Família não encontrada"))
+            ?: return Result.failure(Exception("Family not found"))
 
-        // Adicionar membro à família
+        // Add member to the family
         val userId = firebaseAuth.currentUser?.uid
-            ?: return Result.failure(Exception("Não autenticado"))
+            ?: return Result.failure(Exception("Not authenticated"))
 
         val displayName = firebaseAuth.currentUser?.displayName
 
@@ -221,18 +221,17 @@ class InviteManager(
 
 ---
 
+## Risks and validations
 
-## Riscos e validações
+- Dependency on external services, authentication, quotas, and contractual changes.
+- Privacy and lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or by older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive confirmation states.
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
-
-## Verificação planejada
+## Planned verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

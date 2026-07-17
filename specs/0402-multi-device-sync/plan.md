@@ -1,32 +1,32 @@
-# Plano: Sincronização entre Múltiplos Dispositivos
+# Plan: Multi-Device Sync
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0401`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed Sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when needed.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical Technical Notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
-### Download Inicial
+### Initial Download
 
 ```kotlin
 class InitialSyncUseCase(
@@ -68,23 +68,23 @@ class InitialSyncUseCase(
                 .get().await()
             val weights = weightsSnapshot.documents.mapNotNull { it.toWeightEntity() }
 
-            emit(Progress.Downloading("pesagens", weights.size, weights.size))
+            emit(Progress.Downloading("weigh-ins", weights.size, weights.size))
             weights.forEach { weightDao.upsertWeightEntry(it) }
 
-            // Similar para vaccinations, dewormings...
+            // Similar handling for vaccinations and dewormings...
         }
 
         emit(Progress.Complete)
     }.catch { e ->
-        emit(Progress.Error(e.message ?: "Erro no sync"))
+        emit(Progress.Error(e.message ?: "Sync error"))
     }
 }
 ```
 
-### Tracking de Dispositivos
+### Device Tracking
 
 ```kotlin
-// No Firestore: coleção devices
+// In Firestore: devices collection
 // devices (user_id, device_id, device_name, last_seen_at, app_version)
 data class DeviceInfo(
     val deviceId: String = "",
@@ -146,7 +146,7 @@ class DeviceTracker(
 }
 ```
 
-### Heartbeat para Last Seen
+### Heartbeat for Last Seen
 
 ```kotlin
 class SyncHeartbeatWorker(
@@ -179,17 +179,17 @@ class SyncHeartbeatWorker(
 ---
 
 
-## Riscos e validações
+## Risks and Validation
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependence on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive-confirmation states.
 
-## Verificação planejada
+## Planned Verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

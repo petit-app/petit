@@ -1,6 +1,6 @@
 ---
 spec: "0405"
-title: "Compartilhamento Familiar na Nuvem"
+title: "Cloud Family Sharing"
 family: cloud-sync
 phase: 5
 status: On Hold
@@ -9,222 +9,221 @@ depends_on: ["0201", "0401"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Compartilhamento Familiar na Nuvem
+# Spec: Cloud Family Sharing
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário premium,
-> Eu quero compartilhar os dados dos meus pets com minha família,
-> Para que todos possamos acompanhar e registrar informações dos pets juntos.
+> As a premium user,
+> I want to share my pets' data with my family,
+> So that we can all track and record pet information together.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Criar grupo familiar
+### Scenario 1: Create a family group
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is covered and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou usuário premium
-QUANDO acesso Configurações > "Família"
-E toco em "Criar grupo familiar"
-ENTÃO um grupo é criado
-E eu me torno o administrador
-E recebo um código de convite
+GIVEN I am a premium user
+WHEN I open Settings > "Family"
+AND I tap "Create family group"
+THEN a group is created
+AND I become the administrator
+AND I receive an invitation code
 ```
 
-### Cenário 2: Convidar membro
+### Scenario 2: Invite a member
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is covered and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou admin de um grupo familiar
-QUANDO compartilho o código de convite "PETIT-ABC123"
-E outra pessoa insere o código no app dela
-ENTÃO ela entra no grupo familiar
-E vê todos os pets do grupo
+GIVEN I am the admin of a family group
+WHEN I share the invitation code "PETIT-ABC123"
+AND another person enters the code in their app
+THEN they join the family group
+AND can see all pets in the group
 ```
 
-### Cenário 3: Todos veem e editam
+### Scenario 3: Everyone can view and edit
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is covered and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que Pessoa A e Pessoa B estão no mesmo grupo familiar
-QUANDO Pessoa B adiciona uma pesagem para um pet
-ENTÃO Pessoa A vê a pesagem automaticamente
-E Pessoa A também pode adicionar/editar dados
+GIVEN Person A and Person B are in the same family group
+WHEN Person B adds a weight measurement for a pet
+THEN Person A sees the weight measurement automatically
+AND Person A can also add or edit data
 ```
 
-### Cenário 4: Permissões de admin
+### Scenario 4: Admin permissions
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is covered and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou admin do grupo
-QUANDO acesso a lista de membros
-ENTÃO posso:
-  - Remover membros
-  - Gerar novo código de convite
-  - Deletar o grupo
+GIVEN I am the group admin
+WHEN I open the member list
+THEN I can:
+  - Remove members
+  - Generate a new invitation code
+  - Delete the group
 ```
 
-### Cenário 5: Membro sai do grupo
+### Scenario 5: A member leaves the group
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is covered and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou membro de um grupo familiar
-QUANDO escolho "Sair do grupo"
-ENTÃO perco acesso aos dados compartilhados
-E os dados permanecem para os outros membros
-E meus dados pessoais (não compartilhados) permanecem comigo
+GIVEN I am a member of a family group
+WHEN I select "Leave group"
+THEN I lose access to the shared data
+AND the data remains available to the other members
+AND my personal data (not shared) remains with me
 ```
 
-### Cenário 6: Pets privados vs compartilhados
+### Scenario 6: Private vs. shared pets
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is covered and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou membro de um grupo familiar
-QUANDO cadastro um novo pet
-ENTÃO posso escolher:
-  - "Compartilhar com família" (todos veem)
-  - "Manter privado" (só eu vejo)
+GIVEN I am a member of a family group
+WHEN I add a new pet
+THEN I can choose:
+  - "Share with family" (everyone can see it)
+  - "Keep private" (only I can see it)
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit's local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transit, and deletion.
+- [ ] Provide accessible, understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios under **Functional requirements** are this spec's testable acceptance criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
 ### UI/UX
 
-### Tela: Família
+### Screen: Family
 
 ```
 ┌────────────────────────────────┐
-│ ← Família                      │
+│ ← Family                       │
 ├────────────────────────────────┤
 │                                │
-│ 👨‍👩‍👧 GRUPO FAMILIAR             │
+│ 👨‍👩‍👧 FAMILY GROUP               │
 │ ┌────────────────────────────┐ │
-│ │ Família Exemplo            │ │
-│ │ 3 membros                  │ │
+│ │ Example Family             │ │
+│ │ 3 members                  │ │
 │ └────────────────────────────┘ │
 │                                │
-│ 👥 MEMBROS                     │
+│ 👥 MEMBERS                     │
 │ ┌────────────────────────────┐ │
-│ │ 👤 Pessoa A (você)          │ │
+│ │ 👤 Person A (you)           │ │
 │ │    Admin                   │ │
 │ │                            │ │
-│ │ 👤 Pessoa B                 │ │
-│ │    Membro                  │ │
+│ │ 👤 Person B                 │ │
+│ │    Member                  │ │
 │ │                            │ │
-│ │ 👤 Pessoa C                 │ │
-│ │    Membro                  │ │
+│ │ 👤 Person C                 │ │
+│ │    Member                  │ │
 │ └────────────────────────────┘ │
 │                                │
-│ 🔗 CONVITE                     │
+│ 🔗 INVITATION                  │
 │ ┌────────────────────────────┐ │
-│ │ Código: PETIT-ABC123         │ │
-│ │ [Copiar]  [Compartilhar]   │ │
+│ │ Code: PETIT-ABC123         │ │
+│ │ [Copy]  [Share]            │ │
 │ │                            │ │
-│ │ Expira em 7 dias           │ │
-│ │ [Gerar novo código]        │ │
+│ │ Expires in 7 days          │ │
+│ │ [Generate new code]        │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │     SAIR DO GRUPO          │ │
+│ │       LEAVE GROUP          │ │
 │ └────────────────────────────┘ │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Tela: Entrar em Grupo
+### Screen: Join a Group
 
 ```
 ┌────────────────────────────────┐
-│ ← Entrar em Grupo Familiar     │
+│ ← Join a Family Group          │
 ├────────────────────────────────┤
 │                                │
-│ Digite o código de convite:    │
+│ Enter the invitation code:     │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │ PETIT-                       │ │
+│ │ PETIT-                     │ │
 │ └────────────────────────────┘ │
 │                                │
-│ Peça o código para quem        │
-│ criou o grupo familiar.        │
+│ Ask the person who created     │
+│ the family group for the code. │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │         ENTRAR             │ │
+│ │          JOIN              │ │
 │ └────────────────────────────┘ │
 │                                │
-│           ou                   │
+│             or                 │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │   CRIAR NOVO GRUPO         │ │
+│ │      CREATE NEW GROUP      │ │
 │ └────────────────────────────┘ │
 │                                │
 └────────────────────────────────┘
 ```
 
-### Seletor ao Criar Pet
+### Selector When Creating a Pet
 
 ```
 ┌────────────────────────────────┐
 │                                │
-│ Compartilhamento               │
+│ Sharing                        │
 │                                │
-│ ○ 👤 Privado                   │
-│   Apenas você verá este pet   │
+│ ○ 👤 Private                   │
+│   Only you will see this pet   │
 │                                │
-│ ● 👨‍👩‍👧 Família Exemplo           │
-│   Todos os membros verão       │
+│ ● 👨‍👩‍👧 Example Family           │
+│   All members will see it      │
 │                                │
 └────────────────────────────────┘
 ```
 
 ---
 
+## Edge cases
 
-## Casos extremos
+- The device loses connectivity or the process is interrupted during the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, imposes quota limits, or changes its API.
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+## Decisions
 
-## Decisões
-
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | Firebase, Google Drive, and the referenced APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tier, provider, or schedule as current decisions.
+- Features covered by the specs listed in `depends_on`.

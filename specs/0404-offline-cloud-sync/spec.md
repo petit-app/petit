@@ -1,6 +1,6 @@
 ---
 spec: "0404"
-title: "Sincronização Offline-First"
+title: "Offline-First Sync"
 family: cloud-sync
 phase: 5
 status: On Hold
@@ -9,113 +9,113 @@ depends_on: ["0401"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Sincronização Offline-First
+# Spec: Offline-First Sync
 
-## Contexto e motivação
+## Context and Motivation
 
-> Como usuário premium,
-> Eu quero que o app funcione normalmente mesmo offline,
-> Para que eu possa registrar dados sem conexão e eles sincronizem depois.
+> As a premium user,
+> I want the app to work normally even when offline,
+> So that I can record data without a connection and have it sync later.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional Requirements
 
-### Cenário 1: Criar dados offline
+### Scenario 1: Create Data Offline
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou sem internet
-QUANDO cadastro um novo pet "Mia"
-ENTÃO Mia é salva no Room (syncStatus = PENDING_SYNC)
-E Mia aparece na lista normalmente
-E vejo indicador "Pendente de sync" no item
+GIVEN I have no internet connection
+WHEN I register a new pet named "Mia"
+THEN Mia is saved in Room (syncStatus = PENDING_SYNC)
+AND Mia appears in the list as usual
+AND I see a "Pending sync" indicator on the item
 ```
 
-### Cenário 2: Sync automático ao reconectar
+### Scenario 2: Automatic Sync on Reconnection
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho dados pendentes de sync
-E estou offline
-QUANDO a internet volta
-ENTÃO o sync é iniciado automaticamente
-E os dados pendentes são enviados
-E o syncStatus muda para SYNCED
-E o indicador de pendente desaparece
+GIVEN I have data pending sync
+AND I am offline
+WHEN the internet connection returns
+THEN sync starts automatically
+AND the pending data is uploaded
+AND syncStatus changes to SYNCED
+AND the pending indicator disappears
 ```
 
-### Cenário 3: Múltiplas edições offline
+### Scenario 3: Multiple Offline Edits
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou offline
-QUANDO faço várias edições:
-  - Adiciono pet Mia
-  - Adiciono pesagem para Mia
-  - Edito nome de Luna para Luninha
-ENTÃO todas as edições são salvas localmente
-E todas ficam como PENDING_SYNC
-E ao reconectar, todas são enviadas
+GIVEN I am offline
+WHEN I make several edits:
+  - Add the pet Mia
+  - Add a weigh-in for Mia
+  - Change Luna's name to Lulu
+THEN all edits are saved locally
+AND all of them remain PENDING_SYNC
+AND upon reconnection, all of them are uploaded
 ```
 
-### Cenário 4: Conflito após voltar online
+### Scenario 4: Conflict After Coming Back Online
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que editei Luna offline (updatedAt = 1000)
-E outro dispositivo editou Luna online (updatedAt = 1500)
-QUANDO volto online e sincronizo
-ENTÃO a resolução de conflito acontece
-E a versão mais recente (1500) vence
+GIVEN I edited Luna offline (updatedAt = 1000)
+AND another device edited Luna online (updatedAt = 1500)
+WHEN I come back online and sync
+THEN conflict resolution occurs
+AND the newer version (1500) wins
 ```
 
-### Cenário 5: Queue de sync persiste após fechar app
+### Scenario 5: Sync Queue Persists After the App Is Closed
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que fiz edições offline
-E fecho o app
-E reabro o app (ainda offline)
-ENTÃO as edições ainda estão PENDING_SYNC
-E ao reconectar, serão sincronizadas
+GIVEN I made edits offline
+AND I close the app
+AND I reopen the app (still offline)
+THEN the edits are still PENDING_SYNC
+AND they will be synced upon reconnection
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-Functional Requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit’s local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transmission, and deletion.
+- [ ] Provide accessible, understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication during interrupted operations.
 
-## Estratégia de testes
+## Test Strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance Criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios in **Functional Requirements** are this spec’s testable acceptance criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved Product Notes
 
 ### UI/UX
 
-### Indicador em Item Pendente
+### Pending Item Indicator
 
 ```
 ┌────────────────────────────────┐
-│ ← Meus Pets                    │
+│ ← My Pets                      │
 ├────────────────────────────────┤
 │ ┌──────────────────────────────┐
 │ │ ┌────┐  Luna            ☁️✓  │  ← Synced
@@ -124,19 +124,19 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 │ └──────────────────────────────┘
 │ ┌──────────────────────────────┐
 │ │ ┌────┐  Mia             ☁️⏳  │  ← Pending
-│ │ │ 📷 │  Novo                 │
+│ │ │ 📷 │  New                  │
 │ │ └────┘                       │
 │ └──────────────────────────────┘
 └────────────────────────────────┘
 ```
 
-### Banner de Status Offline
+### Offline Status Banner
 
 ```
 ┌────────────────────────────────┐
-│ ⚠️ Sem conexão                 │
-│ Alterações serão sincronizadas │
-│ quando a internet voltar.      │
+│ ⚠️ No connection              │
+│ Changes will be synced when    │
+│ the internet connection returns.│
 └────────────────────────────────┘
 ┌────────────────────────────────┐
 │ 🐱 Petit                    ⚙️    │
@@ -144,22 +144,22 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 │ ...                            │
 ```
 
-### Status de Sync com Detalhes
+### Detailed Sync Status
 
 ```
 ┌────────────────────────────────┐
-│ ← Sincronização                │
+│ ← Sync                         │
 ├────────────────────────────────┤
 │                                │
-│ 📊 STATUS DA SYNC              │
+│ 📊 SYNC STATUS                 │
 │ ┌────────────────────────────┐ │
-│ │ ⚠️ 3 itens pendentes       │ │
+│ │ ⚠️ 3 pending items        │ │
 │ │                            │ │
-│ │ • 1 pet novo              │ │
-│ │ • 1 pesagem                │ │
-│ │ • 1 vacina editada         │ │
+│ │ • 1 new pet              │ │
+│ │ • 1 weigh-in             │ │
+│ │ • 1 edited vaccination   │ │
 │ │                            │ │
-│ │ Aguardando conexão...      │ │
+│ │ Waiting for connection... │ │
 │ └────────────────────────────┘ │
 │                                │
 └────────────────────────────────┘
@@ -167,23 +167,23 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 
 ---
 
-## Casos extremos
+## Edge Cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted midway through the operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverge, are incomplete, or were created by different app versions.
+- The external provider is unavailable, enforces quota limits, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need validation. |
+| External technology | Not decided | Firebase, Google Drive, and the cited APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of Scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical examples of pricing, tiers, providers, or schedules as current decisions.
+- Capabilities covered by the specs declared in `depends_on`.

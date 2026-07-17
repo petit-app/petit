@@ -1,42 +1,42 @@
-# Tarefas: Resolução de Conflitos na Nuvem
+# Tasks: Cloud Conflict Resolution
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
+> Spec status: **On Hold**. All tasks remain pending until explicit approval.
 
-## Tarefas
+## Tasks
 
-- [ ] **Cenário 1: Last-write-wins básico** (test-type: both)
+- [ ] **Scenario 1: Basic Last-Write-Wins** (test-type: both)
   - blocked-by: spec 0401
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 1: Last-write-wins básico” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que o pet "Luna" tem updatedAt = 1000 no dispositivo A E o dispositivo B edita Luna (updatedAt = 1500) QUANDO o dispositivo A recebe a mudança do snapshot listener do Firestore ENTÃO a versão do dispositivo B (mais recente) é mantida E o dispositivo A mostra as alterações do B
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 1: Basic Last-Write-Wins” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN the pet "Luna" has updatedAt = 1000 on device A AND device B edits Luna (updatedAt = 1500) WHEN device A receives the change from the Firestore snapshot listener THEN device B's version (the newer one) is retained AND device A shows B's changes
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 2: Edição offline mais antiga** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 2: Edição offline mais antiga” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que dispositivo A está offline e edita Luna (updatedAt = 1000) E dispositivo B edita Luna online (updatedAt = 1500) QUANDO dispositivo A volta online e tenta sync ENTÃO a versão do dispositivo B vence (updatedAt maior) E as alterações do dispositivo A são descartadas E o dispositivo A atualiza para a versão do B
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 2: Older Offline Edit** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 2: Older Offline Edit” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN device A is offline and edits Luna (updatedAt = 1000) AND device B edits Luna online (updatedAt = 1500) WHEN device A comes back online and attempts to sync THEN device B's version wins (higher updatedAt) AND device A's changes are discarded AND device A updates to B's version
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 3: Edição offline mais recente** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 3: Edição offline mais recente” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que dispositivo A está offline e edita Luna (updatedAt = 2000) E a versão no Firestore tem updatedAt = 1500 QUANDO dispositivo A volta online e faz sync ENTÃO a versão do dispositivo A vence (updatedAt maior) E o Firestore é atualizado com a versão do A E outros dispositivos recebem a versão do A
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 3: Newer Offline Edit** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 3: Newer Offline Edit” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN device A is offline and edits Luna (updatedAt = 2000) AND the Firestore version has updatedAt = 1500 WHEN device A comes back online and syncs THEN device A's version wins (higher updatedAt) AND Firestore is updated with A's version AND other devices receive A's version
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 4: Delete vs Edit** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 4: Delete vs Edit” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que dispositivo A deleta Luna (deletedAt = 1500) E dispositivo B editou Luna (updatedAt = 1600) antes de receber o delete QUANDO o sync acontece ENTÃO se a edição é mais recente que o delete, Luna é restaurada OU se o delete é mais recente, Luna permanece deletada
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 4: Delete vs. Edit** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 4: Delete vs. Edit” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN device A deletes Luna (deletedAt = 1500) AND device B edited Luna (updatedAt = 1600) before receiving the deletion WHEN sync occurs THEN if the edit is newer than the deletion, Luna is restored OR if the deletion is newer, Luna remains deleted
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
-- [ ] **Cenário 5: Campos diferentes editados** (test-type: both)
-  - blocked-by: spec 0401; tarefa anterior desta spec
-  - summary: entregar este comportamento como uma fatia vertical, incluindo domínio, persistência/serviço e interface quando aplicável.
-  - desired behavior: o fluxo “Cenário 5: Campos diferentes editados” funciona de ponta a ponta sem comprometer os dados locais.
-  - acceptance criteria: DADO que dispositivo A edita o nome de Luna para "Luninha" E dispositivo B edita o peso de Luna ao mesmo tempo QUANDO o sync acontece ENTÃO ambas as mudanças são mantidas (se a estratégia for field-level) OU a versão mais recente vence completamente (se document-level) ---
-  - verification: `./gradlew test` e `./gradlew connectedDebugAndroidTest`
+- [ ] **Scenario 5: Different Fields Edited** (test-type: both)
+  - blocked-by: spec 0401; previous task in this spec
+  - summary: deliver this behavior as a vertical slice, including the domain, persistence/service, and UI where applicable.
+  - desired behavior: the “Scenario 5: Different Fields Edited” flow works end to end without compromising local data.
+  - acceptance criteria: GIVEN device A changes Luna's name to "Lulu" AND device B edits Luna's weight at the same time WHEN sync occurs THEN both changes are retained (if the strategy is field-level) OR the newer version wins completely (if it is document-level) ---
+  - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`

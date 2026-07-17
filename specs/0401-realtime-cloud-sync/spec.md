@@ -1,6 +1,6 @@
 ---
 spec: "0401"
-title: "Sincronização em Tempo Real"
+title: "Real-Time Sync"
 family: cloud-sync
 phase: 5
 status: On Hold
@@ -9,109 +9,109 @@ depends_on: ["0201"]
 origin: "getmiw/specs-miw@09b4497"
 ---
 
-# Spec: Sincronização em Tempo Real
+# Spec: Real-Time Sync
 
-## Contexto e motivação
+## Context and motivation
 
-> Como usuário premium,
-> Eu quero que meus dados sincronizem automaticamente com a nuvem,
-> Para que eles estejam sempre atualizados e disponíveis em qualquer dispositivo.
+> As a premium user,
+> I want my data to sync automatically with the cloud,
+> So that it is always up to date and available on any device.
 
-Esta é uma hipótese histórica ainda não implementada. Produto, provedor externo, disponibilidade e monetização precisam ser revalidados antes de sua aprovação.
+This is a historical hypothesis that has not yet been implemented. The product, external provider, availability, and monetization must be revalidated before approval.
 
-## Requisitos funcionais
+## Functional requirements
 
-### Cenário 1: Sync após criar dados
+### Scenario 1: Sync after creating data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que sou usuário premium com sync ativado
-E tenho conexão de internet
-QUANDO cadastro um novo pet "Luna"
-ENTÃO Luna é salva no Room imediatamente (syncStatus = PENDING)
-E após alguns segundos, Luna é enviada para o Firestore
-E o syncStatus muda para SYNCED
-E vejo indicador de sync ✓
+GIVEN I am a premium user with sync enabled
+AND I have an internet connection
+WHEN I add a new pet named "Luna"
+THEN Luna is saved to Room immediately (syncStatus = PENDING)
+AND after a few seconds, Luna is sent to Firestore
+AND syncStatus changes to SYNCED
+AND I see the sync indicator ✓
 ```
 
-### Cenário 2: Sync em tempo real recebendo dados
+### Scenario 2: Real-time sync receiving data
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho o app aberto
-E alguém (ou outro dispositivo) adiciona dados no Firestore
-QUANDO a mudança é detectada pelo snapshot listener do Firestore
-ENTÃO os novos dados são baixados automaticamente
-E salvos no Room local
-E aparecem na UI sem precisar atualizar manualmente
+GIVEN I have the app open
+AND someone (or another device) adds data to Firestore
+WHEN the change is detected by the Firestore snapshot listener
+THEN the new data is downloaded automatically
+AND saved to the local Room database
+AND appears in the UI without requiring a manual refresh
 ```
 
-### Cenário 3: Sync sem internet (queue)
+### Scenario 3: Sync without internet access (queue)
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que estou sem internet
-QUANDO cadastro um novo pet
-ENTÃO o pet é salvo no Room (syncStatus = PENDING)
-E o pet aparece na UI normalmente
-E quando a internet voltar, o sync acontece automaticamente
+GIVEN I have no internet connection
+WHEN I add a new pet
+THEN the pet is saved to Room (syncStatus = PENDING)
+AND the pet appears in the UI as usual
+AND when the internet connection is restored, sync occurs automatically
 ```
 
-### Cenário 4: Ativar sync pela primeira vez
+### Scenario 4: Enable sync for the first time
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que tenho dados locais
-E nunca sincronizei antes
-QUANDO ativo "Sincronização na nuvem" nas configurações
-ENTÃO todos os dados locais são enviados para o Firestore
-E vejo progresso "Sincronizando X de Y itens..."
-E ao final, todos estão com syncStatus = SYNCED
+GIVEN I have local data
+AND I have never synced before
+WHEN I enable "Cloud sync" in settings
+THEN all local data is sent to Firestore
+AND I see the progress message "Syncing X of Y items..."
+AND when the operation is complete, all items have syncStatus = SYNCED
 ```
 
-### Cenário 5: Premium expira
+### Scenario 5: Premium expires
 
-- [ ] Este cenário é atendido e verificado no limite indicado pela estratégia de testes.
+- [ ] This scenario is implemented and verified at the boundary defined by the test strategy.
 
 ```gherkin
-DADO que meu premium expira
-QUANDO isso acontece
-ENTÃO o snapshot listener do Firestore é desconectado
-E novos dados são salvos apenas localmente (syncStatus = LOCAL_ONLY)
-E os dados já sincronizados permanecem no dispositivo
-E vejo aviso "Sincronização pausada - Renove seu premium"
+GIVEN my premium subscription expires
+WHEN this happens
+THEN the Firestore snapshot listener is disconnected
+AND new data is saved locally only (syncStatus = LOCAL_ONLY)
+AND previously synced data remains on the device
+AND I see the warning "Sync paused - Renew your premium subscription"
 ```
 
 ---
 
-## Requisitos não funcionais
+## Non-functional requirements
 
-- [ ] Preservar a operação local do Petit quando autenticação, rede ou serviço externo estiver indisponível.
-- [ ] Proteger dados pessoais e de saúde do pet durante armazenamento, transporte e exclusão.
-- [ ] Oferecer estados de carregamento, sucesso, vazio e erro acessíveis e compreensíveis.
-- [ ] Evitar perda ou duplicação silenciosa de dados em operações interrompidas.
+- [ ] Preserve Petit’s local operation when authentication, the network, or an external service is unavailable.
+- [ ] Protect personal and pet health data during storage, transmission, and deletion.
+- [ ] Provide accessible and understandable loading, success, empty, and error states.
+- [ ] Prevent silent data loss or duplication when operations are interrupted.
 
-## Estratégia de testes
+## Test strategy
 
-| Escopo | Cobertura esperada |
+| Scope | Expected coverage |
 | --- | --- |
-| Unitário | Regras de elegibilidade, validação, estado, conflito e transformação de dados. |
-| Integração | Fluxos que cruzam interface, repositórios, banco local e provedores externos. |
-| Ambos | Cada tarefa vertical usa teste unitário para regras e integração para limites com I/O. |
+| Unit | Eligibility, validation, state, conflict, and data transformation rules. |
+| Integration | Flows that cross the UI, repositories, local database, and external providers. |
+| Both | Each vertical task uses unit tests for rules and integration tests for I/O boundaries. |
 
-## Critérios de aceite
+## Acceptance criteria
 
-Os cenários em **Requisitos funcionais** são os critérios testáveis desta spec e devem possuir cobertura rastreável antes de o status avançar para `Implemented`.
+The scenarios under **Functional requirements** are this spec’s testable criteria and must have traceable coverage before the status advances to `Implemented`.
 
-## Notas de produto preservadas
+## Preserved product notes
 
 ### UI/UX
 
-### Indicador de Sync na Toolbar
+### Sync indicator in the toolbar
 
 ```
 ┌────────────────────────────────┐
@@ -121,54 +121,54 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 └────────────────────────────────┘
 
 ┌────────────────────────────────┐
-│ 🐱 Petit                 ☁️⟳  ⚙️  │  ← Sincronizando
+│ 🐱 Petit                 ☁️⟳  ⚙️  │  ← Syncing
 ├────────────────────────────────┤
 │ ...                            │
 └────────────────────────────────┘
 
 ┌────────────────────────────────┐
-│ 🐱 Petit                 ☁️!  ⚙️  │  ← Pendente (sem internet)
+│ 🐱 Petit                 ☁️!  ⚙️  │  ← Pending (no internet)
 ├────────────────────────────────┤
 │ ...                            │
 └────────────────────────────────┘
 ```
 
-### Configuração de Sync
+### Sync settings
 
 ```
 ┌────────────────────────────────┐
-│ ← Sincronização                │
+│ ← Sync                         │
 ├────────────────────────────────┤
 │                                │
-│ ☁️ SINCRONIZAÇÃO NA NUVEM      │
+│ ☁️ CLOUD SYNC                  │
 │ ┌────────────────────────────┐ │
-│ │ Ativar                [ON] │ │
+│ │ Enable                [ON] │ │
 │ └────────────────────────────┘ │
 │                                │
-│ ℹ️ Seus dados são sincronizados│
-│ automaticamente entre todos   │
-│ os seus dispositivos.         │
+│ ℹ️ Your data is synced         │
+│ automatically across all      │
+│ your devices.                 │
 │                                │
 ├────────────────────────────────┤
 │                                │
 │ 📊 STATUS                      │
 │ ┌────────────────────────────┐ │
-│ │ ✅ Sincronizado            │ │
-│ │ Última sync: há 2 min      │ │
+│ │ ✅ Synced                  │ │
+│ │ Last sync: 2 min ago       │ │
 │ │                            │ │
-│ │ 2 pets • 15 pesagens      │ │
-│ │ 8 vacinas • 6 vermífugos   │ │
+│ │ 2 pets • 15 weigh-ins      │ │
+│ │ 8 vaccines • 6 dewormings  │ │
 │ └────────────────────────────┘ │
 │                                │
 ├────────────────────────────────┤
 │                                │
-│ ⚙️ OPÇÕES                      │
+│ ⚙️ OPTIONS                     │
 │ ┌────────────────────────────┐ │
-│ │ Sync apenas em Wi-Fi [OFF] │ │
+│ │ Wi-Fi-only sync      [OFF] │ │
 │ └────────────────────────────┘ │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │    FORÇAR SYNC COMPLETO    │ │
+│ │      FORCE FULL SYNC       │ │
 │ └────────────────────────────┘ │
 │                                │
 └────────────────────────────────┘
@@ -176,23 +176,23 @@ Os cenários em **Requisitos funcionais** são os critérios testáveis desta sp
 
 ---
 
-## Casos extremos
+## Edge cases
 
-- O dispositivo perde conectividade ou o processo é interrompido no meio da operação.
-- A sessão expira, muda de conta ou não possui autorização suficiente.
-- Dados locais e remotos divergem, estão incompletos ou foram criados por versões diferentes do app.
-- O provedor externo está indisponível, limita quota ou altera sua API.
+- The device loses connectivity or the process is interrupted mid-operation.
+- The session expires, switches accounts, or lacks sufficient authorization.
+- Local and remote data diverges, is incomplete, or was created by different app versions.
+- The external provider is unavailable, enforces quota limits, or changes its API.
 
-## Decisões
+## Decisions
 
-| Decisão | Escolha atual | Motivo |
+| Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Estado da proposta | On Hold | A demanda e o modelo do produto ainda precisam ser validados. |
-| Tecnologia externa | Não decidida | Firebase, Google Drive e APIs citadas são opções históricas, não compromissos atuais. |
-| Fonte de verdade local | Preservar Room como base offline | Mantém o Petit útil sem conta ou conectividade. |
+| Proposal status | On Hold | Demand and the product model still need to be validated. |
+| External technology | Undecided | The cited Firebase, Google Drive, and APIs are historical options, not current commitments. |
+| Local source of truth | Preserve Room as the offline foundation | Keeps Petit useful without an account or connectivity. |
 
-## Fora de escopo
+## Out of scope
 
-- Implementar esta proposta antes de revisão, aprovação explícita e atualização do índice.
-- Tratar exemplos históricos de preço, tier, provedor ou cronograma como decisão vigente.
-- Funcionalidades cobertas pelas specs declaradas em `depends_on`.
+- Implementing this proposal before review, explicit approval, and an index update.
+- Treating historical pricing, tier, provider, or timeline examples as current decisions.
+- Capabilities covered by the specs declared in `depends_on`.

@@ -1,30 +1,30 @@
-# Plano: Resolução de Conflitos na Nuvem
+# Plan: Cloud Conflict Resolution
 
 Spec: [spec.md](./spec.md)
 
-## Estado
+## Status
 
-Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
+This plan is **On Hold**. No step authorizes implementation until the spec has been reviewed and approved.
 
-## Dependências
+## Dependencies
 
 - Specs: `0401`
-- Revalidar demanda, privacidade, custos, termos do provedor e modelo de disponibilidade.
+- Revalidate demand, privacy, costs, provider terms, and the availability model.
 
-## Sequenciamento proposto
+## Proposed Sequence
 
-1. Revalidar os cenários da spec com o produto atual e atualizar decisões obsoletas.
-2. Criar testes de contrato e regras de domínio para a primeira fatia vertical.
-3. Implementar a integração mínima atrás de abstrações de repositório, mantendo Room como fonte local.
-4. Entregar estados de UI e recuperação de erros para a mesma fatia.
-5. Repetir o ciclo por tarefa, incluindo migração e compatibilidade quando necessário.
-6. Executar os testes focados e as suítes Android relevantes antes de atualizar o status.
+1. Revalidate the spec scenarios against the current product and update obsolete decisions.
+2. Create contract tests and domain rules for the first vertical slice.
+3. Implement the minimum integration behind repository abstractions, keeping Room as the local source of truth.
+4. Deliver UI states and error recovery for the same slice.
+5. Repeat the cycle for each task, including migration and compatibility work when needed.
+6. Run the focused tests and relevant Android suites before updating the status.
 
-## Notas técnicas históricas
+## Historical Technical Notes
 
-Os nomes de classes, APIs, dependências e trechos de código abaixo vieram da proposta original e precisam ser reconciliados com o código e versões atuais antes de uso.
+The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
 
-### Requisitos Técnicos
+### Technical Requirements
 
 ### ConflictResolver
 
@@ -38,37 +38,37 @@ class ConflictResolver {
     }
 
     fun <T : SyncableEntity> resolve(local: T?, remote: T): Resolution {
-        // Não existe localmente: usar remoto
+        // Does not exist locally: use remote
         if (local == null) {
             return Resolution.UseRemote
         }
 
-        // Verificar deletions
+        // Check deletions
         val localDeleted = local.deletedAt != null
         val remoteDeleted = remote.deletedAt != null
 
         return when {
-            // Ambos deletados: usar mais recente
+            // Both deleted: use the newer record
             localDeleted && remoteDeleted -> {
                 if (remote.updatedAt >= local.updatedAt) Resolution.UseRemote
                 else Resolution.KeepLocal
             }
 
-            // Apenas remoto deletado
+            // Only remote is deleted
             remoteDeleted -> {
-                // Se delete é mais recente que local update, aceitar delete
+                // If the deletion is newer than the local update, accept the deletion
                 if (remote.deletedAt!! >= local.updatedAt) Resolution.UseRemote
                 else Resolution.KeepLocal
             }
 
-            // Apenas local deletado
+            // Only local is deleted
             localDeleted -> {
-                // Se remote update é mais recente que local delete, restaurar
+                // If the remote update is newer than the local deletion, restore it
                 if (remote.updatedAt > local.deletedAt!!) Resolution.UseRemote
                 else Resolution.KeepLocal
             }
 
-            // Nenhum deletado: comparar updatedAt
+            // Neither is deleted: compare updatedAt
             else -> {
                 if (remote.updatedAt > local.updatedAt) Resolution.UseRemote
                 else Resolution.KeepLocal
@@ -78,7 +78,7 @@ class ConflictResolver {
 }
 ```
 
-### Aplicando Resolução
+### Applying the Resolution
 
 ```kotlin
 class SyncProcessor(
@@ -93,13 +93,13 @@ class SyncProcessor(
                 petDao.insertPet(remote.toEntity().copy(syncStatus = "SYNCED"))
             }
             is ConflictResolver.Resolution.KeepLocal -> {
-                // Local é mais recente, precisa re-upload
+                // Local is newer and must be uploaded again
                 if (local != null && local.syncStatus != "SYNCED") {
-                    // Será enviado no próximo upload cycle
+                    // It will be sent in the next upload cycle
                 }
             }
             is ConflictResolver.Resolution.Merge -> {
-                // Implementação futura para field-level merge
+                // Future implementation for field-level merge
             }
         }
     }
@@ -108,28 +108,28 @@ class SyncProcessor(
 
 ### Clock Synchronization
 
-Para garantir que `updatedAt` seja confiável entre dispositivos:
+To ensure that `updatedAt` is reliable across devices:
 
 ```kotlin
 object SyncClock {
     /**
-     * Retorna timestamp para uso em updatedAt
-     * Considera possível diferença de relógio entre dispositivos
+     * Returns a timestamp for use in updatedAt
+     * Accounts for possible clock differences between devices
      */
     fun now(): Long {
-        // Por simplicidade, usar System.currentTimeMillis()
-        // Em produção, considerar usar Firestore server timestamps
-        // ou NTP para sincronizar relógios
+        // For simplicity, use System.currentTimeMillis()
+        // In production, consider using Firestore server timestamps
+        // or NTP to synchronize clocks
         return System.currentTimeMillis()
     }
 }
 
-// No Firestore, usar FieldValue.serverTimestamp() para updated_at
-// A coluna updated_at pode usar FieldValue.serverTimestamp()
-// Mas para Last-Write-Wins, o client envia o timestamp local
+// In Firestore, use FieldValue.serverTimestamp() for updated_at
+// The updated_at column can use FieldValue.serverTimestamp()
+// However, for Last-Write-Wins, the client sends the local timestamp
 ```
 
-### Logging de Conflitos (Debug)
+### Conflict Logging (Debug)
 
 ```kotlin
 class ConflictLogger(
@@ -152,7 +152,7 @@ class ConflictLogger(
             """.trimIndent())
         }
 
-        // Analytics para monitorar frequência de conflitos
+        // Analytics to monitor conflict frequency
         analyticsTracker.trackEvent("sync_conflict", mapOf(
             "entity_type" to entityType,
             "resolution" to resolution
@@ -164,17 +164,17 @@ class ConflictLogger(
 ---
 
 
-## Riscos e validações
+## Risks and Validation
 
-- Dependência de serviços externos, autenticação, quota e mudanças contratuais.
-- Privacidade e ciclo de vida de dados pessoais e de saúde do pet.
-- Migrações de banco e compatibilidade com dados criados offline ou em versões antigas.
-- Concorrência, idempotência, conflitos e recuperação após interrupções.
-- Acessibilidade e clareza dos estados de erro, espera e confirmação destrutiva.
+- Dependence on external services, authentication, quotas, and contractual changes.
+- Privacy and the lifecycle of personal and pet health data.
+- Database migrations and compatibility with data created offline or in older versions.
+- Concurrency, idempotency, conflicts, and recovery after interruptions.
+- Accessibility and clarity of error, waiting, and destructive-confirmation states.
 
-## Verificação planejada
+## Planned Verification
 
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest`
 - `./gradlew spotlessCheck`
-- Quando houver build: `./gradlew assembleDebug` seguido de `./gradlew installDebug`
+- When a build is run: `./gradlew assembleDebug` followed by `./gradlew installDebug`

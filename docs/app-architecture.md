@@ -1,9 +1,9 @@
-# Arquitetura
+# Architecture
 
-> Documento transversal. As decisões e requisitos específicos de cada
-> capacidade ficam nas pastas numeradas em [`specs/`](../specs/README.md).
+> Cross-cutting document. Decisions and requirements specific to each
+> capability are kept in the numbered folders under [`specs/`](../specs/README.md).
 
-## Princípios
+## Principles
 
 ### 1. Local-First
 
@@ -17,82 +17,82 @@
                     ▼                          ▼                          ▼
              ┌─────────────┐           ┌─────────────┐           ┌─────────────┐
              │    Room     │           │  DataStore  │           │ WorkManager │
-             │  (verdade)  │           │   (prefs)   │           │   (sync)    │
+             │  (truth)    │           │   (prefs)   │           │   (sync)    │
              └─────────────┘           └─────────────┘           └─────────────┘
 ```
 
-**Regras**:
+**Rules**:
 
-- UI sempre lê do banco local (Room)
-- Operações de escrita vão direto para Room
-- Sync remoto acontece em background via WorkManager
-- Ausência de internet **NUNCA** bloqueia operações
+- The UI always reads from the local database (Room)
+- Write operations go directly to Room
+- Remote sync runs in the background through WorkManager
+- Lack of internet access **NEVER** blocks operations
 
 ### 2. Soft Delete
 
-Todas as entidades sincronizáveis usam soft delete:
+All syncable entities use soft deletion:
 
-- `deletedAt: Long?` - timestamp de exclusão ou null
-- Queries filtram `WHERE deletedAt IS NULL` por padrão
-- Sync propaga deletions para resolver em outros devices
+- `deletedAt: Long?` - deletion timestamp or null
+- Queries filter with `WHERE deletedAt IS NULL` by default
+- Sync propagates deletions so they can be resolved on other devices
 
 ### 3. Sync Status
 
 ```kotlin
 enum class SyncStatus {
-    LOCAL_ONLY,      // Nunca sincronizado (free tier)
-    PENDING_SYNC,    // Modificado, aguardando sync
-    SYNCED,          // Sincronizado com sucesso
-    CONFLICT         // Conflito detectado (resolver)
+    LOCAL_ONLY,      // Never synced (free tier)
+    PENDING_SYNC,    // Modified and awaiting sync
+    SYNCED,          // Synced successfully
+    CONFLICT         // Conflict detected (requires resolution)
 }
 ```
 
 ---
 
-## Camadas
+## Layers
 
 ### Presentation Layer
 
-- **Jetpack Compose** para UI
-- **ViewModel** com StateFlow para estado
-- **Navigation Compose** para navegação
+- **Jetpack Compose** for the UI
+- **ViewModel** with StateFlow for state management
+- **Navigation Compose** for navigation
 
 ### Domain Layer
 
-- **Use Cases** encapsulam regras de negócio
-- **Domain Models** puros (sem anotações Room)
+- **Use Cases** encapsulate business rules
+- Pure **Domain Models** (without Room annotations)
 
 ### Data Layer
 
-- **Repository** abstrai fonte de dados
-- **Room DAOs** para acesso ao banco
-- **DataStore** para preferências
+- **Repository** abstracts the data source
+- **Room DAOs** provide database access
+- **DataStore** stores preferences
 
 ### Background Layer
 
-- **WorkManager Workers** para:
-  - Disparo de notificações de tarefas (`TaskNotificationWorker` — one-shot)
-  - Automação de criação de tarefas ao salvar registros de saúde (`AutoTaskService`)
-  - Agendamento e cancelamento de notificações (`TaskScheduler` / `TaskSchedulerImpl`)
-  - Sync na rede local via NSD (Network Service Discovery) — Fase 2
-  - Sincronização remota via Firebase Firestore — Fase N+2 (holding)
+- **WorkManager Workers** handle:
+  - Triggering task notifications (`TaskNotificationWorker` — one-shot)
+  - Automating task creation when health records are saved (`AutoTaskService`)
+  - Scheduling and canceling notifications (`TaskScheduler` / `TaskSchedulerImpl`)
+  - Local network sync through NSD (Network Service Discovery) — Phase 2
+  - Remote sync through Firebase Firestore — Phase N+2 (on hold)
 
 ---
 
-## Estrutura de Pacotes
+## Package Structure
 
 ```
 com.woliveiras.petit/
 ├── data/
 │   ├── local/
-│   │   ├── db/                     — PetitDatabase e migrações
+│   │   ├── db/                     — PetitDatabase and migrations
 │   │   ├── dao/                    — @Dao interfaces (PetDao, WeightEntryDao, etc.)
-│   │   └── entity/                 — @Entity classes Room
-│   ├── mapper/                     — conversão Entity ↔ Domain model
-│   └── repository/                 — interfaces e implementações de Repository
+│   │   └── entity/                 — Room @Entity classes
+│   ├── mapper/                     — Entity ↔ Domain model conversion
+│   └── repository/                 — Repository interfaces and implementations
 ├── domain/
-│   ├── model/                      — modelos de domínio puros (sem deps Android)
-│   └── usecase/                    — ações cross-repository (ExportImport, DeleteAll)
+│   ├── model/                      — pure domain models (no Android dependencies)
+│   └── usecase/                    — cross-repository actions (ExportImport, DeleteAll)
 ├── presentation/
 │   ├── feature/
 │   │   ├── home/                   — HomeScreen, HomeViewModel, HomeUiState
@@ -101,12 +101,12 @@ com.woliveiras.petit/
 │   │   ├── vaccination/            — VaccinationRecords, VaccinationForm
 │   │   ├── deworming/              — DewormingRecords, DewormingForm
 │   │   ├── tasks/                  — TaskList, TaskForm, CompletedTasks, TaskSettings, TaskFilter
-│   │   ├── timeline/              — ActivityTimeline, ActivityTimelineViewModel
-│   │   ├── settings/              — Settings, ExportImport, DeleteAllData
-│   │   ├── onboarding/            — OnboardingScreen, OnboardingViewModel
-│   │   ├── familygroup/           — FamilyGroup, Pairing e Transfer
-│   │   └── quickadd/              — QuickAddScreen
-│   ├── components/                 — composables compartilhados (PetCard, EmptyState, HealthStatusBadge,
+│   │   ├── timeline/               — ActivityTimeline, ActivityTimelineViewModel
+│   │   ├── settings/               — Settings, ExportImport, DeleteAllData
+│   │   ├── onboarding/             — OnboardingScreen, OnboardingViewModel
+│   │   ├── familygroup/            — FamilyGroup, Pairing, and Transfer
+│   │   └── quickadd/               — QuickAddScreen
+│   ├── components/                 — shared composables (PetCard, EmptyState, HealthStatusBadge,
 │   │                               —   PetitTopAppBar, SpeedDialFab, TimelineEventCard, WeightChart)
 │   ├── navigation/                 — Screen routes, PetitNavGraph, PetitBottomNavBar
 │   └── util/                       — EnumExtensions, LocalizedEnums
@@ -118,30 +118,30 @@ com.woliveiras.petit/
 └── PetitApplication.kt             — @HiltAndroidApp
 ```
 
-Esta árvore reflete os pacotes existentes na data da migração. Elementos de
-sincronização contínua descritos abaixo permanecem como arquitetura planejada.
+This tree reflects the packages that existed at the time of the migration. The
+continuous synchronization components described below remain part of the planned architecture.
 
 ---
 
-## Resolução de Conflitos
+## Conflict Resolution
 
-**Estratégia**: Last-Write-Wins por `updatedAt`
+**Strategy**: Last-Write-Wins based on `updatedAt`
 
 ```
 Local:  { id: "abc", name: "Luna", updatedAt: 1000 }
-Remote: { id: "abc", name: "Luninha", updatedAt: 1500 }
+Remote: { id: "abc", name: "Little Luna", updatedAt: 1500 }
 
-Resultado: Remote vence (updatedAt maior)
+Result: Remote wins (higher updatedAt)
 ```
 
-Sync remoto (Fase N+2, holding) usará Firebase Firestore como transporte.
+Remote sync (Phase N+2, on hold) will use Firebase Firestore as its transport.
 
-### Bateria e Protocolos de Sync Local
+### Battery Use and Local Sync Protocols
 
-O sync local (Fase 2) segue regras estritas de bateria:
+Local sync (Phase 2) follows strict battery-use rules:
 
-- **Sync contínuo** usa **NSD + TCP sobre Wi-Fi de infraestrutura** (roteador da casa) — custo ~5-15mW
-- **Wi-Fi Direct NUNCA é usado para sync contínuo** — apenas para transferência one-shot
-- **Nearby Connections** (Google Play Services) gerencia o transporte do one-shot automaticamente (BLE → BT → Wi-Fi Direct)
-- **WorkManager** controla sync em background com constraints de rede
-- **NSD é lifecycle-aware**: ativo em foreground, desregistrado ao fechar o app
+- **Continuous sync** uses **NSD + TCP over infrastructure Wi-Fi** (the home router) — approximately 5–15 mW
+- **Wi-Fi Direct is NEVER used for continuous sync** — only for one-shot transfers
+- **Nearby Connections** (Google Play Services) automatically manages the one-shot transport (BLE → BT → Wi-Fi Direct)
+- **WorkManager** controls background sync with network constraints
+- **NSD is lifecycle-aware**: active in the foreground and unregistered when the app closes
