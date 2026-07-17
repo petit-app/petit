@@ -4,15 +4,15 @@ Spec: [spec.md](./spec.md)
 
 ## Sequence
 
-1. Present the destructive scope and require the localized confirmation word.
-2. Cancel all scheduled task notification work.
-3. Delete dependent pet-care records and pets in one Room transaction.
-4. Show a success state and return to Home after completion.
-5. Add unit tests for the reset policy, failure state, idempotence, and retry.
-6. Extend the Room transaction to family-group members and sync logs.
-7. Reset reminder and family-group preferences while retaining theme, language, and onboarding completion.
-8. Display cancellation/deletion failures and provide a safe retry path.
-9. Add Room, DataStore, WorkManager, Compose, and focused E2E coverage.
+1. [x] Present the destructive scope and require the localized confirmation word.
+2. [x] Cancel all scheduled task notification work.
+3. [x] Delete dependent pet-care records and pets in one Room transaction.
+4. [x] Show a success state and return to Home after completion.
+5. [x] Add unit tests for the reset policy, failure state, idempotence, and retry.
+6. [x] Extend the Room transaction to family-group members and sync logs.
+7. [x] Reset reminder and family-group preferences while retaining theme, language, and onboarding completion.
+8. [x] Display cancellation/deletion failures and provide a safe retry path.
+9. [x] Add Room, DataStore, WorkManager, Compose, and focused E2E coverage.
 
 ## Architecture
 

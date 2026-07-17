@@ -77,4 +77,8 @@ constructor(@ApplicationContext private val context: Context) : ReminderPreferen
       prefs[PreferencesKeys.NOTIFICATION_MINUTE] = minute.coerceIn(0, 59)
     }
   }
+
+  override suspend fun reset() {
+    context.reminderPreferencesDataStore.edit { it.clear() }
+  }
 }

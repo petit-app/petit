@@ -1,5 +1,6 @@
 package com.woliveiras.petit.presentation.feature.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -104,12 +105,14 @@ private fun DeleteSuccessScreen(onGoHome: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DeleteConfirmationContent(
+internal fun DeleteConfirmationContent(
   uiState: DeleteAllDataUiState,
   onNavigateBack: () -> Unit,
   onConfirmTextChanged: (String) -> Unit,
   onDelete: (String) -> Unit,
 ) {
+  BackHandler(enabled = uiState.isDeleting) {}
+
   val confirmWord = stringResource(R.string.delete_all_data_confirm_word)
   val isConfirmEnabled = uiState.confirmText == confirmWord && !uiState.isDeleting
 
@@ -219,6 +222,15 @@ private fun DeleteConfirmationContent(
         },
       )
 
+      uiState.errorMessage?.let { message ->
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+          text = message,
+          color = MaterialTheme.colorScheme.error,
+          style = MaterialTheme.typography.bodyMedium,
+        )
+      }
+
       Spacer(modifier = Modifier.weight(1f))
       Spacer(modifier = Modifier.height(24.dp))
 
@@ -246,7 +258,14 @@ private fun DeleteConfirmationContent(
           )
           Spacer(modifier = Modifier.width(8.dp))
           Text(
-            text = stringResource(R.string.pet_delete_confirm_button),
+            text =
+              stringResource(
+                if (uiState.errorMessage == null) {
+                  R.string.pet_delete_confirm_button
+                } else {
+                  R.string.action_retry
+                }
+              ),
             style = MaterialTheme.typography.titleMedium,
           )
         }

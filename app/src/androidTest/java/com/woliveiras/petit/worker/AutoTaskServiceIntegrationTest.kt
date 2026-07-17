@@ -118,6 +118,8 @@ class AutoTaskServiceIntegrationTest {
     override suspend fun updateWeightSettings(enabled: Boolean, intervalDays: Int) = Unit
 
     override suspend fun updateNotificationTime(hour: Int, minute: Int) = Unit
+
+    override suspend fun reset() = Unit
   }
 
   private class FixedPetRepository : PetRepository {

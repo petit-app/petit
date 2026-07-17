@@ -21,6 +21,7 @@ data class DeleteAllDataUiState(
   val confirmText: String = "",
   val isDeleting: Boolean = false,
   val isDeleted: Boolean = false,
+  val errorMessage: String? = null,
 )
 
 sealed class DeleteAllDataEvent {
@@ -44,14 +45,20 @@ constructor(
   val events: SharedFlow<DeleteAllDataEvent> = _events.asSharedFlow()
 
   fun updateConfirmText(text: String) {
-    _uiState.update { it.copy(confirmText = text) }
+    _uiState.update { it.copy(confirmText = text, errorMessage = null) }
   }
 
   fun deleteAllData(confirmWord: String) {
-    if (_uiState.value.confirmText != confirmWord) return
+    if (
+      _uiState.value.confirmText != confirmWord ||
+        _uiState.value.isDeleting ||
+        _uiState.value.isDeleted
+    ) {
+      return
+    }
 
     viewModelScope.launch {
-      _uiState.update { it.copy(isDeleting = true) }
+      _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
       deleteAllDataUseCase
         .execute()
         .onSuccess {
@@ -59,10 +66,9 @@ constructor(
           _events.emit(DeleteAllDataEvent.Success)
         }
         .onFailure { error ->
-          _uiState.update { it.copy(isDeleting = false) }
-          _events.emit(
-            DeleteAllDataEvent.Error(error.message ?: context.getString(R.string.error_unknown))
-          )
+          val message = error.message ?: context.getString(R.string.error_unknown)
+          _uiState.update { it.copy(isDeleting = false, errorMessage = message) }
+          _events.emit(DeleteAllDataEvent.Error(message))
         }
     }
   }

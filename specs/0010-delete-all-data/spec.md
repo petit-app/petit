@@ -2,7 +2,7 @@
 spec: "0010"
 title: Delete all data
 family: pet-care
-status: In Progress
+status: Completed
 owner: woliveiras
 depends_on: ["0001", "0002", "0003", "0004", "0005"]
 ---
@@ -15,9 +15,10 @@ The caregiver needs a deliberate way to remove locally stored pet-care records f
 
 ## Current state
 
-The confirmation flow cancels task workers and transactionally deletes the
-visible pet-care records. It does not yet purge local sharing data or
-preferences, and deletion errors are not displayed by the screen.
+The confirmation flow cancels task workers, transactionally deletes pet-care,
+family-member, and sync-log records, resets reminder and local-family
+preferences, and preserves device-experience preferences. Failures remain
+visible, prevent false success, and can be retried safely.
 
 ## Functional requirements
 

@@ -2,9 +2,12 @@ package com.woliveiras.petit.domain.usecase
 
 import androidx.room.withTransaction
 import com.woliveiras.petit.data.local.db.PetitDatabase
+import com.woliveiras.petit.data.repository.FamilyGroupRepository
+import com.woliveiras.petit.data.repository.ReminderPreferencesRepository
 import com.woliveiras.petit.worker.TaskScheduler
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -19,8 +22,12 @@ interface DeleteAllDataAction {
 @Singleton
 class DeleteAllDataUseCase
 @Inject
-constructor(private val database: PetitDatabase, private val taskScheduler: TaskScheduler) :
-  DeleteAllDataAction {
+constructor(
+  private val database: PetitDatabase,
+  private val taskScheduler: TaskScheduler,
+  private val reminderPreferencesRepository: ReminderPreferencesRepository,
+  private val familyGroupRepository: FamilyGroupRepository,
+) : DeleteAllDataAction {
 
   override suspend fun execute(): Result<Unit> =
     withContext(Dispatchers.IO) {
@@ -33,8 +40,14 @@ constructor(private val database: PetitDatabase, private val taskScheduler: Task
           database.vaccinationEntryDao().deleteAll()
           database.weightEntryDao().deleteAll()
           database.petDao().deleteAll()
+          database.familyGroupMemberDao().deleteAll()
+          database.syncLogDao().deleteAll()
         }
+        reminderPreferencesRepository.reset()
+        familyGroupRepository.resetLocalPreferences()
         Result.success(Unit)
+      } catch (e: CancellationException) {
+        throw e
       } catch (e: Exception) {
         Result.failure(e)
       }

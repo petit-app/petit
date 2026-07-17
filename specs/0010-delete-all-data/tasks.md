@@ -19,19 +19,19 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: display success only after the operation completes and navigate back to Home on request.
   - acceptance criteria: successful deletion does not leave the destructive form active.
   - verification: source evidence in `DeleteAllDataViewModel`, `DeleteAllDataScreen`, and `PetitNavGraph`.
-- [ ] **Complete the local-data purge scope** (test-type: integration)
+- [x] **Complete the local-data purge scope** (test-type: integration)
   - blocked-by: cancel workers and delete pet-care records
   - desired behavior: delete family-group members and sync logs, reset reminder/family preferences, and retain theme, language, and onboarding completion.
   - acceptance criteria: every Room table and DataStore is intentionally deleted, reset, or retained according to the spec.
   - test expectations: unit tests cover the reset policy; Room and DataStore tests verify every store explicitly.
   - verification: `./gradlew test`
-- [ ] **Make deletion failures recoverable** (test-type: both)
+- [x] **Make deletion failures recoverable** (test-type: both)
   - blocked-by: cancel workers and delete pet-care records
   - desired behavior: display errors and define recovery when workers were canceled but the Room transaction failed.
   - acceptance criteria: failure never shows success, is visible to the caregiver, and offers a safe retry path.
   - test expectations: unit tests cover cancellation, Room, and preference-reset failures plus repeated submission/retry; Compose tests cover error and retry UI.
   - verification: `./gradlew test`
-- [ ] **Add automated delete-all-data regression tests** (test-type: both)
+- [x] **Add automated delete-all-data regression tests** (test-type: both)
   - blocked-by: complete the local-data purge scope, make deletion failures recoverable
   - desired behavior: cover confirmation, idempotence, WorkManager cancellation, transaction rollback, complete scope, errors, and navigation.
   - acceptance criteria: every acceptance criterion and documented retention decision has automated coverage.

@@ -44,4 +44,7 @@ interface ReminderPreferencesRepository {
 
   /** Update default notification time. */
   suspend fun updateNotificationTime(hour: Int, minute: Int)
+
+  /** Reset all reminder settings to their product defaults. */
+  suspend fun reset()
 }

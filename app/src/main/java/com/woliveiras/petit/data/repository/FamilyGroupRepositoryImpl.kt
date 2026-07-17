@@ -167,6 +167,10 @@ constructor(
     return syncLogDao.getLatestSyncLog()?.toDomain()
   }
 
+  override suspend fun resetLocalPreferences() {
+    context.familyGroupDataStore.edit { it.clear() }
+  }
+
   private fun generateFamilyGroupKey(): String {
     return UUID.randomUUID().toString().take(8).uppercase()
   }

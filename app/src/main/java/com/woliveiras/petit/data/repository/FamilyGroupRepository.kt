@@ -49,4 +49,7 @@ interface FamilyGroupRepository {
 
   /** Get the most recent sync log. */
   suspend fun getLatestSyncLog(): SyncLog?
+
+  /** Clear all locally persisted family-group credentials and sync settings. */
+  suspend fun resetLocalPreferences()
 }
