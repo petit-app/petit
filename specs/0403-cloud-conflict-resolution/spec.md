@@ -2,11 +2,9 @@
 spec: "0403"
 title: "Cloud Conflict Resolution"
 family: cloud-sync
-phase: 5
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0401"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Cloud Conflict Resolution

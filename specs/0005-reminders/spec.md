@@ -2,11 +2,9 @@
 spec: "0005"
 title: Local tasks and reminders
 family: pet-care
-phase: 1
 status: Implemented
-owner: ""
+owner: woliveiras
 depends_on: ["0001"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Local tasks and reminders

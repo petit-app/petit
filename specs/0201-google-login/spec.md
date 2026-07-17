@@ -2,11 +2,9 @@
 spec: "0201"
 title: "Google Login"
 family: identity-access
-phase: 3
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: []
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Google Login

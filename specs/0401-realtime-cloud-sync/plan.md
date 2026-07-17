@@ -22,7 +22,7 @@ This plan is **On Hold**. No step authorizes implementation until the spec has b
 
 ## Historical technical notes
 
-The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
+The class names, APIs, dependencies, and code snippets below must be reviewed against the current code and versions before use.
 
 ### Technical requirements
 
@@ -238,7 +238,7 @@ interface PetDao {
 
 The content below came from the family’s historical README. It is a reference for reevaluation, not an approved architecture.
 
-### Historical overview — Cloud Sync (formerly Phase N+2)
+### Historical overview — Cloud Sync
 
 
 > **Status**: On Hold — may be reevaluated if there is validated demand for real-time remote sync.
@@ -246,12 +246,12 @@ The content below came from the family’s historical README. It is a reference 
 ## Reason for being On Hold
 
 Cloud sync was deferred because:
-1. Phase 2 (local Family Sharing) meets the current sharing demand
+1. Local family sharing meets the current sharing demand
 2. It requires Firebase Auth and cloud infrastructure (operating costs)
 3. Local sync via NSD on the home Wi-Fi network is sufficient for household use
 4. The hypothesis of offering it as a premium feature can only be considered after validating demand and sustainability
 
-## Preserved specs (formerly Phase 5)
+## Related specs
 
 - [US-N21: Real-Time Sync](../0401-realtime-cloud-sync/spec.md)
 - [US-N22: Multiple Devices](../0402-multi-device-sync/spec.md)
@@ -262,8 +262,8 @@ Cloud sync was deferred because:
 
 ## Prerequisites
 
-- Phase 2 complete (Firebase Auth)
-- Phases 3/4 complete (Google Drive Backup works as a fallback)
+- Google Login implemented
+- Google Drive Backup implemented as a fallback
 - Collections configured in Firestore with Security Rules
 - Active premium user
 

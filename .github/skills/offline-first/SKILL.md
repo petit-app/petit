@@ -197,7 +197,7 @@ enum class SyncStatus {
 - Local edits change status to `PENDING_SYNC`
 - Successful sync changes status to `SYNCED`
 - Conflict detection uses `updatedAt` timestamps (last-write-wins)
-- Currently (Phase 1): All records stay `LOCAL_ONLY`
+- Currently: All records stay `LOCAL_ONLY`
 
 ## WorkManager for Background Tasks
 

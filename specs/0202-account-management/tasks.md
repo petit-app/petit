@@ -31,7 +31,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - blocked-by: spec 0201; previous task in this spec
   - summary: deliver this behavior as a vertical slice, including domain, persistence/service, and interface where applicable.
   - desired behavior: the “Scenario 4: Switch accounts” flow works end to end without compromising local data.
-  - acceptance criteria: GIVEN that I am logged in as "pessoa-a@example.com" WHEN I log out AND log in with "pessoa-b@example.com" THEN I am authenticated as Person B AND the local data remains (Person A's data) (data association by account is handled during sync — future phases)
+  - acceptance criteria: GIVEN that I am logged in as "pessoa-a@example.com" WHEN I log out AND log in with "pessoa-b@example.com" THEN I am authenticated as Person B AND the local data remains (Person A's data) (data association by account is handled by the cloud-sync family)
   - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
 
 - [ ] **Scenario 5: Delete account** (test-type: both)

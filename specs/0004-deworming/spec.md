@@ -2,11 +2,9 @@
 spec: "0004"
 title: Deworming records
 family: pet-care
-phase: 1
 status: Implemented
-owner: ""
+owner: woliveiras
 depends_on: ["0001"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Deworming records

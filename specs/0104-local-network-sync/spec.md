@@ -2,11 +2,9 @@
 spec: "0104"
 title: Local network sync
 family: local-sharing
-phase: 2
 status: Draft
-owner: ""
+owner: woliveiras
 depends_on: ["0101", "0103"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Local network sync

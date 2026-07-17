@@ -22,7 +22,7 @@ This plan is **On Hold**. No step authorizes implementation until the spec has b
 
 ## Historical technical notes
 
-The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
+The class names, APIs, dependencies, and code snippets below must be reviewed against the current code and versions before use.
 
 ### Technical Requirements
 
@@ -193,7 +193,7 @@ android {
 
 The content below came from the family's historical README. It is a reference for reassessment, not an approved architecture.
 
-### Historical overview — Firebase Auth (former Phase N)
+### Historical overview — Firebase Auth
 
 
 > **Status**: On Hold — may be reassessed if there is validated demand for Google Login and cloud backup.
@@ -207,7 +207,7 @@ Firebase Auth and cloud services were postponed because:
 
 ## Preserved Specs
 
-The specs below were migrated from the original Phase 2 and will be adapted/updated when this phase resumes.
+The specs below will be adapted and updated if work on this family resumes.
 
 - [US-N01: Google Login](../0201-google-login/spec.md)
 - [US-N02: Account Management](../0202-account-management/spec.md)
@@ -217,7 +217,7 @@ The specs below were migrated from the original Phase 2 and will be adapted/upda
 
 ## Prerequisites
 
-- Phase 1 complete
+- Core pet-care capabilities implemented
 - Google Cloud Console with OAuth configured
 - Firebase project configured (google-services.json)
 

@@ -2,9 +2,7 @@
 
 **Status:** Active
 
-**Origin:** `getmiw/specs-miw@09b4497`, adapted for Petit
-
-**Last reconciliation:** 2026-07-17
+**Last update:** 2026-07-17
 
 ## Problem
 
@@ -18,7 +16,7 @@ professionals.
 2. Centralize the health history of one or more pets.
 3. Keep data available offline and exportable when needed.
 
-## Original requirements document
+## Product and technical foundation
 
 ## Technical Specification:
 
@@ -43,22 +41,16 @@ professionals.
 > **Firebase and cloud services are on hold** until there is user demand.
 > When resumed: Firebase Auth, Google Drive API, Firestore, Analytics, Crashlytics, FCM, Remote Config.
 
-## Phases
+## Delivery status
 
-Phase 1: no required backend; everything is local, with manual export/import,
-no sign-in, and no synchronization, solely to deliver a functional app as
-quickly as possible ✅ COMPLETED
-
-Phase 2: local sharing between household devices (family group) — pairing via
-Nearby Connections, one-shot transfer, a local family group, and continuous
-local network synchronization via NSD. It is **partially implemented**; see the
-[local-sharing family specs](../../specs/README.md#local-sharing).
-
-> **The phases below are on hold until there is user demand:**
->
-> Phase N: Firebase Auth (optional Google sign-in)
-> Phase N+1: Google Drive backup (manual + automatic)
-> Phase N+2: Cloud synchronization (Firestore, premium)
+- **pet-care:** implemented locally, including manual export/import and no
+  required sign-in or backend.
+- **local-sharing:** partially implemented, including Nearby Connections
+  pairing, one-shot transfer, a local family group, and local network
+  synchronization via NSD. See the
+  [local-sharing family specs](../../specs/README.md#local-sharing).
+- **identity-access, backup-recovery, and cloud-sync:** on hold until there is
+  demonstrated user demand. Their specifications remain available for review.
 
 ---
 
@@ -476,11 +468,11 @@ This is important for user trust.
 
 ---
 
-# Delivery Phases
+# Initial Delivery Scope
 
-## Phase 1
+## Pet care foundation
 
-Ideal for an MVP.
+Core capabilities for a useful offline-first release.
 
 ### Technical deliverables
 
@@ -504,12 +496,9 @@ Validate:
 
 ---
 
-## Phase 2
+## Deworming
 
-### Deworming
-
-This phase can reuse much of the vaccination data structure and screens, making
-it a good next step:
+This capability can reuse much of the vaccination data structure and screens:
 
 * entry pattern
 * list of upcoming dates
@@ -518,11 +507,10 @@ it a good next step:
 
 ---
 
-## Phase 3
+## Vaccination
 
-### Vaccination
-
-The same pattern as Phase 2, with slightly more semantics for each vaccine type.
+This follows the same care-history pattern as deworming, with additional
+semantics for each vaccine type.
 
 ---
 
@@ -660,15 +648,10 @@ Layers:
 
 ## 8. Roadmap
 
-> **Legacy record:** the list below is an earlier breakdown that predates the
-> phase structure presented at the beginning of this document. It is retained
-> as historical context and does not represent the current roadmap.
-
-* Phase 1: pet registration, weight, chart, offline-first
-* Phase 2: deworming
-* Phase 3: vaccination
-* Phase 4: export/import
-* Phase 5: cloud sign-in/synchronization (Firebase)
+The canonical roadmap is the family-based [specs index](../../specs/README.md),
+where each capability has its own status. Current priorities are pet care and
+local sharing. Identity, remote backup, and cloud synchronization remain on
+hold until there is demonstrated user demand.
 
 ---
 
@@ -677,5 +660,5 @@ Layers:
 1. **define the data model and status rules**
 2. **design the offline-first architecture**
 3. **write the MVP technical documentation**
-4. **design the Phase 1 screens**
+4. **design the core pet-care screens**
 5. **break the work down into a technical backlog**

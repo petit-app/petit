@@ -2,11 +2,9 @@
 spec: "0405"
 title: "Cloud Family Sharing"
 family: cloud-sync
-phase: 5
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0201", "0401"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Cloud Family Sharing

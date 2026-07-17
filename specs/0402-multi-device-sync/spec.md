@@ -2,11 +2,9 @@
 spec: "0402"
 title: "Multi-Device Sync"
 family: cloud-sync
-phase: 5
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0401"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Multi-Device Sync

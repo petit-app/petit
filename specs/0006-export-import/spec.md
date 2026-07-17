@@ -2,11 +2,9 @@
 spec: "0006"
 title: JSON export and import
 family: pet-care
-phase: 1
 status: Implemented
-owner: ""
+owner: woliveiras
 depends_on: ["0001", "0002", "0003", "0004", "0005"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: JSON export and import

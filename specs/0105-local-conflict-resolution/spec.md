@@ -2,11 +2,9 @@
 spec: "0105"
 title: Local conflict resolution
 family: local-sharing
-phase: 2
 status: In Progress
-owner: ""
+owner: woliveiras
 depends_on: ["0102"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Local conflict resolution

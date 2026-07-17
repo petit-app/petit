@@ -22,7 +22,7 @@ This plan is **On Hold**. No step authorizes implementation until the spec has b
 
 ## Historical technical notes
 
-The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
+The class names, APIs, dependencies, and code snippets below must be reviewed against the current code and versions before use.
 
 ### Data Model
 
@@ -160,7 +160,7 @@ class CreatePetUseCase(
 
 ### Data Display
 
-### Phase 2: Show all local data
+### Current behavior: Show all local data
 
 ```kotlin
 // For now, show all local data regardless of owner
@@ -169,7 +169,7 @@ fun getAllPets(): Flow<List<PetEntity>> {
 }
 ```
 
-### Future phase (5): Filter by owner for sync
+### Cloud sync: Filter by owner
 
 ```kotlin
 // When implementing sync, filter by owner

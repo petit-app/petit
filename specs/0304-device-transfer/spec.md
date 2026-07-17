@@ -2,11 +2,9 @@
 spec: "0304"
 title: "Device-to-Device Transfer"
 family: backup-recovery
-phase: 4
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0101"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Device-to-Device Transfer

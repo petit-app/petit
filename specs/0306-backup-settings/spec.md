@@ -2,11 +2,9 @@
 spec: "0306"
 title: "Backup Settings"
 family: backup-recovery
-phase: 4
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0305"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Backup Settings

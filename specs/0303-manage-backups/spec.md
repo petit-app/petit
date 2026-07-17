@@ -2,11 +2,9 @@
 spec: "0303"
 title: "Manage Backups"
 family: backup-recovery
-phase: 4
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0301"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Manage Backups

@@ -1,8 +1,7 @@
 # Local Sharing Protocols Between Android Devices
 
-> **Technical research migrated on 2026-07-17.** Source:
-> `getmiw/specs-miw@09b4497`. The decisions were generalized for Petit and
-> generic Android devices. Code examples are illustrative; the current
+> **Last update:** 2026-07-17. The decisions apply to Petit and generic
+> Android devices. Code examples are illustrative; the current
 > implementation uses Nearby Connections, while NSD + TCP remains planned in
 > [spec 0104](../specs/0104-local-network-sync/spec.md).
 

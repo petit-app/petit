@@ -22,7 +22,7 @@ This plan is **On Hold**. No step authorizes implementation until the spec has b
 
 ## Historical technical notes
 
-The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
+The class names, APIs, dependencies, and code snippets below must be reviewed against the current code and versions before use.
 
 ### Technical Requirements
 
@@ -190,7 +190,7 @@ data class BackupUiState(
 
 The content below came from the family's historical README. It is a reference for reevaluation, not an approved architecture.
 
-### Historical overview — Google Drive Backup (former Phase N+1)
+### Historical overview — Google Drive Backup
 
 
 > **Status**: On Hold — may be reevaluated if there is validated demand for cloud backup.
@@ -205,12 +205,12 @@ Google Drive backup was postponed because:
 
 ## Preserved Specs
 
-### Manual Backup (former Phase 3)
+### Manual Backup
 - [US-N11: Manual Backup](../0301-manual-backup/spec.md)
 - [US-N12: Restore Backup](../0302-restore-backup/spec.md)
 - [US-N13: Manage Backups](../0303-manage-backups/spec.md)
 
-### Automatic Backup (former Phase 4)
+### Automatic Backup
 - [Original automatic-backup README](../0305-automatic-backup/plan.md)
 - [US-N14a: Automatic Backup](../0305-automatic-backup/spec.md)
 - [US-N14b: Backup Settings](../0306-backup-settings/spec.md)
@@ -222,7 +222,7 @@ Google Drive backup was postponed because:
 
 ## Prerequisites
 
-- Phase 2 complete (Firebase Auth)
+- Google Login implemented
 - Google Cloud Console with the Drive API enabled
 - OAuth configured for the Drive API (scope: `https://www.googleapis.com/auth/drive.appdata`)
 
@@ -331,8 +331,8 @@ appDataFolder/
 
 | Type | Retention | Rule |
 |------|----------|-------|
-| Manual backups (Phase 3) | Until the user deletes them (max. 10) | User-controlled; upon reaching 10, the oldest is removed automatically |
-| Automatic backups (Phase 4) | Last 30 days (rolling window) | Automatic cleanup keeps costs predictable |
+| Manual backups | Until the user deletes them (max. 10) | User-controlled; upon reaching 10, the oldest is removed automatically |
+| Automatic backups | Last 30 days (rolling window) | Automatic cleanup keeps costs predictable |
 | Premium cancellation | 90 days after expiration | Grace period to resubscribe without losing data |
 | Account deletion | 30 days, then permanent purge | Complies with LGPD (right to erasure) while allowing a recovery window |
 

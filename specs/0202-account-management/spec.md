@@ -2,11 +2,9 @@
 spec: "0202"
 title: "Account Management"
 family: identity-access
-phase: 3
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0201"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Account Management
@@ -73,7 +71,7 @@ WHEN I log out
 AND log in with "pessoa-b@example.com"
 THEN I am authenticated as Person B
 AND the local data remains (Person A's data)
-(data association by account is handled during sync — future phases)
+(data association by account is handled by the cloud-sync family)
 ```
 
 ### Scenario 5: Delete account

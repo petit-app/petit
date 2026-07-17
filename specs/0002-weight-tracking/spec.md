@@ -2,11 +2,9 @@
 spec: "0002"
 title: Weight tracking
 family: pet-care
-phase: 1
 status: Implemented
-owner: ""
+owner: woliveiras
 depends_on: ["0001"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Weight tracking

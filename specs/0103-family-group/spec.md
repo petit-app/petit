@@ -2,11 +2,9 @@
 spec: "0103"
 title: Local family group
 family: local-sharing
-phase: 2
 status: In Progress
-owner: ""
+owner: woliveiras
 depends_on: ["0101"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Local family group

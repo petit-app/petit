@@ -2,11 +2,9 @@
 spec: "0001"
 title: Pet management
 family: pet-care
-phase: 1
 status: Implemented
-owner: ""
+owner: woliveiras
 depends_on: []
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Pet management

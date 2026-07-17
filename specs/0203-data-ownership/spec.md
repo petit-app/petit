@@ -2,11 +2,9 @@
 spec: "0203"
 title: "Data Ownership"
 family: identity-access
-phase: 3
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0201"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Data Ownership
@@ -102,7 +100,7 @@ The scenarios in **Functional requirements** are the testable criteria for this 
 
 ### Data Display
 
-### Phase 2: Show all local data
+### Current behavior: Show all local data
 
 ```kotlin
 // For now, show all local data regardless of owner
@@ -111,7 +109,7 @@ fun getAllPets(): Flow<List<PetEntity>> {
 }
 ```
 
-### Future phase (5): Filter by owner for sync
+### Cloud sync: Filter by owner
 
 ```kotlin
 // When implementing sync, filter by owner

@@ -2,11 +2,9 @@
 spec: "0101"
 title: Device pairing
 family: local-sharing
-phase: 2
 status: In Progress
-owner: ""
+owner: woliveiras
 depends_on: []
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Device pairing

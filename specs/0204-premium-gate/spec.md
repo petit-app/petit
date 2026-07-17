@@ -2,11 +2,9 @@
 spec: "0204"
 title: "Premium Gate"
 family: identity-access
-phase: 3
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0201"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Premium Gate

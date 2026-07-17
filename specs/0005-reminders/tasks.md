@@ -26,11 +26,11 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - verification: `./gradlew test`
 - [ ] **Add automatic recurrence** (test-type: both)
   - blocked-by: future product decision
-  - desired behavior: remains out of scope for this phase.
+  - desired behavior: remains out of scope for this specification.
   - acceptance criteria: requires new spec approval before implementation.
   - verification: `./gradlew test`
 - [ ] **Add snooze** (test-type: both)
   - blocked-by: future product decision
-  - desired behavior: remains out of scope for this phase.
+  - desired behavior: remains out of scope for this specification.
   - acceptance criteria: requires new spec approval before implementation.
   - verification: `./gradlew test`

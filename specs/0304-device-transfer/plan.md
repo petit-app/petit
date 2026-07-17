@@ -22,7 +22,7 @@ This plan is **On Hold**. No step authorizes implementation until the spec has b
 
 ## Historical technical notes
 
-The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
+The class names, APIs, dependencies, and code snippets below must be reviewed against the current code and versions before use.
 
 ### Technical Requirements
 
@@ -190,7 +190,7 @@ class ReceiveDataUseCase(
 - **Payload**: Serialize ExportBundle to JSON and send it as a ByteArray
 - **Timeout**: 30 seconds without activity cancels the connection
 - **Battery**: Nearby Connections is battery-optimized
-- **Reuse**: The flow reuses ExportBundle/ImportDataUseCase from Phase 1
+- **Reuse**: The flow reuses `ExportBundle` and `ImportDataUseCase` from the export-import capability
 
 ---
 

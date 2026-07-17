@@ -22,7 +22,7 @@ This plan is **On Hold**. No step authorizes implementation until the spec has b
 
 ## Historical technical notes
 
-The class names, APIs, dependencies, and code snippets below came from the original proposal and must be reconciled with the current code and versions before use.
+The class names, APIs, dependencies, and code snippets below must be reviewed against the current code and versions before use.
 
 ### Technical Requirements
 
@@ -214,7 +214,7 @@ class BackupPreferencesRepositoryImpl(
 
 The content below came from the family's historical README. It is a reference for reassessment, not an approved architecture.
 
-### Historical view — Automatic Backup (former Phase 4)
+### Historical view — Automatic Backup
 
 
 ## Objective
@@ -228,13 +228,13 @@ Implement a **daily automatic backup** of data to Google Drive (appDataFolder), 
 - ✅ Wi-Fi-only sync (configurable)
 - ✅ Successful backup notification (optional)
 - ✅ Automatic retention: 30-day rolling window
-- ❌ Real-time sync between devices (Phase 5 - premium)
-- ❌ Multi-device conflict resolution (Phase 5 - premium)
+- ❌ Real-time sync between devices (cloud-sync family, premium)
+- ❌ Multi-device conflict resolution (cloud-sync family, premium)
 
 
 ## Prerequisites
 
-- Phase 3 complete (manual Google Drive backup)
+- Manual Google Drive backup implemented
 - WorkManager configured
 - Active Google sign-in (backup requires sign-in)
 
@@ -311,7 +311,7 @@ Implement a **daily automatic backup** of data to Google Drive (appDataFolder), 
 
 ### Retention
 - 30-day rolling window for automatic backups
-- Manual backups do not count toward this limit (max. 10, managed in Phase 3)
+- Manual backups do not count toward this limit (max. 10, managed separately)
 - Auto-cleanup when creating a new backup: removes automatic backups older than 30 days
 - After account deletion: permanent purge within 30 days (LGPD)
 

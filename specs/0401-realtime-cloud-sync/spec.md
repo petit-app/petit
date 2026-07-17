@@ -2,11 +2,9 @@
 spec: "0401"
 title: "Real-Time Sync"
 family: cloud-sync
-phase: 5
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0201"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Real-Time Sync

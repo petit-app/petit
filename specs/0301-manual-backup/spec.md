@@ -2,11 +2,9 @@
 spec: "0301"
 title: "Manual Backup"
 family: backup-recovery
-phase: 4
 status: On Hold
-owner: ""
+owner: woliveiras
 depends_on: ["0201"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: Manual Backup

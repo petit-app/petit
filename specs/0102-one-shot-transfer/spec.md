@@ -2,11 +2,9 @@
 spec: "0102"
 title: One-shot data transfer
 family: local-sharing
-phase: 2
 status: In Progress
-owner: ""
+owner: woliveiras
 depends_on: ["0101"]
-origin: "getmiw/specs-miw@09b4497"
 ---
 
 # Spec: One-shot data transfer

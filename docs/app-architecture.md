@@ -74,8 +74,9 @@ enum class SyncStatus {
   - Triggering task notifications (`TaskNotificationWorker` — one-shot)
   - Automating task creation when health records are saved (`AutoTaskService`)
   - Scheduling and canceling notifications (`TaskScheduler` / `TaskSchedulerImpl`)
-  - Local network sync through NSD (Network Service Discovery) — Phase 2
-  - Remote sync through Firebase Firestore — Phase N+2 (on hold)
+  - Local network sync through NSD (Network Service Discovery) — planned in
+    the local-sharing family
+  - Remote sync through Firebase Firestore — cloud-sync family (on hold)
 
 ---
 
@@ -134,11 +135,12 @@ Remote: { id: "abc", name: "Little Luna", updatedAt: 1500 }
 Result: Remote wins (higher updatedAt)
 ```
 
-Remote sync (Phase N+2, on hold) will use Firebase Firestore as its transport.
+Remote sync, currently on hold in the cloud-sync family, will use Firebase
+Firestore as its transport.
 
 ### Battery Use and Local Sync Protocols
 
-Local sync (Phase 2) follows strict battery-use rules:
+Local sync follows strict battery-use rules:
 
 - **Continuous sync** uses **NSD + TCP over infrastructure Wi-Fi** (the home router) — approximately 5–15 mW
 - **Wi-Fi Direct is NEVER used for continuous sync** — only for one-shot transfers
