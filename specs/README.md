@@ -44,7 +44,7 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 | [0005](0005-reminders/spec.md) | Local tasks and reminders | Completed | 0001 |
 | [0006](0006-export-import/spec.md) | JSON export and import | Completed | 0001–0005 |
 | [0007](0007-home-dashboard/spec.md) | Home dashboard | Completed | 0001–0005 |
-| [0008](0008-onboarding/spec.md) | Onboarding | Implemented | — |
+| [0008](0008-onboarding/spec.md) | Onboarding | Completed | — |
 | [0009](0009-app-preferences/spec.md) | App preferences | Implemented | — |
 | [0010](0010-delete-all-data/spec.md) | Delete all data | Completed | 0001–0005 |
 

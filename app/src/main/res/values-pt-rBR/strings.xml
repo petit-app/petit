@@ -687,6 +687,7 @@
   <string name="onboarding_next">Próximo</string>
   <string name="onboarding_get_started">Começar</string>
   <string name="onboarding_page_indicator">Página %1$d de %2$d</string>
+  <string name="onboarding_completion_error">Não foi possível concluir a configuração. Tente novamente.</string>
 
   <!-- Family Group -->
   <string name="profile_section_family_group">Grupo Familiar</string>

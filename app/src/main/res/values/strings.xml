@@ -688,6 +688,7 @@
     <string name="onboarding_next">Next</string>
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_page_indicator">Page %1$d of %2$d</string>
+    <string name="onboarding_completion_error">Couldn\'t finish setup. Try again.</string>
 
     <!-- Family Group -->
     <string name="profile_section_family_group">Family Group</string>

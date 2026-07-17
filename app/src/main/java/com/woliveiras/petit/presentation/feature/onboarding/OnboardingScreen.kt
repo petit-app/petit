@@ -23,12 +23,14 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Vaccines
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +42,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import kotlinx.coroutines.launch
 
@@ -51,8 +54,7 @@ fun OnboardingScreen(
   modifier: Modifier = Modifier,
   viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
-  val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
-  val scope = rememberCoroutineScope()
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
   LaunchedEffect(Unit) {
     viewModel.events.collect { event ->
@@ -62,6 +64,22 @@ fun OnboardingScreen(
     }
   }
 
+  OnboardingContent(
+    uiState = uiState,
+    onComplete = viewModel::completeOnboarding,
+    modifier = modifier,
+  )
+}
+
+@Composable
+internal fun OnboardingContent(
+  uiState: OnboardingUiState,
+  onComplete: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
+  val scope = rememberCoroutineScope()
+
   Column(
     modifier = modifier.fillMaxSize().padding(24.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
@@ -69,7 +87,7 @@ fun OnboardingScreen(
     // Skip button row
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
       if (pagerState.currentPage < PAGE_COUNT - 1) {
-        TextButton(onClick = { viewModel.completeOnboarding() }) {
+        TextButton(onClick = onComplete, enabled = !uiState.isCompleting) {
           Text(stringResource(R.string.onboarding_skip))
         }
       }
@@ -91,6 +109,21 @@ fun OnboardingScreen(
       modifier = Modifier.padding(vertical = 16.dp),
     )
 
+    if (uiState.isCompleting) {
+      CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 3.dp)
+      Spacer(modifier = Modifier.height(8.dp))
+    }
+
+    if (uiState.hasCompletionError) {
+      Text(
+        text = stringResource(R.string.onboarding_completion_error),
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodyMedium,
+        textAlign = TextAlign.Center,
+      )
+      Spacer(modifier = Modifier.height(8.dp))
+    }
+
     // Bottom action button
     if (pagerState.currentPage < PAGE_COUNT - 1) {
       Button(
@@ -101,7 +134,8 @@ fun OnboardingScreen(
       }
     } else {
       Button(
-        onClick = { viewModel.completeOnboarding() },
+        onClick = onComplete,
+        enabled = !uiState.isCompleting,
         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
       ) {
         Text(stringResource(R.string.onboarding_get_started))

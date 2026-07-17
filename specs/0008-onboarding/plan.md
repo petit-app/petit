@@ -4,12 +4,12 @@ Spec: [spec.md](./spec.md)
 
 ## Sequence
 
-1. Persist onboarding completion in `UserPreferencesRepository`.
-2. Select Onboarding or Home as the start destination from the persisted preference.
-3. Present the three-page pager with Next, Skip, Get started, and an accessible page indicator.
-4. Navigate to Home after a successful completion write and remove Onboarding from the back stack.
-5. Harden repeated actions and preference-write failure handling.
-6. Add automated coverage for state, persistence, navigation, and UI behavior.
+1. [x] Persist onboarding completion in `UserPreferencesRepository`.
+2. [x] Select Onboarding or Home as the start destination from the persisted preference.
+3. [x] Present the three-page pager with Next, Skip, Get started, and an accessible page indicator.
+4. [x] Navigate to Home after a successful completion write and remove Onboarding from the back stack.
+5. [x] Harden repeated actions and preference-write failure handling.
+6. [x] Add automated coverage for state, persistence, navigation, and UI behavior.
 
 ## Architecture
 
@@ -22,4 +22,4 @@ Spec: [spec.md](./spec.md)
 
 - Uses the shared user-preferences store documented by spec `0009`.
 - A failed or delayed DataStore write must not leave navigation state inconsistent.
-- UI behavior requires Compose navigation and pager tests, which are not present yet.
+- Compose and end-to-end tests protect pager, navigation, and persisted completion behavior.

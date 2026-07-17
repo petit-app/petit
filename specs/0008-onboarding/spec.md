@@ -2,7 +2,7 @@
 spec: "0008"
 title: Onboarding
 family: pet-care
-status: Implemented
+status: Completed
 owner: woliveiras
 depends_on: []
 ---
@@ -16,8 +16,9 @@ A first-time caregiver needs a short introduction to Petit before entering the m
 ## Current state
 
 The three-page flow, persisted completion state, start-destination selection,
-skip action, and final call to action are implemented. Failure feedback and
-protection against repeated completion actions remain pending.
+skip action, and final call to action are implemented. Completion actions are
+disabled during persistence, failures remain on onboarding with recoverable
+feedback, and automated coverage protects the complete first-run journey.
 
 ## Functional requirements
 
@@ -48,8 +49,6 @@ Unit tests cover completion state and event emission; integration and UI tests c
 
 ## Known limitations
 
-- `isCompleting` is not currently consumed by the screen, so repeated taps are not disabled.
-- Preference-write failures are not surfaced to the caregiver.
 - There is no supported action to reset onboarding from the app.
 
 ## Out of scope
