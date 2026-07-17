@@ -1,5 +1,7 @@
 # Tarefas: Acompanhamento de peso
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Registrar peso em gramas ou quilos** (test-type: both)

@@ -1,5 +1,7 @@
 # Plano: Pareamento de dispositivos
 
+Spec: [spec.md](./spec.md)
+
 ## Estado de partida
 
 O projeto já contém a integração Nearby, permissões, apresentação,

@@ -1,5 +1,7 @@
 # Plano: Gerenciamento de pets
 
+Spec: [spec.md](./spec.md)
+
 ## Sequenciamento
 
 1. Modelar `PetEntity`, domínio e mapeadores com metadados de criação, atualização, exclusão e sincronização.

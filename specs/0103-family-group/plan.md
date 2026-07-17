@@ -1,5 +1,7 @@
 # Plano: Grupo familiar local
 
+Spec: [spec.md](./spec.md)
+
 ## Estado de partida
 
 O app já lista e remove membros localmente, permite sair do grupo e persiste as

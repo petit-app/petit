@@ -1,5 +1,7 @@
 # Plano: Exportação e importação JSON
 
+Spec: [spec.md](./spec.md)
+
 ## Sequenciamento
 
 1. Agregar os cinco domínios em `ExportBundle` com `ExportMetadata`.

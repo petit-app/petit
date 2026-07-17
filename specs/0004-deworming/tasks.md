@@ -1,5 +1,7 @@
 # Tarefas: Registro de desparasitação
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Registrar, editar e excluir desparasitação** (test-type: both)

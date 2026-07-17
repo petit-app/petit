@@ -1,5 +1,7 @@
 # Tarefas: Tarefas e lembretes locais
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Criar tarefas automáticas de cuidado** (test-type: both)

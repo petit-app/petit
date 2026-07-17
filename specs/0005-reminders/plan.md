@@ -1,5 +1,7 @@
 # Plano: Tarefas e lembretes locais
 
+Spec: [spec.md](./spec.md)
+
 ## Sequenciamento
 
 1. Modelar `TaskEntity` com tipos `VACCINATION`, `DEWORMING`, `WEIGHT` e `CUSTOM` e estados `PENDING`/`COMPLETED`.

@@ -1,5 +1,7 @@
 # Tarefas: Sincronização entre Múltiplos Dispositivos
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 > Status da spec: **On Hold**. Todas as tarefas permanecem pendentes até aprovação explícita.
 
 ## Tarefas

@@ -41,8 +41,8 @@ PRD: [Gestão de saúde dos pets no Petit](../docs/prds/2026-07-17-petit-pet-hea
 | [0002](0002-weight-tracking/spec.md) | Acompanhamento de peso | 1 | Implemented | 0001 |
 | [0003](0003-vaccination/spec.md) | Registro de vacinação | 1 | Implemented | 0001 |
 | [0004](0004-deworming/spec.md) | Registro de desparasitação | 1 | Implemented | 0001 |
-| [0005](0005-reminders/spec.md) | Lembretes locais | 1 | Implemented | 0001 |
-| [0006](0006-export-import/spec.md) | Exportação e importação | 1 | Implemented | 0001–0005 |
+| [0005](0005-reminders/spec.md) | Tarefas e lembretes locais | 1 | Implemented | 0001 |
+| [0006](0006-export-import/spec.md) | Exportação e importação JSON | 1 | Implemented | 0001–0005 |
 | [0007](0007-home-dashboard/spec.md) | Dashboard inicial | 1 | Implemented | 0001–0005 |
 
 ### local-sharing
@@ -50,10 +50,10 @@ PRD: [Gestão de saúde dos pets no Petit](../docs/prds/2026-07-17-petit-pet-hea
 | Spec | Título | Fase | Status | Depende de / Origem |
 | --- | --- | --- | --- | --- |
 | [0101](0101-device-pairing/spec.md) | Pareamento de dispositivos | 2 | In Progress | PRD Petit |
-| [0102](0102-one-shot-transfer/spec.md) | Transferência pontual | 2 | In Progress | 0101 |
+| [0102](0102-one-shot-transfer/spec.md) | Transferência pontual de dados | 2 | In Progress | 0101 |
 | [0103](0103-family-group/spec.md) | Grupo familiar local | 2 | In Progress | 0101 |
 | [0104](0104-local-network-sync/spec.md) | Sincronização na rede local | 2 | Draft | 0101, 0103 |
-| [0105](0105-local-conflict-resolution/spec.md) | Resolução de conflitos locais | 2 | In Progress | 0102 |
+| [0105](0105-local-conflict-resolution/spec.md) | Resolução local de conflitos | 2 | In Progress | 0102 |
 
 ### identity-access
 
@@ -61,16 +61,16 @@ PRD: [Gestão de saúde dos pets no Petit](../docs/prds/2026-07-17-petit-pet-hea
 | --- | --- | --- | --- | --- |
 | [0201](0201-google-login/spec.md) | Login com Google | 3 | On Hold | Roadmap histórico |
 | [0202](0202-account-management/spec.md) | Gerenciamento de conta | 3 | On Hold | 0201 |
-| [0203](0203-data-ownership/spec.md) | Vinculação e propriedade dos dados | 3 | On Hold | 0201 |
-| [0204](0204-premium-gate/spec.md) | Controle de funcionalidades premium | 3 | On Hold | 0201 |
+| [0203](0203-data-ownership/spec.md) | Vinculação de Dados | 3 | On Hold | 0201 |
+| [0204](0204-premium-gate/spec.md) | Gate Premium | 3 | On Hold | 0201 |
 
 ### backup-recovery
 
 | Spec | Título | Fase | Status | Depende de / Origem |
 | --- | --- | --- | --- | --- |
-| [0301](0301-manual-backup/spec.md) | Backup manual no Google Drive | 4 | On Hold | 0201 |
-| [0302](0302-restore-backup/spec.md) | Restauração de backup | 4 | On Hold | 0301 |
-| [0303](0303-manage-backups/spec.md) | Gerenciamento de backups | 4 | On Hold | 0301 |
+| [0301](0301-manual-backup/spec.md) | Backup Manual | 4 | On Hold | 0201 |
+| [0302](0302-restore-backup/spec.md) | Restaurar Backup | 4 | On Hold | 0301 |
+| [0303](0303-manage-backups/spec.md) | Gerenciar Backups | 4 | On Hold | 0301 |
 | [0304](0304-device-transfer/spec.md) | Transferência entre dispositivos | 4 | On Hold | 0101 |
 | [0305](0305-automatic-backup/spec.md) | Backup automático | 4 | On Hold | 0301 |
 | [0306](0306-backup-settings/spec.md) | Configurações de backup | 4 | On Hold | 0305 |
@@ -80,8 +80,8 @@ PRD: [Gestão de saúde dos pets no Petit](../docs/prds/2026-07-17-petit-pet-hea
 
 | Spec | Título | Fase | Status | Depende de / Origem |
 | --- | --- | --- | --- | --- |
-| [0401](0401-realtime-cloud-sync/spec.md) | Sincronização em nuvem em tempo real | 5 | On Hold | 0201 |
-| [0402](0402-multi-device-sync/spec.md) | Sincronização entre vários dispositivos | 5 | On Hold | 0401 |
+| [0401](0401-realtime-cloud-sync/spec.md) | Sincronização em Tempo Real | 5 | On Hold | 0201 |
+| [0402](0402-multi-device-sync/spec.md) | Sincronização entre Múltiplos Dispositivos | 5 | On Hold | 0401 |
 | [0403](0403-cloud-conflict-resolution/spec.md) | Resolução de conflitos na nuvem | 5 | On Hold | 0401 |
-| [0404](0404-offline-cloud-sync/spec.md) | Sincronização offline-first com a nuvem | 5 | On Hold | 0401 |
+| [0404](0404-offline-cloud-sync/spec.md) | Sincronização Offline-First | 5 | On Hold | 0401 |
 | [0405](0405-cloud-family-sharing/spec.md) | Compartilhamento familiar na nuvem | 5 | On Hold | 0201, 0401 |

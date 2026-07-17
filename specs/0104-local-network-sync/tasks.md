@@ -1,5 +1,7 @@
 # Tarefas: Sincronização na rede local
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [ ] **Definir um protocolo local versionado e autenticado** (test-type: unit)

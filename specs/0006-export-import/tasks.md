@@ -1,5 +1,7 @@
 # Tarefas: Exportação e importação JSON
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Exportar todos os domínios em JSON** (test-type: both)

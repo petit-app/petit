@@ -1,5 +1,7 @@
 # Plano: Acompanhamento de peso
 
+Spec: [spec.md](./spec.md)
+
 ## Sequenciamento
 
 1. Modelar `WeightEntryEntity` referenciando `PetEntity` e armazenar `weightGrams`.

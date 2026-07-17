@@ -1,5 +1,7 @@
 # Tarefas: Dashboard inicial
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Exibir estado inicial sem pets** (test-type: both)

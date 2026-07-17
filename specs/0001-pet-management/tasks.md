@@ -1,5 +1,7 @@
 # Tarefas: Gerenciamento de pets
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Cadastrar e editar um pet válido** (test-type: both)

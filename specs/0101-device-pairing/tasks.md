@@ -1,5 +1,7 @@
 # Tarefas: Pareamento de dispositivos
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Disponibilizar descoberta e persistência do grupo** (test-type: integration)

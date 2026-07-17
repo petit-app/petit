@@ -1,5 +1,7 @@
 # Plano: Dashboard inicial
 
+Spec: [spec.md](./spec.md)
+
 ## Sequenciamento
 
 1. Agregar pets, tarefas, timeline e último peso no `HomeViewModel`.

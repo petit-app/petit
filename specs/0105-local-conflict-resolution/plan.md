@@ -1,5 +1,7 @@
 # Plano: Resolução local de conflitos
 
+Spec: [spec.md](./spec.md)
+
 ## Estado de partida
 
 O merge por `updatedAt` e a gravação de `SyncLog` já existem. A execução deve

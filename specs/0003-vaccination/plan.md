@@ -1,5 +1,7 @@
 # Plano: Registro de vacinação
 
+Spec: [spec.md](./spec.md)
+
 ## Sequenciamento
 
 1. Modelar `VaccinationEntryEntity` com chave do pet e metadados de auditoria.

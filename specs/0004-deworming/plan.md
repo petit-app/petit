@@ -1,5 +1,7 @@
 # Plano: Registro de desparasitação
 
+Spec: [spec.md](./spec.md)
+
 ## Sequenciamento
 
 1. Modelar `DewormingEntryEntity` referenciando o pet.

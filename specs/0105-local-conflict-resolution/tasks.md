@@ -1,5 +1,7 @@
 # Tarefas: Resolução local de conflitos
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Mesclar por UUID e atualização mais recente** (test-type: unit)

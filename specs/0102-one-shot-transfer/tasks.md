@@ -1,5 +1,7 @@
 # Tarefas: Transferência pontual de dados
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Enviar e importar um bundle pareado** (test-type: integration)

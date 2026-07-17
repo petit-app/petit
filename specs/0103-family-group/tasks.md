@@ -1,5 +1,7 @@
 # Tarefas: Grupo familiar local
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Consultar e gerenciar o grupo local** (test-type: integration)

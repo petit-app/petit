@@ -1,5 +1,7 @@
 # Plano: Sincronização na rede local
 
+Spec: [spec.md](./spec.md)
+
 ## Estado de partida
 
 Não há implementação de NSD/TCP no projeto. Este plano deve começar somente

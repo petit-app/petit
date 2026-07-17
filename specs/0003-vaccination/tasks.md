@@ -1,5 +1,7 @@
 # Tarefas: Registro de vacinação
 
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+
 ## Tasks
 
 - [x] **Registrar e editar uma vacinação** (test-type: both)

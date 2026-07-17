@@ -1,5 +1,7 @@
 # Plano: Transferência pontual de dados
 
+Spec: [spec.md](./spec.md)
+
 ## Estado de partida
 
 O envio, a recepção, as opções de merge/replace e a apresentação já existem.

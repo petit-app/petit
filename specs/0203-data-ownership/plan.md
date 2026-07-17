@@ -1,5 +1,7 @@
 # Plano: Vinculação de Dados
 
+Spec: [spec.md](./spec.md)
+
 ## Estado
 
 Este plano está **On Hold**. Nenhuma etapa autoriza implementação até que a spec seja revisada e aprovada.
