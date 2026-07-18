@@ -2,9 +2,9 @@
 spec: "0104"
 title: Local network sync
 family: local-sharing
-status: Approved
+status: In Progress
 owner: woliveiras
-depends_on: ["0101", "0103"]
+depends_on: ["0101", "0103", "0105"]
 ---
 
 # Spec: Local network sync
