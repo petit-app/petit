@@ -47,6 +47,9 @@ data class ExportBundle(
       val pets =
         if (json.has("pets")) {
           json.getJSONArray("pets").let { array ->
+            if (array.length() > MAX_ENTRIES_PER_LIST) {
+              throw IllegalArgumentException("Too many pets (max $MAX_ENTRIES_PER_LIST)")
+            }
             (0 until array.length()).map { Pet.fromExportJson(array.getJSONObject(it)) }
           }
         } else {
@@ -127,6 +130,16 @@ data class ExportBundle(
     /** Validate imported data fields. Returns list of validation error messages. */
     fun validate(bundle: ExportBundle): List<String> {
       val errors = mutableListOf<String>()
+
+      fun reportDuplicateIds(label: String, ids: List<String>) {
+        if (ids.size != ids.toSet().size) errors.add("Duplicate $label identifiers")
+      }
+
+      reportDuplicateIds("pet", bundle.pets.map { it.id })
+      reportDuplicateIds("weight", bundle.weightEntries.map { it.id })
+      reportDuplicateIds("vaccination", bundle.vaccinationEntries.map { it.id })
+      reportDuplicateIds("deworming", bundle.dewormingEntries.map { it.id })
+      reportDuplicateIds("task", bundle.tasks.map { it.id })
 
       if (bundle.metadata.schemaVersion != SUPPORTED_SCHEMA_VERSION) {
         errors.add("Versão de backup não suportada: ${bundle.metadata.schemaVersion}")

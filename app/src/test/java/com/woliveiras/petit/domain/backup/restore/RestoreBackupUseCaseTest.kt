@@ -134,6 +134,27 @@ class RestoreBackupUseCaseTest {
   }
 
   @Test
+  fun startupCleanupRemovesDownloadAndExtractionDirectoriesLeftByProcessDeath() {
+    val archive = createArchive("orphan-cleanup")
+    val staging = temporaryFolder.newFolder("orphan-staging")
+    staging.resolve("download-dead-process").mkdir()
+    staging.resolve(".restore-dead-process").mkdir()
+    val unrelated = staging.resolve("keep.txt").apply { writeText("safe") }
+    val downloader =
+      DownloadAndValidateBackupUseCase(
+        FileStorageGateway(archive, metadata(archive)),
+        BackupArchiveCodec(),
+        staging,
+      )
+
+    downloader.cleanupOrphans()
+
+    assertThat(staging.resolve("download-dead-process").exists()).isFalse()
+    assertThat(staging.resolve(".restore-dead-process").exists()).isFalse()
+    assertThat(unrelated.readText()).isEqualTo("safe")
+  }
+
+  @Test
   fun replaceInstallsExactRoomAssetsAndPreferencesWhilePreservingDeviceIdentity() = runTest {
     database.petDao().insertPet(PetEntity(id = "local", name = "Local"))
     database

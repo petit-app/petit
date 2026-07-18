@@ -96,6 +96,15 @@ internal constructor(private val context: Context, private val referenceForFile:
     operationDirectory.deleteRecursively()
   }
 
+  override fun cleanupOrphans(activeOperationId: String?) {
+    if (!operationsDirectory().isDirectory) return
+    operationsDirectory()
+      .listFiles()
+      .orEmpty()
+      .filter { it.isDirectory && it.name != activeOperationId }
+      .forEach(File::deleteRecursively)
+  }
+
   private inner class Prepared(
     override val operationId: String,
     private val entries: List<AssetOperationEntry>,
@@ -134,8 +143,11 @@ internal constructor(private val context: Context, private val referenceForFile:
             }
           ),
         )
-    partial.writeText(json.toString())
-    check(partial.renameTo(marker)) { "Could not persist restore asset marker" }
+    FileOutputStream(partial).use { output ->
+      output.write(json.toString().toByteArray(Charsets.UTF_8))
+      output.fd.sync()
+    }
+    Files.move(partial.toPath(), marker.toPath(), ATOMIC_MOVE, REPLACE_EXISTING)
   }
 
   private fun readMarker(operationDirectory: File): List<AssetOperationEntry> {

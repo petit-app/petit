@@ -14,6 +14,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 import org.json.JSONObject
+import org.json.JSONArray
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -199,6 +200,57 @@ class BackupArchiveCodecTest {
             .single { it.getString("path").startsWith("assets/") }
             .put("sha256", sha256(invalidAsset))
             .put("uncompressedSize", invalidAsset.size)
+          listOf(path to manifest.toString().toByteArray())
+        }
+        else -> listOf(path to bytes)
+      }
+    }
+
+    assertThat(runCatching { codec.validate(hostile) }.exceptionOrNull())
+      .isInstanceOf(BackupArchiveException::class.java)
+  }
+
+  @Test
+  fun validationRejectsProviderArchiveContainingDeviceAuthorizationData() {
+    val original = createArchive("authorization-source")
+    val originalEntries =
+      ZipFile(original).use { zip ->
+        zip.entries().asSequence().associate { entry ->
+          entry.name to zip.getInputStream(entry).use { it.readBytes() }
+        }
+      }
+    val originalData = originalEntries.getValue("data/export.json")
+    val hostileData =
+      JSONObject(originalData.toString(Charsets.UTF_8))
+        .put(
+          "membershipChanges",
+          JSONArray()
+            .put(
+              JSONObject()
+                .put("groupId", "a".repeat(64))
+                .put("memberId", "device-1")
+                .put("type", "LEAVE")
+                .put("timestamp", 1L)
+            ),
+        )
+        .toString()
+        .toByteArray()
+    val hostile = temporaryFolder.newFile("authorization.zip")
+    rewriteZip(original, hostile) { path, bytes ->
+      when (path) {
+        "data/export.json" -> listOf(path to hostileData)
+        "manifest.json" -> {
+          val manifest = JSONObject(bytes.toString(Charsets.UTF_8))
+          val dataEntry =
+            manifest
+              .getJSONArray("entries")
+              .let { entries -> (0 until entries.length()).map(entries::getJSONObject) }
+              .single { it.getString("path") == "data/export.json" }
+          dataEntry.put("sha256", sha256(hostileData)).put("uncompressedSize", hostileData.size)
+          manifest.put(
+            "totalUncompressedPayloadSize",
+            manifest.getLong("totalUncompressedPayloadSize") - originalData.size + hostileData.size,
+          )
           listOf(path to manifest.toString().toByteArray())
         }
         else -> listOf(path to bytes)

@@ -58,6 +58,8 @@ interface RestoreAssetInstaller {
   fun rollback(operationId: String)
 
   fun commit(operationId: String, activeReferences: Set<String>, previousReferences: Set<String>)
+
+  fun cleanupOrphans(activeOperationId: String?) = Unit
 }
 
 interface RestoreReminderScheduler {
@@ -95,6 +97,15 @@ class DownloadAndValidateBackupUseCase(
   private val codec: BackupArchiveCodec,
   private val stagingRoot: File,
 ) {
+  fun cleanupOrphans() {
+    if (!stagingRoot.isDirectory) return
+    stagingRoot
+      .listFiles()
+      .orEmpty()
+      .filter { it.name.startsWith("download-") || it.name.startsWith(".restore-") }
+      .forEach(File::deleteRecursively)
+  }
+
   suspend fun execute(
     remoteId: String,
     onProgress: (BackupProgress) -> Unit = {},
@@ -234,7 +245,10 @@ class RestoreBackupUseCase(
   }
 
   suspend fun recoverInterruptedRestore() {
-    val state = recoveryJournal.read() ?: return
+    val state = recoveryJournal.read()
+    downloader.cleanupOrphans()
+    assetInstaller.cleanupOrphans(state?.assetOperationId)
+    state ?: return
     if (state.phase == RestoreRecoveryPhase.PREPARED) {
       compensateToOldState(state)
       return

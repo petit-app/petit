@@ -164,6 +164,23 @@ class FileRestoreInfrastructureTest {
     operationDirectory.deleteRecursively()
   }
 
+  @Test
+  fun startupCleanupRemovesOrphanOperationsButPreservesTheJournalOperation() {
+    val orphan = preparedAsset("orphan-startup")
+    val active = preparedAsset("active-startup")
+
+    installer.cleanupOrphans(active.operationId)
+
+    assertThat(
+        context.filesDir.resolve("backup_restore/operations/${orphan.operationId}").exists()
+      )
+      .isFalse()
+    assertThat(
+        context.filesDir.resolve("backup_restore/operations/${active.operationId}").isDirectory
+      )
+      .isTrue()
+  }
+
   private fun preparedAsset(label: String) =
     temporaryFolder.newFile("$label.jpg").let { source ->
       source.writeBytes(byteArrayOf(0xff.toByte(), 0xd8.toByte(), 0xff.toByte(), 1))

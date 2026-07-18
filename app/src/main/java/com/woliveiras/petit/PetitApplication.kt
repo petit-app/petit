@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @HiltAndroidApp
 class PetitApplication : Application(), Configuration.Provider {
@@ -22,14 +23,13 @@ class PetitApplication : Application(), Configuration.Provider {
   @Inject lateinit var familyGroupRepository: FamilyGroupRepository
   @Inject lateinit var lanSyncScheduler: LanSyncScheduler
   @Inject lateinit var restoreBackupUseCase: RestoreBackupUseCase
+  private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
   override fun onCreate() {
     super.onCreate()
     createNotificationChannel()
-    CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-      runCatching { restoreBackupUseCase.recoverInterruptedRestore() }
-    }
-    CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+    runBlocking(Dispatchers.IO) { restoreBackupUseCase.recoverInterruptedRestore() }
+    applicationScope.launch {
       familyGroupRepository.isSyncEnabled.collect { shouldSchedule ->
         if (shouldSchedule) lanSyncScheduler.schedule() else lanSyncScheduler.cancel()
       }

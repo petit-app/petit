@@ -227,10 +227,21 @@ class BackupArchiveCodec(private val limits: BackupArchiveLimits = BackupArchive
   }
 
   private fun validatePortableReferences(snapshot: BackupSnapshot) {
-    val assetPaths = snapshot.assets.map(::assetPath).toSet()
+    requireArchive(snapshot.exportBundle.membershipChanges.isEmpty()) {
+      "Device and family authorization data cannot be restored from a backup"
+    }
+    val assetsByPet = snapshot.assets.associateBy { it.petId }
+    requireArchive(assetsByPet.size == snapshot.assets.size) { "A pet has duplicate backup assets" }
     val references = snapshot.exportBundle.pets.mapNotNull { it.photoUri }.toSet()
+    val assetPaths = snapshot.assets.map(::assetPath).toSet()
     requireArchive(references == assetPaths) {
       "Backup asset references are incomplete or undeclared"
+    }
+    snapshot.exportBundle.pets.forEach { pet ->
+      val expected = assetsByPet[pet.id]?.let(::assetPath)
+      requireArchive(pet.photoUri == expected) {
+        "A backup asset is associated with the wrong pet"
+      }
     }
     val validationErrors = ExportBundle.validate(snapshot.exportBundle)
     requireArchive(validationErrors.isEmpty()) {
