@@ -19,8 +19,11 @@ private val Context.reminderPreferencesDataStore: DataStore<Preferences> by
 
 @Singleton
 class ReminderPreferencesRepositoryImpl
-@Inject
-constructor(@ApplicationContext private val context: Context) : ReminderPreferencesRepository {
+internal constructor(private val dataStore: DataStore<Preferences>) :
+  ReminderPreferencesRepository {
+  @Inject
+  constructor(@ApplicationContext context: Context) : this(context.reminderPreferencesDataStore)
+
   private object PreferencesKeys {
     val VACCINATION_ENABLED = booleanPreferencesKey("vaccination_reminders_enabled")
     val VACCINATION_DAYS_BEFORE = intPreferencesKey("vaccination_days_before")
@@ -33,7 +36,7 @@ constructor(@ApplicationContext private val context: Context) : ReminderPreferen
   }
 
   override val preferences: Flow<ReminderPreferences> =
-    context.reminderPreferencesDataStore.data.map { prefs ->
+    dataStore.data.map { prefs ->
       ReminderPreferences(
         vaccinationRemindersEnabled = prefs[PreferencesKeys.VACCINATION_ENABLED] ?: true,
         vaccinationDaysBefore = prefs[PreferencesKeys.VACCINATION_DAYS_BEFORE] ?: 7,
@@ -51,34 +54,52 @@ constructor(@ApplicationContext private val context: Context) : ReminderPreferen
   }
 
   override suspend fun updateVaccinationSettings(enabled: Boolean, daysBefore: Int) {
-    context.reminderPreferencesDataStore.edit { prefs ->
+    dataStore.edit { prefs ->
       prefs[PreferencesKeys.VACCINATION_ENABLED] = enabled
       prefs[PreferencesKeys.VACCINATION_DAYS_BEFORE] = daysBefore.coerceIn(1, 30)
     }
   }
 
   override suspend fun updateDewormingSettings(enabled: Boolean, daysBefore: Int) {
-    context.reminderPreferencesDataStore.edit { prefs ->
+    dataStore.edit { prefs ->
       prefs[PreferencesKeys.DEWORMING_ENABLED] = enabled
       prefs[PreferencesKeys.DEWORMING_DAYS_BEFORE] = daysBefore.coerceIn(1, 30)
     }
   }
 
   override suspend fun updateWeightSettings(enabled: Boolean, intervalDays: Int) {
-    context.reminderPreferencesDataStore.edit { prefs ->
+    dataStore.edit { prefs ->
       prefs[PreferencesKeys.WEIGHT_ENABLED] = enabled
       prefs[PreferencesKeys.WEIGHT_INTERVAL_DAYS] = intervalDays.coerceIn(7, 90)
     }
   }
 
   override suspend fun updateNotificationTime(hour: Int, minute: Int) {
-    context.reminderPreferencesDataStore.edit { prefs ->
+    dataStore.edit { prefs ->
       prefs[PreferencesKeys.NOTIFICATION_HOUR] = hour.coerceIn(0, 23)
       prefs[PreferencesKeys.NOTIFICATION_MINUTE] = minute.coerceIn(0, 59)
     }
   }
 
   override suspend fun reset() {
-    context.reminderPreferencesDataStore.edit { it.clear() }
+    dataStore.edit { it.clear() }
+  }
+
+  override suspend fun replaceRestorablePreferences(preferences: ReminderPreferences) {
+    require(preferences.vaccinationDaysBefore in 0..365)
+    require(preferences.dewormingDaysBefore in 0..365)
+    require(preferences.weightReminderIntervalDays in 1..365)
+    require(preferences.defaultNotificationHour in 0..23)
+    require(preferences.defaultNotificationMinute in 0..59)
+    dataStore.edit { stored ->
+      stored[PreferencesKeys.VACCINATION_ENABLED] = preferences.vaccinationRemindersEnabled
+      stored[PreferencesKeys.VACCINATION_DAYS_BEFORE] = preferences.vaccinationDaysBefore
+      stored[PreferencesKeys.DEWORMING_ENABLED] = preferences.dewormingRemindersEnabled
+      stored[PreferencesKeys.DEWORMING_DAYS_BEFORE] = preferences.dewormingDaysBefore
+      stored[PreferencesKeys.WEIGHT_ENABLED] = preferences.weightRemindersEnabled
+      stored[PreferencesKeys.WEIGHT_INTERVAL_DAYS] = preferences.weightReminderIntervalDays
+      stored[PreferencesKeys.NOTIFICATION_HOUR] = preferences.defaultNotificationHour
+      stored[PreferencesKeys.NOTIFICATION_MINUTE] = preferences.defaultNotificationMinute
+    }
   }
 }

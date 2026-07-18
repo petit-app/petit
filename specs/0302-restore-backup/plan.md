@@ -4,7 +4,9 @@ Spec: [spec.md](./spec.md)
 
 ## Status
 
-This plan is **Approved** and may be implemented.
+This plan is **In Progress**. Archive download, validation, transactional Room
+restore, durable recovery, preferences, reminders, and assets are implemented
+behind provider-neutral contracts.
 
 ## Dependencies
 
@@ -31,6 +33,13 @@ This plan is **Approved** and may be implemented.
 6. Restore preferences and reschedule reminders according to the selected mode.
 7. Deliver accessible confirmation, progress, success, and recovery states.
 8. Validate restoration on a second physical device.
+
+## Progress
+
+- Steps 1-6 are implemented and verified with hostile archives, Room, DataStore,
+  filesystem, cancellation, and recovery tests.
+- Step 7 has provider-neutral ViewModel and accessible Compose coverage.
+- Step 8 and real Google authorization/download remain pending.
 
 ## Planned verification
 

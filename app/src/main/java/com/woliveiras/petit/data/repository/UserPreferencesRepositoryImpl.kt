@@ -62,4 +62,12 @@ internal constructor(private val dataStore: DataStore<Preferences>) : UserPrefer
   override suspend fun setOnboardingCompleted() {
     dataStore.edit { preferences -> preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = true }
   }
+
+  override suspend fun replaceRestorablePreferences(preferences: UserPreferences) {
+    dataStore.edit { stored ->
+      stored[PreferencesKeys.THEME] = preferences.theme.name
+      stored[PreferencesKeys.LANGUAGE] = preferences.language.code
+      stored[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = preferences.hasCompletedOnboarding
+    }
+  }
 }

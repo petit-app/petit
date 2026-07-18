@@ -1,6 +1,7 @@
 package com.woliveiras.petit.di
 
 import com.woliveiras.petit.data.backup.ProviderUnavailableBackupAuthorizationGateway
+import com.woliveiras.petit.data.backup.ProviderUnavailableBackupStorageGateway
 import com.woliveiras.petit.data.repository.BackupAttemptRepository
 import com.woliveiras.petit.data.repository.BackupAttemptRepositoryImpl
 import com.woliveiras.petit.data.repository.DewormingEntryRepository
@@ -20,6 +21,7 @@ import com.woliveiras.petit.data.repository.VaccinationEntryRepositoryImpl
 import com.woliveiras.petit.data.repository.WeightEntryRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
 import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
+import com.woliveiras.petit.domain.backup.BackupStorageGateway
 import com.woliveiras.petit.domain.usecase.DeleteAllDataAction
 import com.woliveiras.petit.domain.usecase.DeleteAllDataUseCase
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
@@ -48,6 +50,12 @@ abstract class RepositoryModule {
   abstract fun bindBackupAuthorizationGateway(
     providerUnavailableBackupAuthorizationGateway: ProviderUnavailableBackupAuthorizationGateway
   ): BackupAuthorizationGateway
+
+  @Binds
+  @Singleton
+  abstract fun bindBackupStorageGateway(
+    providerUnavailableBackupStorageGateway: ProviderUnavailableBackupStorageGateway
+  ): BackupStorageGateway
 
   @Binds
   @Singleton

@@ -47,4 +47,9 @@ interface ReminderPreferencesRepository {
 
   /** Reset all reminder settings to their product defaults. */
   suspend fun reset()
+
+  /** Atomically replace every restorable reminder preference. */
+  suspend fun replaceRestorablePreferences(preferences: ReminderPreferences) {
+    throw UnsupportedOperationException("Exact reminder preference restore is not supported")
+  }
 }

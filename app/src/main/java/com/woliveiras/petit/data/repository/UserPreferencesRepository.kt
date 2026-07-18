@@ -24,4 +24,9 @@ interface UserPreferencesRepository {
 
   /** Mark onboarding as completed. */
   suspend fun setOnboardingCompleted()
+
+  /** Atomically replace every restorable preference, including a false onboarding value. */
+  suspend fun replaceRestorablePreferences(preferences: UserPreferences) {
+    throw UnsupportedOperationException("Exact preference restore is not supported")
+  }
 }

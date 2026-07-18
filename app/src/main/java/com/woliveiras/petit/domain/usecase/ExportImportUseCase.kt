@@ -270,6 +270,45 @@ constructor(
       database.withTransaction { importDataWithinTransaction(bundle, conflictResolution) }
     }
 
+  /** Restores a validated archive while preserving conflict decisions made on portable values. */
+  suspend fun restoreData(
+    bundle: ExportBundle,
+    conflictResolution: ConflictResolution,
+    installedAssetReferences: Map<String, String>,
+  ): MergeResult =
+    withContext(Dispatchers.IO) {
+      database.withTransaction {
+        restoreDataWithinTransaction(bundle, conflictResolution, installedAssetReferences)
+      }
+    }
+
+  internal suspend fun restoreDataWithinTransaction(
+    bundle: ExportBundle,
+    conflictResolution: ConflictResolution,
+    installedAssetReferences: Map<String, String>,
+  ): MergeResult {
+    val validationErrors = ExportBundle.validate(bundle)
+    require(validationErrors.isEmpty()) { "Invalid restore data: ${validationErrors.first()}" }
+    require(bundle.pets.mapNotNull { it.photoUri }.all { it in installedAssetReferences }) {
+      "A restored pet asset was not installed"
+    }
+
+    val replacePhotoReference:
+      (com.woliveiras.petit.domain.model.Pet) -> com.woliveiras.petit.domain.model.Pet =
+      { pet ->
+        pet.copy(photoUri = pet.photoUri?.let(installedAssetReferences::getValue))
+      }
+    return if (conflictResolution == ConflictResolution.REPLACE) {
+      replaceShareableData(bundle.copy(pets = bundle.pets.map(replacePhotoReference)))
+    } else {
+      mergeShareableData(
+        bundle = bundle,
+        mergeExisting = conflictResolution == ConflictResolution.MERGE,
+        transformRemotePet = replacePhotoReference,
+      )
+    }
+  }
+
   /** Applies a validated bundle inside a transaction already owned by the caller. */
   internal suspend fun importDataWithinTransaction(
     bundle: ExportBundle,
@@ -288,6 +327,11 @@ constructor(
   private suspend fun mergeShareableData(
     bundle: ExportBundle,
     mergeExisting: Boolean,
+    transformRemotePet:
+      (com.woliveiras.petit.domain.model.Pet) -> com.woliveiras.petit.domain.model.Pet =
+      {
+        it
+      },
   ): MergeResult {
     val resolver = ConflictResolver()
     val localPets = database.petDao().getAllIncludingDeleted().toDomain().associateBy { it.id }
@@ -304,6 +348,7 @@ constructor(
         bundle.pets.map { it.asConflictVersion() },
         { id -> localPets[id]?.asConflictVersion() },
         mergeExisting,
+        transformRemotePet,
       )
     if (pets.values.isNotEmpty()) {
       database.petDao().insertPets(pets.values.map { it.toEntity() })
@@ -402,6 +447,7 @@ constructor(
     remoteVersions: List<ConflictVersion<T>>,
     getLocal: (String) -> ConflictVersion<T>?,
     mergeExisting: Boolean,
+    transformRemote: (T) -> T = { it },
   ): AppliedBatch<T> {
     val counts = AppliedCounts()
     val selectedValues = mutableListOf<T>()
@@ -411,11 +457,11 @@ constructor(
       val result = resolver.resolve(local, remote)
       when (result.outcome) {
         ConflictOutcome.Inserted -> {
-          selectedValues += result.selected.value
+          selectedValues += transformRemote(result.selected.value)
           if (result.selected.deletedAt == null) counts.added++ else counts.removed++
         }
         ConflictOutcome.RemoteWon -> {
-          selectedValues += result.selected.value
+          selectedValues += transformRemote(result.selected.value)
           if (local?.deletedAt == null && result.selected.deletedAt != null) {
             counts.removed++
           } else {

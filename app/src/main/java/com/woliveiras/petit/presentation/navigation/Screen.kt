@@ -1,5 +1,7 @@
 package com.woliveiras.petit.presentation.navigation
 
+import android.net.Uri
+
 /** Navigation destinations for the app. */
 sealed class Screen(val route: String) {
 
@@ -80,6 +82,11 @@ sealed class Screen(val route: String) {
 
   /** Settings screen. */
   data object Settings : Screen("settings")
+
+  /** Restore one exact provider backup ID. */
+  data object RestoreBackup : Screen("settings/backups/{remoteId}/restore") {
+    fun createRoute(remoteId: String) = "settings/backups/${Uri.encode(remoteId)}/restore"
+  }
 
   /** Tasks list screen. */
   data object Tasks : Screen("tasks")

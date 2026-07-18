@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
+import com.woliveiras.petit.domain.backup.restore.RestoreBackupUseCase
 import com.woliveiras.petit.worker.LanSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -20,10 +21,14 @@ class PetitApplication : Application(), Configuration.Provider {
   @Inject lateinit var workerFactory: HiltWorkerFactory
   @Inject lateinit var familyGroupRepository: FamilyGroupRepository
   @Inject lateinit var lanSyncScheduler: LanSyncScheduler
+  @Inject lateinit var restoreBackupUseCase: RestoreBackupUseCase
 
   override fun onCreate() {
     super.onCreate()
     createNotificationChannel()
+    CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+      runCatching { restoreBackupUseCase.recoverInterruptedRestore() }
+    }
     CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
       familyGroupRepository.isSyncEnabled.collect { shouldSchedule ->
         if (shouldSchedule) lanSyncScheduler.schedule() else lanSyncScheduler.cancel()

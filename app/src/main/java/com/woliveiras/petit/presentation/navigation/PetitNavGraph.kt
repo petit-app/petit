@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.woliveiras.petit.presentation.feature.backup.RestoreBackupRoute
 import com.woliveiras.petit.presentation.feature.deworming.DewormingFormScreen
 import com.woliveiras.petit.presentation.feature.deworming.DewormingRecordsScreen
 import com.woliveiras.petit.presentation.feature.familygroup.FamilyGroupScreen
@@ -307,6 +308,13 @@ fun PetitNavGraph(
         onNavigateToFamilyGroup = { navController.navigate(Screen.FamilyGroup.route) },
         onNavigateToPairing = { navController.navigate(Screen.FamilyGroupPairing.route) },
       )
+    }
+
+    composable(
+      route = Screen.RestoreBackup.route,
+      arguments = listOf(navArgument("remoteId") { type = NavType.StringType }),
+    ) {
+      RestoreBackupRoute(onNavigateBack = { navController.popBackStack() })
     }
 
     // Delete All Data

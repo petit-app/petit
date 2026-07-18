@@ -5,11 +5,21 @@ import com.woliveiras.petit.BuildConfig
 import com.woliveiras.petit.data.backup.archive.AndroidBackupPetAssetSource
 import com.woliveiras.petit.data.backup.archive.BackupPetAssetSource
 import com.woliveiras.petit.data.backup.archive.PortableBackupArchivePreparer
+import com.woliveiras.petit.data.backup.restore.AndroidRestoreAssetInstaller
+import com.woliveiras.petit.data.backup.restore.FileRestoreRecoveryJournal
 import com.woliveiras.petit.data.repository.ReminderPreferencesRepository
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
+import com.woliveiras.petit.domain.backup.BackupStorageGateway
 import com.woliveiras.petit.domain.backup.archive.BackupArchiveCodec
+import com.woliveiras.petit.domain.backup.restore.DownloadAndValidateBackupUseCase
+import com.woliveiras.petit.domain.backup.restore.RestoreAssetInstaller
+import com.woliveiras.petit.domain.backup.restore.RestoreBackupAction
+import com.woliveiras.petit.domain.backup.restore.RestoreBackupUseCase
+import com.woliveiras.petit.domain.backup.restore.RestoreRecoveryJournal
+import com.woliveiras.petit.domain.backup.restore.RestoreReminderScheduler
 import com.woliveiras.petit.domain.usecase.ExportImportUseCase
 import com.woliveiras.petit.domain.usecase.backup.BackupArchivePreparer
+import com.woliveiras.petit.worker.RestoreReminderSchedulerImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -50,4 +60,57 @@ object BackupModule {
       appVersion = BuildConfig.VERSION_NAME,
       clock = clock,
     )
+
+  @Provides
+  @Singleton
+  fun provideRestoreAssetInstaller(installer: AndroidRestoreAssetInstaller): RestoreAssetInstaller =
+    installer
+
+  @Provides
+  @Singleton
+  fun provideRestoreRecoveryJournal(@ApplicationContext context: Context): RestoreRecoveryJournal =
+    FileRestoreRecoveryJournal(context.filesDir.resolve("backup_restore"))
+
+  @Provides
+  @Singleton
+  fun provideRestoreReminderScheduler(
+    scheduler: RestoreReminderSchedulerImpl
+  ): RestoreReminderScheduler = scheduler
+
+  @Provides
+  @Singleton
+  fun provideDownloadAndValidateBackupUseCase(
+    @ApplicationContext context: Context,
+    storageGateway: BackupStorageGateway,
+    codec: BackupArchiveCodec,
+  ): DownloadAndValidateBackupUseCase =
+    DownloadAndValidateBackupUseCase(
+      storageGateway,
+      codec,
+      context.cacheDir.resolve("restore_downloads"),
+    )
+
+  @Provides
+  @Singleton
+  fun provideRestoreBackupUseCase(
+    downloader: DownloadAndValidateBackupUseCase,
+    exportImportUseCase: ExportImportUseCase,
+    assetInstaller: RestoreAssetInstaller,
+    userPreferencesRepository: UserPreferencesRepository,
+    reminderPreferencesRepository: ReminderPreferencesRepository,
+    reminderScheduler: RestoreReminderScheduler,
+    recoveryJournal: RestoreRecoveryJournal,
+  ): RestoreBackupUseCase =
+    RestoreBackupUseCase(
+      downloader,
+      exportImportUseCase,
+      assetInstaller,
+      userPreferencesRepository,
+      reminderPreferencesRepository,
+      reminderScheduler,
+      recoveryJournal,
+    )
+
+  @Provides
+  fun provideRestoreBackupAction(useCase: RestoreBackupUseCase): RestoreBackupAction = useCase
 }
