@@ -62,7 +62,7 @@ constructor(
       val endpointId = nearbyTransferRepository.connectedPeerId
       if (endpointId != null) {
         try {
-          sendDataUseCase(endpointId)
+          sendDataUseCase(endpointId, nearbyTransferRepository.connectedPeerName.orEmpty())
         } catch (_: IllegalArgumentException) {
           _uiState.update {
             it.copy(transferState = TransferState.Error(TransferError.PayloadTooLarge))

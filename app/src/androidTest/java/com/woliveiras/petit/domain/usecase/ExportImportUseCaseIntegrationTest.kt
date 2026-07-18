@@ -194,6 +194,33 @@ class ExportImportUseCaseIntegrationTest {
     assertThat(database.taskDao().getAllTasks().first()).isEmpty()
   }
 
+  @Test
+  fun syncLogFailureRollsBackTheImportedEntitiesInTheSameRoomTransaction() = runTest {
+    database.openHelper.writableDatabase.execSQL(
+      """
+      CREATE TRIGGER abort_sync_log
+      BEFORE INSERT ON sync_logs
+      BEGIN
+        SELECT RAISE(ABORT, 'forced sync log failure');
+      END
+      """
+        .trimIndent()
+    )
+    val mergeData = MergeDataUseCase(useCase, database)
+
+    val failure = runCatching {
+      mergeData(
+        bundle = validBundle(tasks = emptyList()),
+        peerId = "peer-1",
+        peerName = "Kitchen phone",
+      )
+    }
+
+    assertThat(failure.exceptionOrNull()).isNotNull()
+    assertThat(database.petDao().getAllPets().first()).isEmpty()
+    assertThat(database.syncLogDao().getLatestSyncLog()).isNull()
+  }
+
   private fun backupUri(filename: String) =
     FileProvider.getUriForFile(
       context,

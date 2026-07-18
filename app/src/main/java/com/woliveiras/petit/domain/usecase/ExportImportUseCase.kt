@@ -5,11 +5,17 @@ import android.net.Uri
 import androidx.room.withTransaction
 import com.woliveiras.petit.BuildConfig
 import com.woliveiras.petit.data.local.db.PetitDatabase
+import com.woliveiras.petit.data.mapper.toDomain
+import com.woliveiras.petit.data.mapper.toEntity
 import com.woliveiras.petit.data.repository.DewormingEntryRepository
 import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.data.repository.TaskRepository
 import com.woliveiras.petit.data.repository.VaccinationEntryRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepository
+import com.woliveiras.petit.domain.conflict.ConflictOutcome
+import com.woliveiras.petit.domain.conflict.ConflictResolver
+import com.woliveiras.petit.domain.conflict.ConflictVersion
+import com.woliveiras.petit.domain.conflict.asConflictVersion
 import com.woliveiras.petit.domain.model.ConflictResolution
 import com.woliveiras.petit.domain.model.DewormingEntry
 import com.woliveiras.petit.domain.model.ExportBundle
@@ -83,6 +89,24 @@ constructor(
         vaccinationEntries = vaccinations,
         dewormingEntries = dewormings,
         tasks = tasks,
+      )
+    }
+
+  /** Export every shareable version, including soft-delete tombstones used for convergence. */
+  suspend fun exportShareable(): ExportBundle =
+    withContext(Dispatchers.IO) {
+      ExportBundle(
+        metadata =
+          ExportMetadata(
+            appVersion = BuildConfig.VERSION_NAME,
+            exportDate = Instant.now().toString(),
+            schemaVersion = 1,
+          ),
+        pets = database.petDao().getAllIncludingDeleted().toDomain(),
+        weightEntries = database.weightEntryDao().getAllIncludingDeleted().toDomain(),
+        vaccinationEntries = database.vaccinationEntryDao().getAllIncludingDeleted().toDomain(),
+        dewormingEntries = database.dewormingEntryDao().getAllIncludingDeleted().toDomain(),
+        tasks = database.taskDao().getAllIncludingDeleted().toDomain(),
       )
     }
 
@@ -188,206 +212,242 @@ constructor(
     conflictResolution: ConflictResolution,
   ): MergeResult =
     withContext(Dispatchers.IO) {
-      val validationErrors = ExportBundle.validate(bundle)
-      require(validationErrors.isEmpty()) { "Dados inválidos: ${validationErrors.first()}" }
-
-      if (conflictResolution == ConflictResolution.REPLACE) {
-        return@withContext replaceShareableData(bundle)
-      }
-
-      database.withTransaction {
-        var petsAdded = 0
-        var petsUpdated = 0
-        var weightsAdded = 0
-        var weightsUpdated = 0
-        var vaccinationsAdded = 0
-        var vaccinationsUpdated = 0
-        var dewormingsAdded = 0
-        var dewormingsUpdated = 0
-        var tasksAdded = 0
-        var tasksUpdated = 0
-
-        val existingPetIds = petRepository.getAllPets().first().map { it.id }.toSet()
-
-        // Import pets
-        for (pet in bundle.pets) {
-          val exists = pet.id in existingPetIds
-          when {
-            !exists -> {
-              petRepository.savePet(pet)
-              petsAdded++
-            }
-            conflictResolution == ConflictResolution.REPLACE -> {
-              petRepository.savePet(pet)
-              petsUpdated++
-            }
-            conflictResolution == ConflictResolution.MERGE -> {
-              val existing = petRepository.getPetById(pet.id)
-              if (existing == null || pet.updatedAt > existing.updatedAt) {
-                petRepository.savePet(pet)
-                petsUpdated++
-              }
-            }
-          // KEEP: do nothing for existing pets
-          }
-        }
-
-        // Import weight entries
-        for (entry in bundle.weightEntries) {
-          val existing = weightRepository.getWeightEntryById(entry.id)
-          when {
-            existing == null -> {
-              weightRepository.saveWeightEntry(entry)
-              weightsAdded++
-            }
-            conflictResolution == ConflictResolution.REPLACE -> {
-              weightRepository.saveWeightEntry(entry)
-              weightsUpdated++
-            }
-            conflictResolution == ConflictResolution.MERGE &&
-              entry.updatedAt > existing.updatedAt -> {
-              weightRepository.saveWeightEntry(entry)
-              weightsUpdated++
-            }
-          }
-        }
-
-        // Import vaccination entries
-        for (entry in bundle.vaccinationEntries) {
-          val existing = vaccinationRepository.getVaccinationEntryById(entry.id)
-          when {
-            existing == null -> {
-              vaccinationRepository.saveVaccinationEntry(entry)
-              vaccinationsAdded++
-            }
-            conflictResolution == ConflictResolution.REPLACE -> {
-              vaccinationRepository.saveVaccinationEntry(entry)
-              vaccinationsUpdated++
-            }
-            conflictResolution == ConflictResolution.MERGE &&
-              entry.updatedAt > existing.updatedAt -> {
-              vaccinationRepository.saveVaccinationEntry(entry)
-              vaccinationsUpdated++
-            }
-          }
-        }
-
-        // Import deworming entries
-        for (entry in bundle.dewormingEntries) {
-          val existing = dewormingRepository.getDewormingEntryById(entry.id)
-          when {
-            existing == null -> {
-              dewormingRepository.saveDewormingEntry(entry)
-              dewormingsAdded++
-            }
-            conflictResolution == ConflictResolution.REPLACE -> {
-              dewormingRepository.saveDewormingEntry(entry)
-              dewormingsUpdated++
-            }
-            conflictResolution == ConflictResolution.MERGE &&
-              entry.updatedAt > existing.updatedAt -> {
-              dewormingRepository.saveDewormingEntry(entry)
-              dewormingsUpdated++
-            }
-          }
-        }
-
-        // Import tasks
-        for (entry in bundle.tasks) {
-          val existing = taskRepository.getTaskById(entry.id)
-          when {
-            existing == null -> {
-              taskRepository.saveTask(entry)
-              tasksAdded++
-            }
-            conflictResolution == ConflictResolution.REPLACE -> {
-              taskRepository.saveTask(entry)
-              tasksUpdated++
-            }
-            conflictResolution == ConflictResolution.MERGE &&
-              entry.updatedAt > existing.updatedAt -> {
-              taskRepository.saveTask(entry)
-              tasksUpdated++
-            }
-          }
-        }
-
-        MergeResult(
-          petsAdded = petsAdded,
-          petsUpdated = petsUpdated,
-          weightsAdded = weightsAdded,
-          weightsUpdated = weightsUpdated,
-          vaccinationsAdded = vaccinationsAdded,
-          vaccinationsUpdated = vaccinationsUpdated,
-          dewormingsAdded = dewormingsAdded,
-          dewormingsUpdated = dewormingsUpdated,
-          tasksAdded = tasksAdded,
-          tasksUpdated = tasksUpdated,
-          conflictsResolved =
-            petsUpdated + weightsUpdated + vaccinationsUpdated + dewormingsUpdated + tasksUpdated,
-        )
-      }
+      database.withTransaction { importDataWithinTransaction(bundle, conflictResolution) }
     }
 
-  private suspend fun replaceShareableData(bundle: ExportBundle): MergeResult =
-    database.withTransaction {
-      val existingPets = petRepository.getAllPets().first()
-      val existingWeights =
-        existingPets.flatMap { weightRepository.getWeightEntriesForPet(it.id).first() }
-      val existingVaccinations =
-        existingPets.flatMap { vaccinationRepository.getVaccinationEntriesForPet(it.id).first() }
-      val existingDewormings =
-        existingPets.flatMap { dewormingRepository.getDewormingEntriesForPet(it.id).first() }
-      val existingTasks = taskRepository.getAllActiveTasks().first()
+  /** Applies a validated bundle inside a transaction already owned by the caller. */
+  internal suspend fun importDataWithinTransaction(
+    bundle: ExportBundle,
+    conflictResolution: ConflictResolution,
+  ): MergeResult {
+    val validationErrors = ExportBundle.validate(bundle)
+    require(validationErrors.isEmpty()) { "Dados inválidos: ${validationErrors.first()}" }
 
-      database.taskDao().deleteAll()
-      database.dewormingEntryDao().deleteAll()
-      database.vaccinationEntryDao().deleteAll()
-      database.weightEntryDao().deleteAll()
-      database.petDao().deleteAll()
+    return if (conflictResolution == ConflictResolution.REPLACE) {
+      replaceShareableData(bundle)
+    } else {
+      mergeShareableData(bundle, conflictResolution == ConflictResolution.MERGE)
+    }
+  }
 
-      bundle.pets.forEach { petRepository.savePet(it) }
-      bundle.weightEntries.forEach { weightRepository.saveWeightEntry(it) }
-      bundle.vaccinationEntries.forEach { vaccinationRepository.saveVaccinationEntry(it) }
-      bundle.dewormingEntries.forEach { dewormingRepository.saveDewormingEntry(it) }
-      bundle.tasks.forEach { taskRepository.saveTask(it) }
-
-      val petCounts = replacementCounts(existingPets.map { it.id }, bundle.pets.map { it.id })
-      val weightCounts =
-        replacementCounts(existingWeights.map { it.id }, bundle.weightEntries.map { it.id })
-      val vaccinationCounts =
-        replacementCounts(
-          existingVaccinations.map { it.id },
-          bundle.vaccinationEntries.map { it.id },
-        )
-      val dewormingCounts =
-        replacementCounts(existingDewormings.map { it.id }, bundle.dewormingEntries.map { it.id })
-      val taskCounts = replacementCounts(existingTasks.map { it.id }, bundle.tasks.map { it.id })
-
-      MergeResult(
-        petsAdded = petCounts.added,
-        petsUpdated = petCounts.updated,
-        petsRemoved = petCounts.removed,
-        weightsAdded = weightCounts.added,
-        weightsUpdated = weightCounts.updated,
-        weightsRemoved = weightCounts.removed,
-        vaccinationsAdded = vaccinationCounts.added,
-        vaccinationsUpdated = vaccinationCounts.updated,
-        vaccinationsRemoved = vaccinationCounts.removed,
-        dewormingsAdded = dewormingCounts.added,
-        dewormingsUpdated = dewormingCounts.updated,
-        dewormingsRemoved = dewormingCounts.removed,
-        tasksAdded = taskCounts.added,
-        tasksUpdated = taskCounts.updated,
-        tasksRemoved = taskCounts.removed,
-        conflictsResolved =
-          petCounts.updated +
-            weightCounts.updated +
-            vaccinationCounts.updated +
-            dewormingCounts.updated +
-            taskCounts.updated,
+  private suspend fun mergeShareableData(
+    bundle: ExportBundle,
+    mergeExisting: Boolean,
+  ): MergeResult {
+    val resolver = ConflictResolver()
+    val localPets = database.petDao().getAllIncludingDeleted().toDomain().associateBy { it.id }
+    val localWeights =
+      database.weightEntryDao().getAllIncludingDeleted().toDomain().associateBy { it.id }
+    val localVaccinations =
+      database.vaccinationEntryDao().getAllIncludingDeleted().toDomain().associateBy { it.id }
+    val localDewormings =
+      database.dewormingEntryDao().getAllIncludingDeleted().toDomain().associateBy { it.id }
+    val localTasks = database.taskDao().getAllIncludingDeleted().toDomain().associateBy { it.id }
+    val pets =
+      applyVersions(
+        resolver,
+        bundle.pets.map { it.asConflictVersion() },
+        { id -> localPets[id]?.asConflictVersion() },
+        mergeExisting,
       )
+    if (pets.values.isNotEmpty()) {
+      database.petDao().insertPets(pets.values.map { it.toEntity() })
     }
+    val weights =
+      applyVersions(
+        resolver,
+        bundle.weightEntries.map { it.asConflictVersion() },
+        { id -> localWeights[id]?.asConflictVersion() },
+        mergeExisting,
+      )
+    if (weights.values.isNotEmpty()) {
+      database.weightEntryDao().insertWeightEntries(weights.values.map { it.toEntity() })
+    }
+    val vaccinations =
+      applyVersions(
+        resolver,
+        bundle.vaccinationEntries.map { it.asConflictVersion() },
+        { id -> localVaccinations[id]?.asConflictVersion() },
+        mergeExisting,
+      )
+    if (vaccinations.values.isNotEmpty()) {
+      database
+        .vaccinationEntryDao()
+        .insertVaccinationEntries(vaccinations.values.map { it.toEntity() })
+    }
+    val dewormings =
+      applyVersions(
+        resolver,
+        bundle.dewormingEntries.map { it.asConflictVersion() },
+        { id -> localDewormings[id]?.asConflictVersion() },
+        mergeExisting,
+      )
+    if (dewormings.values.isNotEmpty()) {
+      database.dewormingEntryDao().insertDewormingEntries(dewormings.values.map { it.toEntity() })
+    }
+    val tasks =
+      applyVersions(
+        resolver,
+        bundle.tasks.map { it.asConflictVersion() },
+        { id -> localTasks[id]?.asConflictVersion() },
+        mergeExisting,
+      )
+    if (tasks.values.isNotEmpty()) {
+      database.taskDao().insertTasks(tasks.values.map { it.toEntity() })
+    }
+
+    return MergeResult(
+      petsAdded = pets.added,
+      petsUpdated = pets.updated,
+      petsRemoved = pets.removed,
+      weightsAdded = weights.added,
+      weightsUpdated = weights.updated,
+      weightsRemoved = weights.removed,
+      vaccinationsAdded = vaccinations.added,
+      vaccinationsUpdated = vaccinations.updated,
+      vaccinationsRemoved = vaccinations.removed,
+      dewormingsAdded = dewormings.added,
+      dewormingsUpdated = dewormings.updated,
+      dewormingsRemoved = dewormings.removed,
+      tasksAdded = tasks.added,
+      tasksUpdated = tasks.updated,
+      tasksRemoved = tasks.removed,
+      conflictsResolved =
+        pets.conflicts +
+          weights.conflicts +
+          vaccinations.conflicts +
+          dewormings.conflicts +
+          tasks.conflicts,
+    )
+  }
+
+  private data class AppliedCounts(
+    var added: Int = 0,
+    var updated: Int = 0,
+    var removed: Int = 0,
+    var conflicts: Int = 0,
+  )
+
+  private data class AppliedBatch<T>(val counts: AppliedCounts, val values: List<T>) {
+    val added: Int
+      get() = counts.added
+
+    val updated: Int
+      get() = counts.updated
+
+    val removed: Int
+      get() = counts.removed
+
+    val conflicts: Int
+      get() = counts.conflicts
+  }
+
+  private suspend fun <T> applyVersions(
+    resolver: ConflictResolver,
+    remoteVersions: List<ConflictVersion<T>>,
+    getLocal: (String) -> ConflictVersion<T>?,
+    mergeExisting: Boolean,
+  ): AppliedBatch<T> {
+    val counts = AppliedCounts()
+    val selectedValues = mutableListOf<T>()
+    for (remote in resolver.normalize(remoteVersions)) {
+      val local = getLocal(remote.id)
+      if (local != null && !mergeExisting) continue
+      val result = resolver.resolve(local, remote)
+      when (result.outcome) {
+        ConflictOutcome.Inserted -> {
+          selectedValues += result.selected.value
+          if (result.selected.deletedAt == null) counts.added++ else counts.removed++
+        }
+        ConflictOutcome.RemoteWon -> {
+          selectedValues += result.selected.value
+          if (local?.deletedAt == null && result.selected.deletedAt != null) {
+            counts.removed++
+          } else {
+            counts.updated++
+          }
+          counts.conflicts++
+        }
+        ConflictOutcome.LocalKept -> counts.conflicts++
+        ConflictOutcome.Identical -> Unit
+      }
+    }
+    return AppliedBatch(counts, selectedValues)
+  }
+
+  private suspend fun replaceShareableData(bundle: ExportBundle): MergeResult {
+    val resolver = ConflictResolver()
+    val incomingPets =
+      resolver.normalize(bundle.pets.map { it.asConflictVersion() }).map { it.value }
+    val incomingWeights =
+      resolver.normalize(bundle.weightEntries.map { it.asConflictVersion() }).map { it.value }
+    val incomingVaccinations =
+      resolver.normalize(bundle.vaccinationEntries.map { it.asConflictVersion() }).map { it.value }
+    val incomingDewormings =
+      resolver.normalize(bundle.dewormingEntries.map { it.asConflictVersion() }).map { it.value }
+    val incomingTasks =
+      resolver.normalize(bundle.tasks.map { it.asConflictVersion() }).map { it.value }
+    val existingPets = database.petDao().getAllIncludingDeleted().toDomain()
+    val existingWeights = database.weightEntryDao().getAllIncludingDeleted().toDomain()
+    val existingVaccinations = database.vaccinationEntryDao().getAllIncludingDeleted().toDomain()
+    val existingDewormings = database.dewormingEntryDao().getAllIncludingDeleted().toDomain()
+    val existingTasks = database.taskDao().getAllIncludingDeleted().toDomain()
+
+    database.taskDao().deleteAll()
+    database.dewormingEntryDao().deleteAll()
+    database.vaccinationEntryDao().deleteAll()
+    database.weightEntryDao().deleteAll()
+    database.petDao().deleteAll()
+
+    if (incomingPets.isNotEmpty()) database.petDao().insertPets(incomingPets.map { it.toEntity() })
+    if (incomingWeights.isNotEmpty()) {
+      database.weightEntryDao().insertWeightEntries(incomingWeights.map { it.toEntity() })
+    }
+    if (incomingVaccinations.isNotEmpty()) {
+      database
+        .vaccinationEntryDao()
+        .insertVaccinationEntries(incomingVaccinations.map { it.toEntity() })
+    }
+    if (incomingDewormings.isNotEmpty()) {
+      database.dewormingEntryDao().insertDewormingEntries(incomingDewormings.map { it.toEntity() })
+    }
+    if (incomingTasks.isNotEmpty()) {
+      database.taskDao().insertTasks(incomingTasks.map { it.toEntity() })
+    }
+
+    val petCounts = replacementCounts(existingPets.map { it.id }, incomingPets.map { it.id })
+    val weightCounts =
+      replacementCounts(existingWeights.map { it.id }, incomingWeights.map { it.id })
+    val vaccinationCounts =
+      replacementCounts(existingVaccinations.map { it.id }, incomingVaccinations.map { it.id })
+    val dewormingCounts =
+      replacementCounts(existingDewormings.map { it.id }, incomingDewormings.map { it.id })
+    val taskCounts = replacementCounts(existingTasks.map { it.id }, incomingTasks.map { it.id })
+
+    return MergeResult(
+      petsAdded = petCounts.added,
+      petsUpdated = petCounts.updated,
+      petsRemoved = petCounts.removed,
+      weightsAdded = weightCounts.added,
+      weightsUpdated = weightCounts.updated,
+      weightsRemoved = weightCounts.removed,
+      vaccinationsAdded = vaccinationCounts.added,
+      vaccinationsUpdated = vaccinationCounts.updated,
+      vaccinationsRemoved = vaccinationCounts.removed,
+      dewormingsAdded = dewormingCounts.added,
+      dewormingsUpdated = dewormingCounts.updated,
+      dewormingsRemoved = dewormingCounts.removed,
+      tasksAdded = taskCounts.added,
+      tasksUpdated = taskCounts.updated,
+      tasksRemoved = taskCounts.removed,
+      conflictsResolved =
+        petCounts.updated +
+          weightCounts.updated +
+          vaccinationCounts.updated +
+          dewormingCounts.updated +
+          taskCounts.updated,
+    )
+  }
 
   private data class ReplacementCounts(val added: Int, val updated: Int, val removed: Int)
 

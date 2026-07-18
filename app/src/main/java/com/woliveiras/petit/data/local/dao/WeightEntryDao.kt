@@ -19,6 +19,9 @@ interface WeightEntryDao {
   )
   fun getWeightEntriesForPet(petId: String): Flow<List<WeightEntryEntity>>
 
+  @Query("SELECT * FROM weight_entries ORDER BY id")
+  suspend fun getAllIncludingDeleted(): List<WeightEntryEntity>
+
   /** Get the latest weight entry for a pet. */
   @Query(
     "SELECT * FROM weight_entries WHERE petId = :petId AND deletedAt IS NULL ORDER BY date DESC LIMIT 1"
@@ -35,6 +38,9 @@ interface WeightEntryDao {
   @Query("SELECT * FROM weight_entries WHERE id = :id AND deletedAt IS NULL")
   suspend fun getWeightEntryById(id: String): WeightEntryEntity?
 
+  @Query("SELECT * FROM weight_entries WHERE id = :id")
+  suspend fun getByIdIncludingDeleted(id: String): WeightEntryEntity?
+
   /** Get weight entry for a specific date (for upsert logic). */
   @Query("SELECT * FROM weight_entries WHERE petId = :petId AND date = :date AND deletedAt IS NULL")
   suspend fun getWeightEntryByDate(petId: String, date: Long): WeightEntryEntity?
@@ -42,6 +48,9 @@ interface WeightEntryDao {
   /** Insert a new weight entry. */
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertWeightEntry(entry: WeightEntryEntity)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insertWeightEntries(entries: List<WeightEntryEntity>)
 
   /** Update an existing weight entry. */
   @Update suspend fun updateWeightEntry(entry: WeightEntryEntity)

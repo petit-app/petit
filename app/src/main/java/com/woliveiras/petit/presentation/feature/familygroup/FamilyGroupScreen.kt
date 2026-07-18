@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DevicesOther
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,6 +49,7 @@ fun FamilyGroupScreen(
   onNavigateToPairing: () -> Unit,
   onNavigateToSend: () -> Unit,
   onNavigateToReceive: () -> Unit,
+  onNavigateToSyncHistory: () -> Unit,
   viewModel: FamilyGroupViewModel = hiltViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -261,6 +263,34 @@ fun FamilyGroupScreen(
               )
             },
             headlineContent = { Text(stringResource(R.string.family_group_pair_device)) },
+            trailingContent = {
+              Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            },
+          )
+
+          HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+          )
+
+          ListItem(
+            modifier = Modifier.clickable(onClick = onNavigateToSyncHistory),
+            colors =
+              ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+              ),
+            leadingContent = {
+              Icon(
+                imageVector = Icons.Default.History,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+              )
+            },
+            headlineContent = { Text(stringResource(R.string.family_group_sync_history)) },
             trailingContent = {
               Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

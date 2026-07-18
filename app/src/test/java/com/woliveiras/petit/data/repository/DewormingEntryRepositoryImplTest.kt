@@ -55,10 +55,14 @@ class DewormingEntryRepositoryImplTest {
     override fun getDewormingEntriesForPet(petId: String): Flow<List<DewormingEntryEntity>> =
       MutableStateFlow(emptyList())
 
+    override suspend fun getAllIncludingDeleted(): List<DewormingEntryEntity> = emptyList()
+
     override fun getLatestDewormingsForPet(petId: String): Flow<List<DewormingEntryEntity>> =
       MutableStateFlow(emptyList())
 
     override suspend fun getDewormingEntryById(id: String): DewormingEntryEntity? = null
+
+    override suspend fun getByIdIncludingDeleted(id: String): DewormingEntryEntity? = null
 
     override fun getOverdueDewormings(today: Long): Flow<List<DewormingEntryEntity>> {
       overdueToday = today
@@ -75,6 +79,8 @@ class DewormingEntryRepositoryImplTest {
     }
 
     override suspend fun insertDewormingEntry(entry: DewormingEntryEntity) = Unit
+
+    override suspend fun insertDewormingEntries(entries: List<DewormingEntryEntity>) = Unit
 
     override suspend fun updateDewormingEntry(entry: DewormingEntryEntity) = Unit
 

@@ -15,6 +15,10 @@ data class ExportBundle(
   val dewormingEntries: List<DewormingEntry>,
   val tasks: List<Task>,
 ) {
+  val entityCount: Int
+    get() =
+      pets.size + weightEntries.size + vaccinationEntries.size + dewormingEntries.size + tasks.size
+
   fun toJson(): JSONObject {
     return JSONObject().apply {
       put("metadata", metadata.toJson())
@@ -226,6 +230,7 @@ fun Pet.toExportJson(): JSONObject {
     put("notes", notes)
     put("createdAt", createdAt)
     put("updatedAt", updatedAt)
+    put("deletedAt", deletedAt ?: JSONObject.NULL)
   }
 }
 
@@ -258,6 +263,7 @@ fun Pet.Companion.fromExportJson(json: JSONObject): Pet {
     notes = json.optStringOrNull("notes"),
     createdAt = json.getLong("createdAt"),
     updatedAt = json.getLong("updatedAt"),
+    deletedAt = json.optLongOrNull("deletedAt"),
     syncStatus = SyncStatus.LOCAL_ONLY,
   )
 }
@@ -271,6 +277,7 @@ fun WeightEntry.toExportJson(): JSONObject {
     put("note", note)
     put("createdAt", createdAt)
     put("updatedAt", updatedAt)
+    put("deletedAt", deletedAt ?: JSONObject.NULL)
   }
 }
 
@@ -283,6 +290,7 @@ fun WeightEntry.Companion.fromExportJson(json: JSONObject): WeightEntry {
     note = json.optStringOrNull("note"),
     createdAt = json.getLong("createdAt"),
     updatedAt = json.getLong("updatedAt"),
+    deletedAt = json.optLongOrNull("deletedAt"),
     syncStatus = SyncStatus.LOCAL_ONLY,
   )
 }
@@ -301,6 +309,7 @@ fun VaccinationEntry.toExportJson(): JSONObject {
     put("note", note)
     put("createdAt", createdAt)
     put("updatedAt", updatedAt)
+    put("deletedAt", deletedAt ?: JSONObject.NULL)
   }
 }
 
@@ -331,6 +340,7 @@ fun VaccinationEntry.Companion.fromExportJson(json: JSONObject): VaccinationEntr
     note = json.optStringOrNull("note"),
     createdAt = json.getLong("createdAt"),
     updatedAt = json.getLong("updatedAt"),
+    deletedAt = json.optLongOrNull("deletedAt"),
     syncStatus = SyncStatus.LOCAL_ONLY,
   )
 }
@@ -346,6 +356,7 @@ fun DewormingEntry.toExportJson(): JSONObject {
     put("note", note)
     put("createdAt", createdAt)
     put("updatedAt", updatedAt)
+    put("deletedAt", deletedAt ?: JSONObject.NULL)
   }
 }
 
@@ -364,6 +375,7 @@ fun DewormingEntry.Companion.fromExportJson(json: JSONObject): DewormingEntry {
     note = json.optStringOrNull("note"),
     createdAt = json.getLong("createdAt"),
     updatedAt = json.getLong("updatedAt"),
+    deletedAt = json.optLongOrNull("deletedAt"),
     syncStatus = SyncStatus.LOCAL_ONLY,
   )
 }
@@ -380,6 +392,7 @@ fun Task.toExportJson(): JSONObject {
     put("status", status.name)
     put("createdAt", createdAt)
     put("updatedAt", updatedAt)
+    put("deletedAt", deletedAt ?: JSONObject.NULL)
   }
 }
 
@@ -409,6 +422,7 @@ fun Task.Companion.fromExportJson(json: JSONObject): Task {
     status = status,
     createdAt = json.getLong("createdAt"),
     updatedAt = json.getLong("updatedAt"),
+    deletedAt = json.optLongOrNull("deletedAt"),
   )
 }
 
@@ -416,6 +430,9 @@ fun Task.Companion.fromExportJson(json: JSONObject): Task {
 private fun JSONObject.optStringOrNull(key: String): String? {
   return if (isNull(key)) null else optString(key, null)?.takeIf { it.isNotEmpty() && it != "null" }
 }
+
+private fun JSONObject.optLongOrNull(key: String): Long? =
+  if (!has(key) || isNull(key)) null else getLong(key)
 
 private fun JSONObject.toLegacyReminderTask(): Task {
   val scheduledFor = optStringOrNull("scheduledAt") ?: optStringOrNull("scheduledFor")

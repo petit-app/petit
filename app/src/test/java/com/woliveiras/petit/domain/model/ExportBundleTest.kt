@@ -33,6 +33,24 @@ class ExportBundleTest {
   }
 
   @Test
+  fun tombstoneRoundTripsWithItsDeletionTimestamp() {
+    val deleted =
+      Task(
+        id = "task-1",
+        kind = TaskKind.CUSTOM,
+        title = "Deleted",
+        scheduledFor = LocalDateTime.of(2026, 7, 20, 9, 0),
+        createdAt = 1L,
+        updatedAt = 20L,
+        deletedAt = 20L,
+      )
+
+    val restored = ExportBundle.fromJson(emptyBundle(tasks = listOf(deleted)).toJson())
+
+    assertThat(restored.tasks).containsExactly(deleted)
+  }
+
+  @Test
   fun legacyRemindersAreConvertedToCurrentTasksBeforeValidation() {
     val legacy =
       emptyBundleJson().apply {

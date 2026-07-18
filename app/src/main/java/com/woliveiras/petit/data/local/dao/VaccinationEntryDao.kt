@@ -22,6 +22,9 @@ interface VaccinationEntryDao {
   )
   fun getVaccinationEntriesForPet(petId: String): Flow<List<VaccinationEntryEntity>>
 
+  @Query("SELECT * FROM vaccination_entries ORDER BY id")
+  suspend fun getAllIncludingDeleted(): List<VaccinationEntryEntity>
+
   /** Get the latest vaccination entry for each vaccine type for a pet. */
   @Query(
     """
@@ -47,6 +50,9 @@ interface VaccinationEntryDao {
   /** Get a vaccination entry by ID. */
   @Query("SELECT * FROM vaccination_entries WHERE id = :id AND deletedAt IS NULL")
   suspend fun getVaccinationEntryById(id: String): VaccinationEntryEntity?
+
+  @Query("SELECT * FROM vaccination_entries WHERE id = :id")
+  suspend fun getByIdIncludingDeleted(id: String): VaccinationEntryEntity?
 
   /**
    * Get all overdue vaccinations (nextDueDate < today, only latest entry per vaccine type per pet).
@@ -101,6 +107,9 @@ interface VaccinationEntryDao {
   /** Insert a new vaccination entry. */
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertVaccinationEntry(entry: VaccinationEntryEntity)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insertVaccinationEntries(entries: List<VaccinationEntryEntity>)
 
   /** Update an existing vaccination entry. */
   @Update suspend fun updateVaccinationEntry(entry: VaccinationEntryEntity)

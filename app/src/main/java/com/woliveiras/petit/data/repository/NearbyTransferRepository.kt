@@ -38,7 +38,7 @@ interface NearbyTransferRepository {
   /** Reject a connection request from a remote device. */
   suspend fun rejectConnection(endpointId: String)
 
-  /** Send an export bundle to the connected device. */
+  /** Send an export bundle and return only after payload delivery succeeds. */
   suspend fun sendData(endpointId: String, bundle: ExportBundle)
 
   /** Cancel the active payload, discard partial data, and disconnect the peer. */

@@ -15,9 +15,14 @@ interface PetDao {
   @Query("SELECT * FROM pets WHERE deletedAt IS NULL ORDER BY name ASC")
   fun getAllPets(): Flow<List<PetEntity>>
 
+  @Query("SELECT * FROM pets ORDER BY id") suspend fun getAllIncludingDeleted(): List<PetEntity>
+
   /** Get a single pet by ID. */
   @Query("SELECT * FROM pets WHERE id = :id AND deletedAt IS NULL")
   suspend fun getPetById(id: String): PetEntity?
+
+  @Query("SELECT * FROM pets WHERE id = :id")
+  suspend fun getByIdIncludingDeleted(id: String): PetEntity?
 
   /** Get a single pet by ID as Flow for reactive updates. */
   @Query("SELECT * FROM pets WHERE id = :id AND deletedAt IS NULL")
@@ -28,6 +33,8 @@ interface PetDao {
 
   /** Insert a new pet. */
   @Upsert suspend fun insertPet(pet: PetEntity)
+
+  @Upsert suspend fun insertPets(pets: List<PetEntity>)
 
   /** Update an existing pet. */
   @Update suspend fun updatePet(pet: PetEntity)

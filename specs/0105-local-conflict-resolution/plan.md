@@ -2,11 +2,16 @@
 
 Spec: [spec.md](./spec.md)
 
-## Starting point
+## Implementation status
 
-The `updatedAt` merge and `SyncLog` write already exist. Implementation should
-first characterize this behavior, decide the unresolved tie-breaker, and only
-then extract a single reusable rule.
+Steps 1–7 are implemented locally. The remaining open task is physical
+two-device convergence validation for edits, deletes, and equal-time ties.
+
+## Starting point and delivered outcome
+
+The original `updatedAt` merge and separate `SyncLog` write were characterized
+before implementation. They now use one pure resolver, batch DAO writes, and a
+single Room transaction for the imported entities and audit log.
 
 ## Implementation sequence
 
@@ -24,7 +29,8 @@ then extract a single reusable rule.
 2. Compare active events and deletions by the most recent effective time.
 3. Newer remote event: update or apply the soft delete.
 4. Newer local event: keep the local version.
-5. Equal times: apply the stable tie-breaker still to be decided, never “keep local” on both sides.
+5. Equal times: prefer a tombstone, then compare the type-aware, length-prefixed
+   canonical payload; never “keep local” on both sides.
 
 ## Dependencies and integration
 

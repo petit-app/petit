@@ -108,6 +108,9 @@ sealed class Screen(val route: String) {
   /** Family group management screen. */
   data object FamilyGroup : Screen("familygroup")
 
+  /** Local synchronization audit history. */
+  data object FamilyGroupSyncHistory : Screen("familygroup/sync-history")
+
   /** Pairing screen for connecting devices. */
   data object FamilyGroupPairing : Screen("familygroup/pairing")
 

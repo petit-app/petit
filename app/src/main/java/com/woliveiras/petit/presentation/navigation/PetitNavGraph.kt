@@ -332,6 +332,13 @@ fun PetitNavGraph(
             Screen.FamilyGroupTransfer.createRoute(Screen.FamilyGroupTransfer.MODE_RECEIVE)
           )
         },
+        onNavigateToSyncHistory = { navController.navigate(Screen.FamilyGroupSyncHistory.route) },
+      )
+    }
+
+    composable(Screen.FamilyGroupSyncHistory.route) {
+      com.woliveiras.petit.presentation.feature.familygroup.SyncHistoryScreen(
+        onNavigateBack = { navController.popBackStack() }
       )
     }
 

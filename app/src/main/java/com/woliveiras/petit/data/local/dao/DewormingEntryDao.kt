@@ -22,6 +22,9 @@ interface DewormingEntryDao {
   )
   fun getDewormingEntriesForPet(petId: String): Flow<List<DewormingEntryEntity>>
 
+  @Query("SELECT * FROM deworming_entries ORDER BY id")
+  suspend fun getAllIncludingDeleted(): List<DewormingEntryEntity>
+
   /** Get the latest deworming entry for each type for a pet. */
   @Query(
     """
@@ -47,6 +50,9 @@ interface DewormingEntryDao {
   /** Get a deworming entry by ID. */
   @Query("SELECT * FROM deworming_entries WHERE id = :id AND deletedAt IS NULL")
   suspend fun getDewormingEntryById(id: String): DewormingEntryEntity?
+
+  @Query("SELECT * FROM deworming_entries WHERE id = :id")
+  suspend fun getByIdIncludingDeleted(id: String): DewormingEntryEntity?
 
   /** Get all overdue dewormings (nextDueDate < today, only latest entry per type per pet). */
   @Query(
@@ -96,6 +102,9 @@ interface DewormingEntryDao {
   /** Insert a new deworming entry. */
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertDewormingEntry(entry: DewormingEntryEntity)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insertDewormingEntries(entries: List<DewormingEntryEntity>)
 
   /** Update an existing deworming entry. */
   @Update suspend fun updateDewormingEntry(entry: DewormingEntryEntity)

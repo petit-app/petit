@@ -18,28 +18,28 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - acceptance criteria: the current flow persists `SyncLog`.
   - verification: `./gradlew test`
 
-- [ ] **Decide the tie-breaker for equal timestamps** (test-type: unit)
+- [x] **Decide the tie-breaker for equal timestamps** (test-type: unit)
   - blocked-by: characterization tests
   - summary: select a stable key and document the total order.
   - desired behavior: both devices choose the same version when payloads differ.
   - acceptance criteria: the decision covers active/deleted versions and passes with both input orders.
   - verification: `./gradlew test`
 
-- [ ] **Extract and cover a single resolver** (test-type: unit)
+- [x] **Extract and cover a single resolver** (test-type: unit)
   - blocked-by: tie-breaker decided
   - summary: centralize insertion, editing, soft delete, and tie-breaking in a pure function.
   - desired behavior: the resolver is deterministic, idempotent, and symmetric.
   - acceptance criteria: the complete matrix, retries, and reverse order pass.
   - verification: `./gradlew test`
 
-- [ ] **Apply the batch and log in the same transaction** (test-type: integration)
+- [x] **Apply the batch and log in the same transaction** (test-type: integration)
   - blocked-by: single resolver
   - summary: integrate the resolver into spec 0102 with consistent rollback.
   - desired behavior: a failure leaves neither applied entities without a log nor a log without entities.
   - acceptance criteria: a test with an injected failure rolls back the entire batch.
   - verification: `./gradlew test`
 
-- [ ] **Display local sync history** (test-type: both)
+- [x] **Display local sync history** (test-type: both)
   - blocked-by: transaction with log
   - summary: list the peer, time, type, and counts without clinical content.
   - desired behavior: the user can confirm and diagnose recent syncs.

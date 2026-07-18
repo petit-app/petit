@@ -16,13 +16,19 @@ import com.woliveiras.petit.data.repository.TaskRepositoryImpl
 import com.woliveiras.petit.data.repository.VaccinationEntryRepositoryImpl
 import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
 import com.woliveiras.petit.domain.model.ConflictResolution
+import com.woliveiras.petit.domain.model.DewormingEntry
+import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
+import com.woliveiras.petit.domain.model.VaccinationEntry
+import com.woliveiras.petit.domain.model.VaccineType
+import com.woliveiras.petit.domain.model.WeightEntry
 import java.time.Clock
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -54,7 +60,7 @@ class ExportImportUseCaseTest {
   }
 
   @Test
-  fun exportAllIncludesPendingCompletedAndGlobalTasksButExcludesLogicalDeletes() = runTest {
+  fun backupExportExcludesLogicalDeletesWhileShareableExportIncludesTombstones() = runTest {
     database.petDao().insertPet(PetEntity(id = "pet-1", name = "Mimi"))
     listOf(
         TaskEntity(
@@ -84,13 +90,14 @@ class ExportImportUseCaseTest {
       )
       .forEach { database.taskDao().insertTask(it) }
 
-    val exported = useCase.exportAll()
+    val backup = useCase.exportAll()
+    val shareable = useCase.exportShareable()
 
-    assertThat(exported.tasks.map { it.id })
+    assertThat(backup.tasks.map { it.id })
       .containsExactly("pending", "completed", "global")
       .inOrder()
-    assertThat(exported.tasks.single { it.id == "completed" }.status)
-      .isEqualTo(TaskStatus.COMPLETED)
+    assertThat(backup.tasks.single { it.id == "completed" }.status).isEqualTo(TaskStatus.COMPLETED)
+    assertThat(shareable.tasks.single { it.id == "deleted" }.deletedAt).isEqualTo(5L)
   }
 
   @Test
@@ -280,7 +287,99 @@ class ExportImportUseCaseTest {
     assertThat(database.petDao().getAllPets().first().map { it.id }).containsExactly("local-pet")
   }
 
-  private fun bundleWithTask(title: String, updatedAt: Long) =
+  @Test
+  fun newerTombstoneWinsAndRetryDoesNotChangeCounts() = runTest {
+    database.petDao().insertPet(PetEntity(id = "pet-1", name = "Mimi"))
+    database
+      .taskDao()
+      .insertTask(
+        TaskEntity(
+          id = "task-1",
+          petId = "pet-1",
+          kind = "CUSTOM",
+          title = "Active",
+          scheduledFor = 1L,
+          updatedAt = 10L,
+        )
+      )
+    val tombstone = bundleWithTask("Deleted", updatedAt = 20L, deletedAt = 20L)
+
+    val first = useCase.importData(tombstone, ConflictResolution.MERGE)
+    val retry = useCase.importData(tombstone, ConflictResolution.MERGE)
+
+    assertThat(database.taskDao().getTaskById("task-1")).isNull()
+    assertThat(database.taskDao().getByIdIncludingDeleted("task-1")?.deletedAt).isEqualTo(20L)
+    assertThat(first.tasksRemoved).isEqualTo(1)
+    assertThat(retry.totalAdded + retry.totalUpdated + retry.totalRemoved).isEqualTo(0)
+  }
+
+  @Test
+  fun duplicateVersionsInARealImportAreNormalizedByTheResolver() = runTest {
+    val old = bundleWithTask("Old", updatedAt = 10L)
+    val newest = old.tasks.single().copy(title = "Newest", updatedAt = 30L)
+    val duplicated = old.copy(tasks = listOf(old.tasks.single(), newest))
+
+    val result = useCase.importData(duplicated, ConflictResolution.MERGE)
+
+    assertThat(database.taskDao().getTaskById("task-1")?.title).isEqualTo("Newest")
+    assertThat(result.tasksAdded).isEqualTo(1)
+  }
+
+  @Test
+  fun mergeAppliesTombstonesForEveryShareableEntityType() = runTest {
+    val active = completeBundle(updatedAt = 10L)
+    useCase.importData(active, ConflictResolution.MERGE)
+    val tombstones =
+      active.copy(
+        pets = active.pets.map { it.copy(updatedAt = 20L, deletedAt = 20L) },
+        weightEntries = active.weightEntries.map { it.copy(updatedAt = 20L, deletedAt = 20L) },
+        vaccinationEntries =
+          active.vaccinationEntries.map { it.copy(updatedAt = 20L, deletedAt = 20L) },
+        dewormingEntries =
+          active.dewormingEntries.map { it.copy(updatedAt = 20L, deletedAt = 20L) },
+        tasks = active.tasks.map { it.copy(updatedAt = 20L, deletedAt = 20L) },
+      )
+
+    val result = useCase.importData(tombstones, ConflictResolution.MERGE)
+
+    assertThat(result.petsRemoved).isEqualTo(1)
+    assertThat(result.weightsRemoved).isEqualTo(1)
+    assertThat(result.vaccinationsRemoved).isEqualTo(1)
+    assertThat(result.dewormingsRemoved).isEqualTo(1)
+    assertThat(result.tasksRemoved).isEqualTo(1)
+    assertThat(database.petDao().getPetById("pet-1")).isNull()
+    assertThat(database.weightEntryDao().getWeightEntryById("weight-1")).isNull()
+    assertThat(database.vaccinationEntryDao().getVaccinationEntryById("vaccination-1")).isNull()
+    assertThat(database.dewormingEntryDao().getDewormingEntryById("deworming-1")).isNull()
+    assertThat(database.taskDao().getTaskById("task-1")).isNull()
+  }
+
+  @Test
+  fun largeChangesetIsBatchAppliedAndAnIdenticalRetryIsIdempotent() = runTest {
+    val tasks =
+      (1..500).map { index ->
+        Task(
+          id = "task-$index",
+          petId = "pet-1",
+          kind = TaskKind.CUSTOM,
+          title = "Task $index",
+          scheduledFor = LocalDateTime.of(2026, 7, 18, 9, 0),
+          createdAt = 1L,
+          updatedAt = index.toLong(),
+        )
+      }
+    val bundle = completeBundle(updatedAt = 1L).copy(tasks = tasks)
+
+    val first = useCase.importData(bundle, ConflictResolution.MERGE)
+    val retry = useCase.importData(bundle, ConflictResolution.MERGE)
+
+    assertThat(database.taskDao().getAllIncludingDeleted()).hasSize(500)
+    assertThat(first.tasksAdded).isEqualTo(500)
+    assertThat(retry.totalAdded + retry.totalUpdated + retry.totalRemoved).isEqualTo(0)
+    assertThat(retry.conflictsResolved).isEqualTo(0)
+  }
+
+  private fun bundleWithTask(title: String, updatedAt: Long, deletedAt: Long? = null) =
     ExportBundle(
       metadata = ExportMetadata("1.0", "2026-07-17T00:00:00Z"),
       pets = listOf(Pet(id = "pet-1", name = "Mimi", createdAt = 1L, updatedAt = 1L)),
@@ -295,6 +394,58 @@ class ExportImportUseCaseTest {
             kind = TaskKind.CUSTOM,
             title = title,
             scheduledFor = LocalDateTime.of(2026, 7, 17, 9, 0),
+            createdAt = 1L,
+            updatedAt = updatedAt,
+            deletedAt = deletedAt,
+          )
+        ),
+    )
+
+  private fun completeBundle(updatedAt: Long) =
+    ExportBundle(
+      metadata = ExportMetadata("1.0", "2026-07-18T00:00:00Z"),
+      pets = listOf(Pet("pet-1", "Mimi", createdAt = 1L, updatedAt = updatedAt)),
+      weightEntries =
+        listOf(
+          WeightEntry(
+            "weight-1",
+            "pet-1",
+            LocalDate.of(2026, 7, 18),
+            4_200,
+            createdAt = 1L,
+            updatedAt = updatedAt,
+          )
+        ),
+      vaccinationEntries =
+        listOf(
+          VaccinationEntry(
+            id = "vaccination-1",
+            petId = "pet-1",
+            vaccineType = VaccineType.RABIES,
+            applicationDate = LocalDate.of(2026, 7, 18),
+            createdAt = 1L,
+            updatedAt = updatedAt,
+          )
+        ),
+      dewormingEntries =
+        listOf(
+          DewormingEntry(
+            id = "deworming-1",
+            petId = "pet-1",
+            type = DewormingType.INTERNAL,
+            applicationDate = LocalDate.of(2026, 7, 18),
+            createdAt = 1L,
+            updatedAt = updatedAt,
+          )
+        ),
+      tasks =
+        listOf(
+          Task(
+            id = "task-1",
+            petId = "pet-1",
+            kind = TaskKind.CUSTOM,
+            title = "Task",
+            scheduledFor = LocalDateTime.of(2026, 7, 18, 9, 0),
             createdAt = 1L,
             updatedAt = updatedAt,
           )

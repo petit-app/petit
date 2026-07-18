@@ -1,6 +1,8 @@
 package com.woliveiras.petit.domain.usecase
 
-import com.woliveiras.petit.data.repository.FamilyGroupRepository
+import androidx.room.withTransaction
+import com.woliveiras.petit.data.local.db.PetitDatabase
+import com.woliveiras.petit.data.mapper.toEntity
 import com.woliveiras.petit.domain.model.ConflictResolution
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.MergeResult
@@ -15,7 +17,7 @@ class MergeDataUseCase
 @Inject
 constructor(
   private val exportImportUseCase: ExportImportUseCase,
-  private val familyGroupRepository: FamilyGroupRepository,
+  private val database: PetitDatabase,
 ) {
 
   /**
@@ -35,21 +37,21 @@ constructor(
   ): MergeResult {
     val resolution = if (replace) ConflictResolution.REPLACE else ConflictResolution.MERGE
 
-    val result = exportImportUseCase.importData(bundle, resolution)
-
-    val syncLog =
-      SyncLog(
-        id = UUID.randomUUID().toString(),
-        peerId = peerId,
-        peerName = peerName,
-        syncTimestamp = System.currentTimeMillis(),
-        entitiesSent = 0,
-        entitiesReceived = result.totalAdded + result.totalUpdated,
-        conflictsResolved = result.conflictsResolved,
-        syncType = if (replace) "REPLACE" else "MERGE",
-      )
-    familyGroupRepository.recordSyncLog(syncLog)
-
-    return result
+    return database.withTransaction {
+      val result = exportImportUseCase.importDataWithinTransaction(bundle, resolution)
+      val syncLog =
+        SyncLog(
+          id = UUID.randomUUID().toString(),
+          peerId = peerId,
+          peerName = peerName,
+          syncTimestamp = System.currentTimeMillis(),
+          entitiesSent = 0,
+          entitiesReceived = bundle.entityCount,
+          conflictsResolved = result.conflictsResolved,
+          syncType = if (replace) "REPLACE" else "MERGE",
+        )
+      database.syncLogDao().insertSyncLog(syncLog.toEntity())
+      result
+    }
   }
 }

@@ -37,6 +37,8 @@ import java.time.Clock
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -83,6 +85,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
   private val outgoingTempFile = AtomicReference<File?>(null)
   private val incomingProgress = AtomicReference<MonotonicTransferProgress?>(null)
   private val outgoingProgress = AtomicReference<MonotonicTransferProgress?>(null)
+  private val outgoingCompletion = AtomicReference<CompletableDeferred<Unit>?>(null)
 
   override val connectedPeerName: String?
     get() = pendingDeviceName.get()
@@ -134,7 +137,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
         authorizedEndpointIdRef.compareAndSet(endpointId, null)
         val transferWasActive = incomingPayloadId.get() != null || outgoingPayloadId.get() != null
         cleanupIncomingTransfer()
-        cleanupOutgoingTransfer()
+        resolveOutgoingTransfer(IllegalStateException("Endpoint disconnected during transfer"))
         _pairingState.value =
           pendingPairingError.getAndSet(null)?.let(PairingState::Error) ?: PairingState.Idle
         if (_transferState.value !is TransferState.Error) {
@@ -213,14 +216,14 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
           PayloadTransferUpdate.Status.SUCCESS -> {
             val total = update.totalBytes.coerceAtLeast(0)
             _transferState.value = TransferState.Sent(total)
-            cleanupOutgoingTransfer()
+            resolveOutgoingTransfer()
           }
           PayloadTransferUpdate.Status.FAILURE -> {
-            cleanupOutgoingTransfer()
+            resolveOutgoingTransfer(IllegalStateException("Payload transfer failed"))
             _transferState.value = TransferState.Error(TransferError.TransferFailed)
           }
           PayloadTransferUpdate.Status.CANCELED -> {
-            cleanupOutgoingTransfer()
+            resolveOutgoingTransfer(CancellationException("Payload transfer canceled"))
             _transferState.value = TransferState.Idle
           }
         }
@@ -349,16 +352,19 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
       }
     outgoingPayloadId.set(payload.id)
     outgoingProgress.set(MonotonicTransferProgress(bytes.size.toLong()))
+    val completion = CompletableDeferred<Unit>()
+    check(outgoingCompletion.compareAndSet(null, completion)) { "A transfer is already active" }
     connectionsClient.sendPayload(endpointId, payload).addOnFailureListener {
-      cleanupOutgoingTransfer()
+      resolveOutgoingTransfer(it)
       _transferState.value = TransferState.Error(TransferError.TransferFailed)
     }
+    completion.await()
   }
 
   override fun cancelTransfer() {
     outgoingPayloadId.get()?.let(connectionsClient::cancelPayload)
     incomingPayloadId.get()?.let(connectionsClient::cancelPayload)
-    cleanupOutgoingTransfer()
+    resolveOutgoingTransfer(CancellationException("Transfer canceled"))
     cleanupIncomingTransfer()
     disconnect()
   }
@@ -370,7 +376,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
     connectionsClient.stopDiscovery()
     pendingDeviceName.set(null)
     receivedPayloadData.setLength(0)
-    cleanupOutgoingTransfer()
+    resolveOutgoingTransfer(CancellationException("Peer disconnected"))
     cleanupIncomingTransfer()
     cleanupPairingReferences()
     _pairingState.value = PairingState.Idle
@@ -504,6 +510,12 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
     outgoingPayloadId.set(null)
     outgoingProgress.set(null)
     outgoingTempFile.getAndSet(null)?.delete()
+  }
+
+  private fun resolveOutgoingTransfer(error: Throwable? = null) {
+    val completion = outgoingCompletion.getAndSet(null)
+    cleanupOutgoingTransfer()
+    if (error == null) completion?.complete(Unit) else completion?.completeExceptionally(error)
   }
 
   private fun PairingRejectionReason.toPairingError(): PairingError =

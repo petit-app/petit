@@ -22,6 +22,8 @@ interface TaskDao {
   @Query("SELECT * FROM tasks WHERE deletedAt IS NULL ORDER BY scheduledFor ASC")
   fun getAllTasks(): Flow<List<TaskEntity>>
 
+  @Query("SELECT * FROM tasks ORDER BY id") suspend fun getAllIncludingDeleted(): List<TaskEntity>
+
   /** Get all tasks for a specific pet. */
   @Query("SELECT * FROM tasks WHERE petId = :petId AND deletedAt IS NULL ORDER BY scheduledFor ASC")
   fun getTasksForPet(petId: String): Flow<List<TaskEntity>>
@@ -29,6 +31,9 @@ interface TaskDao {
   /** Get a task by ID. */
   @Query("SELECT * FROM tasks WHERE id = :id AND deletedAt IS NULL")
   suspend fun getTaskById(id: String): TaskEntity?
+
+  @Query("SELECT * FROM tasks WHERE id = :id")
+  suspend fun getByIdIncludingDeleted(id: String): TaskEntity?
 
   /** Get pending tasks due today (scheduledFor between start and end of day). */
   @Query(
@@ -62,6 +67,8 @@ interface TaskDao {
 
   /** Insert a new task. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertTask(task: TaskEntity)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertTasks(tasks: List<TaskEntity>)
 
   /** Update an existing task. */
   @Update suspend fun updateTask(task: TaskEntity)

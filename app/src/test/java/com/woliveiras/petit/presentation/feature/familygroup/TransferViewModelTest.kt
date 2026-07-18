@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.local.db.PetitDatabase
+import com.woliveiras.petit.data.local.entity.PetEntity
 import com.woliveiras.petit.data.repository.DewormingEntryRepositoryImpl
-import com.woliveiras.petit.data.repository.FamilyGroupRepository
 import com.woliveiras.petit.data.repository.NearbyTransferRepository
 import com.woliveiras.petit.data.repository.PetRepositoryImpl
 import com.woliveiras.petit.data.repository.TaskRepositoryImpl
@@ -15,21 +15,20 @@ import com.woliveiras.petit.data.repository.VaccinationEntryRepositoryImpl
 import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
-import com.woliveiras.petit.domain.model.FamilyGroupInfo
-import com.woliveiras.petit.domain.model.FamilyGroupMember
 import com.woliveiras.petit.domain.model.PairingState
-import com.woliveiras.petit.domain.model.SyncLog
 import com.woliveiras.petit.domain.model.TransferError
 import com.woliveiras.petit.domain.model.TransferState
 import com.woliveiras.petit.domain.usecase.ExportImportUseCase
 import com.woliveiras.petit.domain.usecase.MergeDataUseCase
 import com.woliveiras.petit.domain.usecase.SendDataUseCase
 import java.time.Clock
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -48,6 +47,7 @@ class TransferViewModelTest {
   private val dispatcher = StandardTestDispatcher()
   private lateinit var database: PetitDatabase
   private lateinit var nearby: FakeNearbyTransferRepository
+  private lateinit var sendDataUseCase: SendDataUseCase
   private lateinit var viewModel: TransferViewModel
 
   @Before
@@ -69,12 +69,13 @@ class TransferViewModelTest {
         DewormingEntryRepositoryImpl(database.dewormingEntryDao(), Clock.systemUTC()),
         TaskRepositoryImpl(database.taskDao()),
       )
+    sendDataUseCase = SendDataUseCase(exportImport, nearby, database)
     viewModel =
       TransferViewModel(
         SavedStateHandle(mapOf("mode" to "send")),
         nearby,
-        SendDataUseCase(exportImport, nearby),
-        MergeDataUseCase(exportImport, FakeFamilyGroupRepository()),
+        sendDataUseCase,
+        MergeDataUseCase(exportImport, database),
       )
   }
 
@@ -91,6 +92,41 @@ class TransferViewModelTest {
       awaitBackgroundWork { nearby.sentEndpoints.isNotEmpty() }
 
       assertThat(nearby.sentEndpoints).containsExactly("authorized-endpoint")
+    }
+
+  @Test
+  fun completedSendRecordsThePeerAndExactBundleEntityCount() =
+    runTest(dispatcher) {
+      advanceUntilIdle()
+      awaitBackgroundWork { nearby.sentEndpoints.isNotEmpty() }
+      database.petDao().insertPet(PetEntity(id = "pet-1", name = "Mimi"))
+
+      sendDataUseCase("authorized-endpoint", "Kitchen phone")
+
+      val log = database.syncLogDao().getLatestSyncLog()
+      assertThat(log?.peerId).isEqualTo("authorized-endpoint")
+      assertThat(log?.peerName).isEqualTo("Kitchen phone")
+      assertThat(log?.entitiesSent).isEqualTo(1)
+      assertThat(log?.entitiesReceived).isEqualTo(0)
+      assertThat(log?.syncType).isEqualTo("SEND")
+    }
+
+  @Test
+  fun sendIsNotLoggedUntilTheTransportConfirmsPayloadSuccess() =
+    runTest(dispatcher) {
+      advanceUntilIdle()
+      awaitBackgroundWork { nearby.sentEndpoints.isNotEmpty() }
+      val logsBefore = database.syncLogDao().getAllSyncLogs().first().size
+      database.petDao().insertPet(PetEntity(id = "pet-1", name = "Mimi"))
+      nearby.sendGate = CompletableDeferred()
+
+      val send = launch { sendDataUseCase("authorized-endpoint", "Kitchen phone") }
+      advanceUntilIdle()
+
+      assertThat(database.syncLogDao().getAllSyncLogs().first()).hasSize(logsBefore)
+      nearby.sendGate?.complete(Unit)
+      send.join()
+      assertThat(database.syncLogDao().getAllSyncLogs().first()).hasSize(logsBefore + 1)
     }
 
   @Test
@@ -151,6 +187,7 @@ class TransferViewModelTest {
     override val connectedPeerId: String = "authorized-endpoint"
     var failSend = false
     var sendAttempts = 0
+    var sendGate: CompletableDeferred<Unit>? = null
     var cancelCalls = 0
     val sentEndpoints = mutableListOf<String>()
 
@@ -176,6 +213,7 @@ class TransferViewModelTest {
     override suspend fun sendData(endpointId: String, bundle: ExportBundle) {
       sendAttempts++
       if (failSend) error("interrupted")
+      sendGate?.await()
       sentEndpoints += endpointId
     }
 
@@ -192,41 +230,5 @@ class TransferViewModelTest {
       if (condition()) return
       Thread.sleep(10)
     }
-  }
-
-  private class FakeFamilyGroupRepository : FamilyGroupRepository {
-    override val familyGroupInfo: Flow<FamilyGroupInfo?> = MutableStateFlow(null)
-    override val localDevice: Flow<FamilyGroupMember?> = MutableStateFlow(null)
-    override val isSyncEnabled: Flow<Boolean> = MutableStateFlow(false)
-
-    override suspend fun getFamilyGroupKey(): String? = null
-
-    override suspend fun createFamilyGroup(deviceName: String): String = error("unused")
-
-    override suspend fun joinFamilyGroup(familyGroupKey: String, deviceName: String) = Unit
-
-    override suspend fun persistAuthorizedPairing(
-      familyGroupKey: String,
-      localMember: FamilyGroupMember,
-      remoteMember: FamilyGroupMember,
-    ) = Unit
-
-    override suspend fun addRemoteMember(member: FamilyGroupMember) = Unit
-
-    override suspend fun leaveFamilyGroup() = Unit
-
-    override suspend fun removeMember(memberId: String) = Unit
-
-    override suspend fun updateLastSyncAt(memberId: String) = Unit
-
-    override suspend fun setSyncEnabled(enabled: Boolean) = Unit
-
-    override suspend fun recordSyncLog(syncLog: SyncLog) = Unit
-
-    override fun getSyncLogs(): Flow<List<SyncLog>> = emptyFlow()
-
-    override suspend fun getLatestSyncLog(): SyncLog? = null
-
-    override suspend fun resetLocalPreferences() = Unit
   }
 }
