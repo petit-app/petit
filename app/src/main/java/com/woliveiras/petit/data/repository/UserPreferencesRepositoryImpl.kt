@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.woliveiras.petit.domain.backup.revision.BackupMutationKind
+import com.woliveiras.petit.domain.backup.revision.RestorableRevisionRepository
 import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.AppTheme
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,8 +22,17 @@ private val Context.dataStore: DataStore<Preferences> by
 
 @Singleton
 class UserPreferencesRepositoryImpl
-internal constructor(private val dataStore: DataStore<Preferences>) : UserPreferencesRepository {
-  @Inject constructor(@ApplicationContext context: Context) : this(context.dataStore)
+internal constructor(
+  private val dataStore: DataStore<Preferences>,
+  private val revisions: RestorableRevisionRepository? = null,
+) : UserPreferencesRepository {
+  @Inject
+  constructor(
+    @ApplicationContext context: Context,
+    revisions: RestorableRevisionRepository,
+  ) : this(context.dataStore, revisions)
+
+  constructor(context: Context) : this(context.dataStore, null)
 
   private object PreferencesKeys {
     val THEME = stringPreferencesKey("theme")
@@ -53,14 +64,17 @@ internal constructor(private val dataStore: DataStore<Preferences>) : UserPrefer
 
   override suspend fun updateTheme(theme: AppTheme) {
     dataStore.edit { preferences -> preferences[PreferencesKeys.THEME] = theme.name }
+    recordRestorableChange()
   }
 
   override suspend fun updateLanguage(language: AppLanguage) {
     dataStore.edit { preferences -> preferences[PreferencesKeys.LANGUAGE] = language.code }
+    recordRestorableChange()
   }
 
   override suspend fun setOnboardingCompleted() {
     dataStore.edit { preferences -> preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = true }
+    recordRestorableChange()
   }
 
   override suspend fun replaceRestorablePreferences(preferences: UserPreferences) {
@@ -69,5 +83,10 @@ internal constructor(private val dataStore: DataStore<Preferences>) : UserPrefer
       stored[PreferencesKeys.LANGUAGE] = preferences.language.code
       stored[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = preferences.hasCompletedOnboarding
     }
+    recordRestorableChange()
+  }
+
+  private suspend fun recordRestorableChange() {
+    revisions?.recordCommittedMutation(BackupMutationKind.RESTORABLE_PREFERENCE)
   }
 }

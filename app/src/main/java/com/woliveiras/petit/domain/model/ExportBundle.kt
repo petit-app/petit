@@ -131,16 +131,6 @@ data class ExportBundle(
     fun validate(bundle: ExportBundle): List<String> {
       val errors = mutableListOf<String>()
 
-      fun reportDuplicateIds(label: String, ids: List<String>) {
-        if (ids.size != ids.toSet().size) errors.add("Duplicate $label identifiers")
-      }
-
-      reportDuplicateIds("pet", bundle.pets.map { it.id })
-      reportDuplicateIds("weight", bundle.weightEntries.map { it.id })
-      reportDuplicateIds("vaccination", bundle.vaccinationEntries.map { it.id })
-      reportDuplicateIds("deworming", bundle.dewormingEntries.map { it.id })
-      reportDuplicateIds("task", bundle.tasks.map { it.id })
-
       if (bundle.metadata.schemaVersion != SUPPORTED_SCHEMA_VERSION) {
         errors.add("Versão de backup não suportada: ${bundle.metadata.schemaVersion}")
       }

@@ -9,6 +9,7 @@ import com.woliveiras.petit.data.local.dao.FamilyGroupMemberDao
 import com.woliveiras.petit.data.local.dao.LanSyncDao
 import com.woliveiras.petit.data.local.dao.MembershipChangeDao
 import com.woliveiras.petit.data.local.dao.PetDao
+import com.woliveiras.petit.data.local.dao.RestorableRevisionDao
 import com.woliveiras.petit.data.local.dao.SyncLogDao
 import com.woliveiras.petit.data.local.dao.TaskDao
 import com.woliveiras.petit.data.local.dao.TimelineDao
@@ -22,6 +23,7 @@ import com.woliveiras.petit.data.local.entity.LanSeenNonceEntity
 import com.woliveiras.petit.data.local.entity.LanSyncPeerEntity
 import com.woliveiras.petit.data.local.entity.MembershipChangeEntity
 import com.woliveiras.petit.data.local.entity.PetEntity
+import com.woliveiras.petit.data.local.entity.RestorableRevisionEntity
 import com.woliveiras.petit.data.local.entity.SyncLogEntity
 import com.woliveiras.petit.data.local.entity.TaskEntity
 import com.woliveiras.petit.data.local.entity.VaccinationEntryEntity
@@ -43,8 +45,9 @@ import com.woliveiras.petit.data.local.entity.WeightEntryEntity
       LanAppliedBatchEntity::class,
       LanOutboundAckEntity::class,
       LanSeenNonceEntity::class,
+      RestorableRevisionEntity::class,
     ],
-  version = 2,
+  version = 3,
   exportSchema = true,
 )
 abstract class PetitDatabase : RoomDatabase() {
@@ -68,6 +71,8 @@ abstract class PetitDatabase : RoomDatabase() {
   abstract fun membershipChangeDao(): MembershipChangeDao
 
   abstract fun lanSyncDao(): LanSyncDao
+
+  abstract fun restorableRevisionDao(): RestorableRevisionDao
 
   companion object {
     const val DATABASE_NAME = "petit_database"
@@ -135,5 +140,52 @@ abstract class PetitDatabase : RoomDatabase() {
           )
         }
       }
+
+    val MIGRATION_2_3 =
+      object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+          db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS restorable_revision (
+              id INTEGER NOT NULL,
+              currentRevision INTEGER NOT NULL,
+              completedRevision INTEGER NOT NULL,
+              PRIMARY KEY(id)
+            )
+            """
+              .trimIndent()
+          )
+          installRestorableRevisionTriggers(db)
+        }
+      }
+
+    fun installRestorableRevisionTriggers(db: SupportSQLiteDatabase) {
+      db.execSQL(
+        """
+        INSERT OR IGNORE INTO restorable_revision(id, currentRevision, completedRevision)
+        VALUES (0, 0, 0)
+        """
+          .trimIndent()
+      )
+      val restorableTables =
+        listOf("pets", "weight_entries", "vaccination_entries", "deworming_entries", "tasks")
+      val operations = listOf("INSERT" to "insert", "UPDATE" to "update", "DELETE" to "delete")
+      restorableTables.forEach { table ->
+        operations.forEach { (operation, suffix) ->
+          db.execSQL(
+            """
+            CREATE TRIGGER IF NOT EXISTS restorable_revision_${table}_$suffix
+            AFTER $operation ON $table
+            BEGIN
+              UPDATE restorable_revision
+              SET currentRevision = currentRevision + 1
+              WHERE id = 0;
+            END
+            """
+              .trimIndent()
+          )
+        }
+      }
+    }
   }
 }

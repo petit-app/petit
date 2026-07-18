@@ -2,23 +2,23 @@
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Spec status: **Approved**. Implementation may proceed in dependency order.
+> Spec status: **In Progress**. Provider-independent implementation is underway.
 
 ## Tasks
 
-- [ ] **Classify restorable changes and revisions** (test-type: both)
+- [x] **Classify restorable changes and revisions** (test-type: both)
   - blocked-by: specs 0305 and 0306
   - desired behavior: every committed restorable data or asset change advances a revision while backup bookkeeping cannot trigger itself.
   - acceptance criteria: all included and excluded trigger types in `spec.md` have regression coverage.
   - verification: `./gradlew test`
 
-- [ ] **Debounce one durable change-triggered backup** (test-type: both)
+- [x] **Debounce one durable change-triggered backup** (test-type: both)
   - blocked-by: previous task
   - desired behavior: rapid changes replace one five-minute unique request that survives process death.
   - acceptance criteria: concurrent edits, app closure, settings disable, and network constraints preserve one authoritative request.
   - verification: `./gradlew test`
 
-- [ ] **Coalesce manual, periodic, and triggered runs** (test-type: both)
+- [x] **Coalesce manual, periodic, and triggered runs** (test-type: both)
   - blocked-by: previous task
   - desired behavior: one successful backup covers its local revision and cancels redundant pending work.
   - acceptance criteria: equal/newer revisions do not create duplicate archives and older revisions remain eligible.

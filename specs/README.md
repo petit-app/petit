@@ -76,7 +76,7 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 | [0303](0303-manage-backups/spec.md)   | Manage Google Drive backups   | In Progress | 0301       |
 | [0305](0305-automatic-backup/spec.md) | Automatic Google Drive backup | In Progress | 0301       |
 | [0306](0306-backup-settings/spec.md)  | Backup settings               | In Progress | 0305       |
-| [0307](0307-backup-triggers/spec.md)  | Backup triggers               | Approved    | 0305, 0306 |
+| [0307](0307-backup-triggers/spec.md)  | Backup triggers               | In Progress | 0305, 0306 |
 
 ### cloud-sync
 

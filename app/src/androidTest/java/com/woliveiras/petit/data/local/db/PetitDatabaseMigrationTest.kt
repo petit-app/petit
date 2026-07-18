@@ -26,6 +26,7 @@ class PetitDatabaseMigrationTest {
   @After
   fun tearDown() {
     context.deleteDatabase(TEST_DATABASE)
+    context.deleteDatabase(TEST_DATABASE_2_3)
   }
 
   @Test
@@ -122,6 +123,30 @@ class PetitDatabaseMigrationTest {
     }
   }
 
+  @Test
+  fun migration2To3CreatesDurableRevisionAndRestorableTriggers() {
+    context.deleteDatabase(TEST_DATABASE_2_3)
+    openRevisionDatabase(version = 2).use { it.writableDatabase }
+
+    openRevisionDatabase(version = 3).use { helper ->
+      val database = helper.writableDatabase
+      database.execSQL("INSERT INTO pets(id) VALUES (?)", arrayOf<Any?>("pet-1"))
+      database
+        .query("SELECT currentRevision, completedRevision FROM restorable_revision WHERE id = 0")
+        .use { cursor ->
+          assertThat(cursor.moveToFirst()).isTrue()
+          assertThat(cursor.getLong(0)).isEqualTo(1)
+          assertThat(cursor.getLong(1)).isEqualTo(0)
+        }
+
+      database.execSQL("INSERT INTO sync_logs(id) VALUES (?)", arrayOf<Any?>("bookkeeping-1"))
+      database.query("SELECT currentRevision FROM restorable_revision WHERE id = 0").use { cursor ->
+        assertThat(cursor.moveToFirst()).isTrue()
+        assertThat(cursor.getLong(0)).isEqualTo(1)
+      }
+    }
+  }
+
   private fun openDatabase(version: Int): SupportSQLiteOpenHelper =
     FrameworkSQLiteOpenHelperFactory()
       .create(
@@ -148,8 +173,41 @@ class PetitDatabaseMigrationTest {
           .build()
       )
 
+  private fun openRevisionDatabase(version: Int): SupportSQLiteOpenHelper =
+    FrameworkSQLiteOpenHelperFactory()
+      .create(
+        SupportSQLiteOpenHelper.Configuration.builder(context)
+          .name(TEST_DATABASE_2_3)
+          .callback(
+            object : SupportSQLiteOpenHelper.Callback(version) {
+              override fun onCreate(db: SupportSQLiteDatabase) {
+                require(version == 2)
+                listOf(
+                    "pets",
+                    "weight_entries",
+                    "vaccination_entries",
+                    "deworming_entries",
+                    "tasks",
+                    "sync_logs",
+                  )
+                  .forEach { table ->
+                    db.execSQL("CREATE TABLE $table (id TEXT NOT NULL PRIMARY KEY)")
+                  }
+              }
+
+              override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                assertThat(oldVersion).isEqualTo(2)
+                assertThat(newVersion).isEqualTo(3)
+                PetitDatabase.MIGRATION_2_3.migrate(db)
+              }
+            }
+          )
+          .build()
+      )
+
   companion object {
     private const val TEST_DATABASE = "petit-migration-1-2-test"
+    private const val TEST_DATABASE_2_3 = "petit-migration-2-3-test"
 
     private val VERSION_1_FAMILY_GROUP_MEMBERS_SCHEMA =
       """

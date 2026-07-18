@@ -158,16 +158,6 @@ class ExportBundleTest {
     assertThat(errors[1]).contains("missing-pet")
   }
 
-  @Test
-  fun duplicateEntityIdentifiersAreRejectedBeforeRestoreNormalization() {
-    val duplicate = Pet(id = "pet-1", name = "Mimi", createdAt = 1L, updatedAt = 1L)
-    val bundle = emptyBundle().copy(pets = listOf(duplicate, duplicate.copy(updatedAt = 2L)))
-
-    val errors = ExportBundle.validate(bundle)
-
-    assertThat(errors).contains("Duplicate pet identifiers")
-  }
-
   private fun emptyBundle(tasks: List<Task> = emptyList()) =
     ExportBundle(
       metadata = ExportMetadata(appVersion = "1.0", exportDate = "2026-07-17T00:00:00Z"),

@@ -1,6 +1,7 @@
 package com.woliveiras.petit.di
 
 import android.content.Context
+import androidx.work.WorkManager
 import com.woliveiras.petit.BuildConfig
 import com.woliveiras.petit.data.backup.archive.AndroidBackupPetAssetSource
 import com.woliveiras.petit.data.backup.archive.BackupPetAssetSource
@@ -20,7 +21,10 @@ import com.woliveiras.petit.domain.backup.restore.RestoreReminderScheduler
 import com.woliveiras.petit.domain.usecase.ExportImportUseCase
 import com.woliveiras.petit.domain.usecase.backup.BackupArchivePreparer
 import com.woliveiras.petit.domain.usecase.backup.ManageBackupsUseCase
+import com.woliveiras.petit.worker.ChangeTriggeredBackupScheduler
+import com.woliveiras.petit.worker.ChangeTriggeredBackupWorker
 import com.woliveiras.petit.worker.RestoreReminderSchedulerImpl
+import com.woliveiras.petit.worker.WorkManagerChangeTriggeredBackupScheduler
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,6 +37,16 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object BackupModule {
+  @Provides
+  @Singleton
+  fun provideChangeTriggeredBackupScheduler(
+    @ApplicationContext context: Context
+  ): ChangeTriggeredBackupScheduler =
+    WorkManagerChangeTriggeredBackupScheduler(
+      WorkManager.getInstance(context),
+      ChangeTriggeredBackupWorker::class.java,
+    )
+
   @Provides @Singleton fun provideBackupArchiveCodec(): BackupArchiveCodec = BackupArchiveCodec()
 
   @Provides

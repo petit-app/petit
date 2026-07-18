@@ -2,7 +2,7 @@
 spec: "0307"
 title: "Backup Triggers"
 family: backup-recovery
-status: Approved
+status: In Progress
 owner: woliveiras
 depends_on: ["0305", "0306"]
 ---
@@ -114,7 +114,7 @@ before the status can advance to `Implemented`.
 
 | Decision | Current choice | Rationale |
 | --- | --- | --- |
-| Status | Approved | The behavior is approved for implementation. |
+| Status | In Progress | Provider-neutral triggers are implemented; physical durability remains open. |
 | Debounce | Five minutes after the latest restorable change | Coalesces rapid edits without long exposure. |
 | Price | Free | Triggering user-owned backup is not a Petit Cloud capability. |
 | Duplicate prevention | Local revision watermark | Periodic, manual, and triggered runs share one completion boundary. |

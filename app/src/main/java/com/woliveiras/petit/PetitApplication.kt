@@ -7,6 +7,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
 import com.woliveiras.petit.domain.backup.restore.RestoreBackupUseCase
+import com.woliveiras.petit.domain.usecase.backup.BackupTriggerCoordinator
 import com.woliveiras.petit.worker.LanSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -23,6 +24,7 @@ class PetitApplication : Application(), Configuration.Provider {
   @Inject lateinit var familyGroupRepository: FamilyGroupRepository
   @Inject lateinit var lanSyncScheduler: LanSyncScheduler
   @Inject lateinit var restoreBackupUseCase: RestoreBackupUseCase
+  @Inject lateinit var backupTriggerCoordinator: BackupTriggerCoordinator
   private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
   override fun onCreate() {
@@ -34,6 +36,7 @@ class PetitApplication : Application(), Configuration.Provider {
         if (shouldSchedule) lanSyncScheduler.schedule() else lanSyncScheduler.cancel()
       }
     }
+    backupTriggerCoordinator.start(applicationScope)
   }
 
   override val workManagerConfiguration: Configuration

@@ -1,0 +1,857 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "868a8cc66ae51f4b96036e77ee8970af",
+    "entities": [
+      {
+        "tableName": "pets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `petType` TEXT NOT NULL, `birthDate` INTEGER, `sex` TEXT NOT NULL, `breed` TEXT, `color` TEXT, `microchipNumber` TEXT, `passportNumber` TEXT, `photoUri` TEXT, `notes` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petType",
+            "columnName": "petType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "birthDate",
+            "columnName": "birthDate",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sex",
+            "columnName": "sex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "breed",
+            "columnName": "breed",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "microchipNumber",
+            "columnName": "microchipNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "passportNumber",
+            "columnName": "passportNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "photoUri",
+            "columnName": "photoUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "weight_entries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `petId` TEXT NOT NULL, `date` INTEGER NOT NULL, `weightGrams` INTEGER NOT NULL, `note` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`petId`) REFERENCES `pets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petId",
+            "columnName": "petId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weightGrams",
+            "columnName": "weightGrams",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_weight_entries_petId",
+            "unique": false,
+            "columnNames": [
+              "petId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_weight_entries_petId` ON `${TABLE_NAME}` (`petId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pets",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "petId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "vaccination_entries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `petId` TEXT NOT NULL, `vaccineType` TEXT NOT NULL, `customVaccineTypeName` TEXT, `applicationDate` INTEGER NOT NULL, `nextDueDate` INTEGER, `veterinarian` TEXT, `clinic` TEXT, `batchNumber` TEXT, `note` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`petId`) REFERENCES `pets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petId",
+            "columnName": "petId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vaccineType",
+            "columnName": "vaccineType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "customVaccineTypeName",
+            "columnName": "customVaccineTypeName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "applicationDate",
+            "columnName": "applicationDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextDueDate",
+            "columnName": "nextDueDate",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "veterinarian",
+            "columnName": "veterinarian",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "clinic",
+            "columnName": "clinic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "batchNumber",
+            "columnName": "batchNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_vaccination_entries_petId",
+            "unique": false,
+            "columnNames": [
+              "petId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vaccination_entries_petId` ON `${TABLE_NAME}` (`petId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pets",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "petId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "deworming_entries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `petId` TEXT NOT NULL, `type` TEXT NOT NULL, `medication` TEXT NOT NULL, `applicationDate` INTEGER NOT NULL, `nextDueDate` INTEGER, `note` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`petId`) REFERENCES `pets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petId",
+            "columnName": "petId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "medication",
+            "columnName": "medication",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "applicationDate",
+            "columnName": "applicationDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextDueDate",
+            "columnName": "nextDueDate",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_deworming_entries_petId",
+            "unique": false,
+            "columnNames": [
+              "petId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_deworming_entries_petId` ON `${TABLE_NAME}` (`petId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pets",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "petId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "tasks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `petId` TEXT, `kind` TEXT NOT NULL, `referenceEntityId` TEXT, `title` TEXT NOT NULL, `description` TEXT, `scheduledFor` INTEGER NOT NULL, `status` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`petId`) REFERENCES `pets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petId",
+            "columnName": "petId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "referenceEntityId",
+            "columnName": "referenceEntityId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "scheduledFor",
+            "columnName": "scheduledFor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tasks_petId",
+            "unique": false,
+            "columnNames": [
+              "petId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tasks_petId` ON `${TABLE_NAME}` (`petId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pets",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "petId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "family_group_members",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `deviceName` TEXT NOT NULL, `familyGroupKey` TEXT NOT NULL, `isLocalDevice` INTEGER NOT NULL, `lastSyncAt` INTEGER, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceName",
+            "columnName": "deviceName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "familyGroupKey",
+            "columnName": "familyGroupKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLocalDevice",
+            "columnName": "isLocalDevice",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncAt",
+            "columnName": "lastSyncAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "sync_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `peerId` TEXT NOT NULL, `peerName` TEXT NOT NULL, `syncTimestamp` INTEGER NOT NULL, `entitiesSent` INTEGER NOT NULL, `entitiesReceived` INTEGER NOT NULL, `conflictsResolved` INTEGER NOT NULL, `syncType` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "peerId",
+            "columnName": "peerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "peerName",
+            "columnName": "peerName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncTimestamp",
+            "columnName": "syncTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entitiesSent",
+            "columnName": "entitiesSent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entitiesReceived",
+            "columnName": "entitiesReceived",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conflictsResolved",
+            "columnName": "conflictsResolved",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncType",
+            "columnName": "syncType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "membership_changes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`groupId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `type` TEXT NOT NULL, `deviceName` TEXT, `timestamp` INTEGER NOT NULL, `deliveryKey` TEXT, PRIMARY KEY(`groupId`, `memberId`))",
+        "fields": [
+          {
+            "fieldPath": "groupId",
+            "columnName": "groupId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "memberId",
+            "columnName": "memberId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceName",
+            "columnName": "deviceName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deliveryKey",
+            "columnName": "deliveryKey",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "groupId",
+            "memberId"
+          ]
+        }
+      },
+      {
+        "tableName": "lan_sync_peers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`peerId` TEXT NOT NULL, `outboundCursor` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`peerId`))",
+        "fields": [
+          {
+            "fieldPath": "peerId",
+            "columnName": "peerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outboundCursor",
+            "columnName": "outboundCursor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "peerId"
+          ]
+        }
+      },
+      {
+        "tableName": "lan_applied_batches",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`batchId` TEXT NOT NULL, `peerId` TEXT NOT NULL, `acknowledgedCursor` INTEGER NOT NULL, `appliedAt` INTEGER NOT NULL, PRIMARY KEY(`batchId`, `peerId`))",
+        "fields": [
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "peerId",
+            "columnName": "peerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "acknowledgedCursor",
+            "columnName": "acknowledgedCursor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appliedAt",
+            "columnName": "appliedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "batchId",
+            "peerId"
+          ]
+        }
+      },
+      {
+        "tableName": "lan_outbound_acks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`peerId` TEXT NOT NULL, `batchId` TEXT NOT NULL, `cursor` INTEGER NOT NULL, PRIMARY KEY(`peerId`, `batchId`))",
+        "fields": [
+          {
+            "fieldPath": "peerId",
+            "columnName": "peerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursor",
+            "columnName": "cursor",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "peerId",
+            "batchId"
+          ]
+        }
+      },
+      {
+        "tableName": "lan_seen_nonces",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`nonceKey` TEXT NOT NULL, `seenAt` INTEGER NOT NULL, PRIMARY KEY(`nonceKey`))",
+        "fields": [
+          {
+            "fieldPath": "nonceKey",
+            "columnName": "nonceKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seenAt",
+            "columnName": "seenAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "nonceKey"
+          ]
+        }
+      },
+      {
+        "tableName": "restorable_revision",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `currentRevision` INTEGER NOT NULL, `completedRevision` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentRevision",
+            "columnName": "currentRevision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedRevision",
+            "columnName": "completedRevision",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '868a8cc66ae51f4b96036e77ee8970af')"
+    ]
+  }
+}

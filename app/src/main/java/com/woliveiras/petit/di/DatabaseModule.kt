@@ -2,9 +2,12 @@ package com.woliveiras.petit.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.woliveiras.petit.data.local.dao.DewormingEntryDao
 import com.woliveiras.petit.data.local.dao.FamilyGroupMemberDao
 import com.woliveiras.petit.data.local.dao.PetDao
+import com.woliveiras.petit.data.local.dao.RestorableRevisionDao
 import com.woliveiras.petit.data.local.dao.SyncLogDao
 import com.woliveiras.petit.data.local.dao.TaskDao
 import com.woliveiras.petit.data.local.dao.TimelineDao
@@ -27,7 +30,14 @@ object DatabaseModule {
   @Singleton
   fun providePetitDatabase(@ApplicationContext context: Context): PetitDatabase {
     return Room.databaseBuilder(context, PetitDatabase::class.java, PetitDatabase.DATABASE_NAME)
-      .addMigrations(PetitDatabase.MIGRATION_1_2)
+      .addMigrations(PetitDatabase.MIGRATION_1_2, PetitDatabase.MIGRATION_2_3)
+      .addCallback(
+        object : RoomDatabase.Callback() {
+          override fun onOpen(db: SupportSQLiteDatabase) {
+            PetitDatabase.installRestorableRevisionTriggers(db)
+          }
+        }
+      )
       .build()
   }
 
@@ -78,4 +88,9 @@ object DatabaseModule {
   fun provideSyncLogDao(database: PetitDatabase): SyncLogDao {
     return database.syncLogDao()
   }
+
+  @Provides
+  @Singleton
+  fun provideRestorableRevisionDao(database: PetitDatabase): RestorableRevisionDao =
+    database.restorableRevisionDao()
 }

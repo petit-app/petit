@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.woliveiras.petit.domain.backup.revision.BackupMutationKind
+import com.woliveiras.petit.domain.backup.revision.RestorableRevisionRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,10 +21,17 @@ private val Context.reminderPreferencesDataStore: DataStore<Preferences> by
 
 @Singleton
 class ReminderPreferencesRepositoryImpl
-internal constructor(private val dataStore: DataStore<Preferences>) :
-  ReminderPreferencesRepository {
+internal constructor(
+  private val dataStore: DataStore<Preferences>,
+  private val revisionRepository: RestorableRevisionRepository? = null,
+) : ReminderPreferencesRepository {
   @Inject
-  constructor(@ApplicationContext context: Context) : this(context.reminderPreferencesDataStore)
+  constructor(
+    @ApplicationContext context: Context,
+    revisions: RestorableRevisionRepository,
+  ) : this(context.reminderPreferencesDataStore, revisions)
+
+  constructor(context: Context) : this(context.reminderPreferencesDataStore, null)
 
   private object PreferencesKeys {
     val VACCINATION_ENABLED = booleanPreferencesKey("vaccination_reminders_enabled")
@@ -58,6 +67,7 @@ internal constructor(private val dataStore: DataStore<Preferences>) :
       prefs[PreferencesKeys.VACCINATION_ENABLED] = enabled
       prefs[PreferencesKeys.VACCINATION_DAYS_BEFORE] = daysBefore.coerceIn(1, 30)
     }
+    recordRestorableChange()
   }
 
   override suspend fun updateDewormingSettings(enabled: Boolean, daysBefore: Int) {
@@ -65,6 +75,7 @@ internal constructor(private val dataStore: DataStore<Preferences>) :
       prefs[PreferencesKeys.DEWORMING_ENABLED] = enabled
       prefs[PreferencesKeys.DEWORMING_DAYS_BEFORE] = daysBefore.coerceIn(1, 30)
     }
+    recordRestorableChange()
   }
 
   override suspend fun updateWeightSettings(enabled: Boolean, intervalDays: Int) {
@@ -72,6 +83,7 @@ internal constructor(private val dataStore: DataStore<Preferences>) :
       prefs[PreferencesKeys.WEIGHT_ENABLED] = enabled
       prefs[PreferencesKeys.WEIGHT_INTERVAL_DAYS] = intervalDays.coerceIn(7, 90)
     }
+    recordRestorableChange()
   }
 
   override suspend fun updateNotificationTime(hour: Int, minute: Int) {
@@ -79,10 +91,12 @@ internal constructor(private val dataStore: DataStore<Preferences>) :
       prefs[PreferencesKeys.NOTIFICATION_HOUR] = hour.coerceIn(0, 23)
       prefs[PreferencesKeys.NOTIFICATION_MINUTE] = minute.coerceIn(0, 59)
     }
+    recordRestorableChange()
   }
 
   override suspend fun reset() {
     dataStore.edit { it.clear() }
+    recordRestorableChange()
   }
 
   override suspend fun replaceRestorablePreferences(preferences: ReminderPreferences) {
@@ -101,5 +115,10 @@ internal constructor(private val dataStore: DataStore<Preferences>) :
       stored[PreferencesKeys.NOTIFICATION_HOUR] = preferences.defaultNotificationHour
       stored[PreferencesKeys.NOTIFICATION_MINUTE] = preferences.defaultNotificationMinute
     }
+    recordRestorableChange()
+  }
+
+  private suspend fun recordRestorableChange() {
+    revisionRepository?.recordCommittedMutation(BackupMutationKind.REMINDER_STATE)
   }
 }

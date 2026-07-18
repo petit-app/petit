@@ -8,16 +8,37 @@ import com.woliveiras.petit.domain.backup.BackupTrigger
 import java.time.Clock
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
+import kotlinx.coroutines.sync.withLock
 
 class ManualBackupHistoryRunner
-@Inject
-constructor(
+internal constructor(
   private val createBackupAction: CreateBackupAction,
   private val attemptRepository: BackupAttemptRepository,
   private val clock: Clock,
+  private val revisionCompletion: BackupRevisionCompletion,
 ) {
+  @Inject
+  constructor(
+    createBackupAction: CreateBackupAction,
+    attemptRepository: BackupAttemptRepository,
+    clock: Clock,
+    revisionCompletion: BackupTriggerCoordinator,
+  ) : this(
+    createBackupAction,
+    attemptRepository,
+    clock,
+    revisionCompletion as BackupRevisionCompletion,
+  )
+
+  constructor(
+    createBackupAction: CreateBackupAction,
+    attemptRepository: BackupAttemptRepository,
+    clock: Clock,
+  ) : this(createBackupAction, attemptRepository, clock, NoOpBackupRevisionCompletion)
+
   suspend fun run(backupId: String): BackupAttemptStatus {
     val startedAt = clock.instant()
+    val targetRevision = revisionCompletion.capture()
     attemptRepository.upsert(
       BackupAttempt(
         id = backupId,
@@ -27,19 +48,29 @@ constructor(
       )
     )
     return try {
-      when (val result = createBackupAction.execute(backupId, BackupTrigger.MANUAL)) {
+      val result =
+        ProviderNeutralBackupExecutionGate.mutex.withLock {
+          createBackupAction.execute(backupId, BackupTrigger.MANUAL).also { created ->
+            if (created is BackupCreationResult.Success) {
+              revisionCompletion.completed(targetRevision)
+            }
+          }
+        }
+      when (result) {
         is BackupCreationResult.Success -> {
-          record(
-            BackupAttempt(
-              id = backupId,
-              trigger = BackupTrigger.MANUAL,
-              startedAt = startedAt,
-              completedAt = clock.instant(),
-              status = BackupAttemptStatus.SUCCEEDED,
-              archiveSizeBytes = result.metadata.archiveSizeBytes,
-              contentCounts = result.metadata.contentCounts,
+          val status =
+            record(
+              BackupAttempt(
+                id = backupId,
+                trigger = BackupTrigger.MANUAL,
+                startedAt = startedAt,
+                completedAt = clock.instant(),
+                status = BackupAttemptStatus.SUCCEEDED,
+                archiveSizeBytes = result.metadata.archiveSizeBytes,
+                contentCounts = result.metadata.contentCounts,
+              )
             )
-          )
+          status
         }
         BackupCreationResult.AuthorizationRequired ->
           recordFailure(

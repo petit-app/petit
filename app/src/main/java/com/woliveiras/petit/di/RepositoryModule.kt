@@ -2,6 +2,7 @@ package com.woliveiras.petit.di
 
 import com.woliveiras.petit.data.backup.ProviderUnavailableBackupAuthorizationGateway
 import com.woliveiras.petit.data.backup.ProviderUnavailableBackupStorageGateway
+import com.woliveiras.petit.data.backup.revision.RoomRevisionStateStore
 import com.woliveiras.petit.data.repository.BackupAttemptRepository
 import com.woliveiras.petit.data.repository.BackupAttemptRepositoryImpl
 import com.woliveiras.petit.data.repository.BackupSettingsRepository
@@ -24,10 +25,15 @@ import com.woliveiras.petit.data.repository.WeightEntryRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
 import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
 import com.woliveiras.petit.domain.backup.BackupStorageGateway
+import com.woliveiras.petit.domain.backup.revision.RestorableRevisionRepository
+import com.woliveiras.petit.domain.backup.revision.RestorableRevisionStore
+import com.woliveiras.petit.domain.backup.revision.TransactionalRestorableRevisionRepository
 import com.woliveiras.petit.domain.usecase.DeleteAllDataAction
 import com.woliveiras.petit.domain.usecase.DeleteAllDataUseCase
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryUseCase
+import com.woliveiras.petit.domain.usecase.backup.BackupRevisionCompletion
+import com.woliveiras.petit.domain.usecase.backup.BackupTriggerCoordinator
 import com.woliveiras.petit.domain.usecase.backup.CreateBackupAction
 import com.woliveiras.petit.domain.usecase.backup.ProviderUnavailableCreateBackupAction
 import com.woliveiras.petit.worker.AutoTaskService
@@ -46,6 +52,24 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+  @Binds
+  @Singleton
+  abstract fun bindBackupRevisionCompletion(
+    implementation: BackupTriggerCoordinator
+  ): BackupRevisionCompletion
+
+  @Binds
+  @Singleton
+  abstract fun bindRestorableRevisionStore(
+    implementation: RoomRevisionStateStore
+  ): RestorableRevisionStore
+
+  @Binds
+  @Singleton
+  abstract fun bindRestorableRevisionRepository(
+    implementation: TransactionalRestorableRevisionRepository
+  ): RestorableRevisionRepository
 
   @Binds
   @Singleton
