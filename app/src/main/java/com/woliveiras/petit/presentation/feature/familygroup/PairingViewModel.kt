@@ -66,7 +66,7 @@ constructor(
       val existingLocal = familyGroupRepository.localDevice.first()
       val existingKey = familyGroupRepository.getFamilyGroupKey()
       val credentials = credentialsGenerator.generate()
-      val deviceId = existingLocal?.id ?: credentials.deviceId
+      val deviceId = existingLocal?.id ?: familyGroupRepository.getOrCreateLocalDeviceId()
       val familyGroupKey = existingKey ?: credentials.familyGroupKey
       _uiState.update {
         it.copy(
@@ -88,16 +88,17 @@ constructor(
     }
     if (!ensureTransportAvailable()) return
     viewModelScope.launch {
-      val credentials = credentialsGenerator.generate()
+      val existingLocal = familyGroupRepository.localDevice.first()
+      val deviceId = existingLocal?.id ?: familyGroupRepository.getOrCreateLocalDeviceId()
       _uiState.update {
         it.copy(
           isCreatingGroup = false,
           familyGroupKey = null,
-          localDeviceId = credentials.deviceId,
+          localDeviceId = deviceId,
           pairingPersisted = false,
         )
       }
-      nearbyTransferRepository.startDiscovery(Build.MODEL, credentials.deviceId, code)
+      nearbyTransferRepository.startDiscovery(Build.MODEL, deviceId, code)
     }
   }
 
@@ -165,6 +166,9 @@ constructor(
           ),
       )
       _uiState.update { it.copy(familyGroupKey = state.familyGroupKey, pairingPersisted = true) }
+    } catch (_: SecurityException) {
+      nearbyTransferRepository.disconnect()
+      _uiState.update { it.copy(pairingState = PairingState.Error(PairingError.RevokedMember)) }
     } catch (_: Exception) {
       nearbyTransferRepository.disconnect()
       _uiState.update { it.copy(pairingState = PairingState.Error(PairingError.PersistenceFailed)) }

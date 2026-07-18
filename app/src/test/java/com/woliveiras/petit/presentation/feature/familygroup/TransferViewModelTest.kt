@@ -8,6 +8,7 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.local.db.PetitDatabase
 import com.woliveiras.petit.data.local.entity.PetEntity
 import com.woliveiras.petit.data.repository.DewormingEntryRepositoryImpl
+import com.woliveiras.petit.data.repository.FamilyGroupRepositoryImpl
 import com.woliveiras.petit.data.repository.NearbyTransferRepository
 import com.woliveiras.petit.data.repository.PetRepositoryImpl
 import com.woliveiras.petit.data.repository.TaskRepositoryImpl
@@ -15,6 +16,7 @@ import com.woliveiras.petit.data.repository.VaccinationEntryRepositoryImpl
 import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
+import com.woliveiras.petit.domain.model.FamilyGroupMember
 import com.woliveiras.petit.domain.model.PairingState
 import com.woliveiras.petit.domain.model.TransferError
 import com.woliveiras.petit.domain.model.TransferState
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -48,6 +51,7 @@ class TransferViewModelTest {
   private lateinit var database: PetitDatabase
   private lateinit var nearby: FakeNearbyTransferRepository
   private lateinit var sendDataUseCase: SendDataUseCase
+  private lateinit var familyGroupRepository: FamilyGroupRepositoryImpl
   private lateinit var viewModel: TransferViewModel
 
   @Before
@@ -69,18 +73,27 @@ class TransferViewModelTest {
         DewormingEntryRepositoryImpl(database.dewormingEntryDao(), Clock.systemUTC()),
         TaskRepositoryImpl(database.taskDao()),
       )
-    sendDataUseCase = SendDataUseCase(exportImport, nearby, database)
+    familyGroupRepository =
+      FamilyGroupRepositoryImpl(
+        context,
+        database.familyGroupMemberDao(),
+        database.syncLogDao(),
+        database,
+      )
+    runBlocking { familyGroupRepository.resetLocalPreferences() }
+    sendDataUseCase = SendDataUseCase(exportImport, nearby, database, familyGroupRepository)
     viewModel =
       TransferViewModel(
         SavedStateHandle(mapOf("mode" to "send")),
         nearby,
         sendDataUseCase,
-        MergeDataUseCase(exportImport, database),
+        MergeDataUseCase(exportImport, database, familyGroupRepository),
       )
   }
 
   @After
   fun tearDown() {
+    runBlocking { familyGroupRepository.resetLocalPreferences() }
     database.close()
     Dispatchers.resetMain()
   }
@@ -101,10 +114,10 @@ class TransferViewModelTest {
       awaitBackgroundWork { nearby.sentEndpoints.isNotEmpty() }
       database.petDao().insertPet(PetEntity(id = "pet-1", name = "Mimi"))
 
-      sendDataUseCase("authorized-endpoint", "Kitchen phone")
+      sendDataUseCase("authorized-endpoint", "Kitchen phone", "remote-id")
 
       val log = database.syncLogDao().getLatestSyncLog()
-      assertThat(log?.peerId).isEqualTo("authorized-endpoint")
+      assertThat(log?.peerId).isEqualTo("remote-id")
       assertThat(log?.peerName).isEqualTo("Kitchen phone")
       assertThat(log?.entitiesSent).isEqualTo(1)
       assertThat(log?.entitiesReceived).isEqualTo(0)
@@ -120,13 +133,32 @@ class TransferViewModelTest {
       database.petDao().insertPet(PetEntity(id = "pet-1", name = "Mimi"))
       nearby.sendGate = CompletableDeferred()
 
-      val send = launch { sendDataUseCase("authorized-endpoint", "Kitchen phone") }
+      val send = launch { sendDataUseCase("authorized-endpoint", "Kitchen phone", "remote-id") }
       advanceUntilIdle()
 
       assertThat(database.syncLogDao().getAllSyncLogs().first()).hasSize(logsBefore)
       nearby.sendGate?.complete(Unit)
       send.join()
       assertThat(database.syncLogDao().getAllSyncLogs().first()).hasSize(logsBefore + 1)
+    }
+
+  @Test
+  fun sendIncludesQueuedMembershipChanges() =
+    runTest(dispatcher) {
+      advanceUntilIdle()
+      awaitBackgroundWork { nearby.sentEndpoints.isNotEmpty() }
+      familyGroupRepository.persistAuthorizedPairing(
+        "group-key",
+        FamilyGroupMember("local-id", "Old", "group-key", true, null, 1L, 1L),
+        FamilyGroupMember("remote-id", "Peer", "group-key", false, null, 1L, 1L),
+      )
+      familyGroupRepository.renameLocalDevice("Kitchen tablet")
+
+      sendDataUseCase("authorized-endpoint", "Peer", "remote-id")
+
+      assertThat(nearby.lastBundle?.membershipChanges).hasSize(1)
+      assertThat(nearby.lastBundle?.membershipChanges?.single()?.deviceName)
+        .isEqualTo("Kitchen tablet")
     }
 
   @Test
@@ -185,11 +217,13 @@ class TransferViewModelTest {
     override val transferState: Flow<TransferState> = transfer
     override val connectedPeerName: String = "Peer"
     override val connectedPeerId: String = "authorized-endpoint"
+    override val connectedPeerDeviceId: String = "remote-id"
     var failSend = false
     var sendAttempts = 0
     var sendGate: CompletableDeferred<Unit>? = null
     var cancelCalls = 0
     val sentEndpoints = mutableListOf<String>()
+    var lastBundle: ExportBundle? = null
 
     override suspend fun startAdvertising(
       deviceName: String,
@@ -214,6 +248,7 @@ class TransferViewModelTest {
       sendAttempts++
       if (failSend) error("interrupted")
       sendGate?.await()
+      lastBundle = bundle
       sentEndpoints += endpointId
     }
 

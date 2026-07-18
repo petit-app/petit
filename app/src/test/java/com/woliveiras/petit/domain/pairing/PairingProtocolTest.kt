@@ -92,4 +92,25 @@ class PairingProtocolTest {
     assertThat(result)
       .isEqualTo(PairingAuthorizationResult.Rejected(PairingRejectionReason.CodeExpired))
   }
+
+  @Test
+  fun revokedStableIdentityCannotReuseTheOldGroupAuthorization() {
+    val session =
+      PairingAuthorizationSession(
+        pairingCode = PairingCode("0042", expiresAtMillis = 2_000L),
+        familyGroupKey = "secret-key",
+        localDeviceId = "sender-id",
+        localDeviceName = "Sender",
+        revokedMemberIds = setOf("removed-id"),
+      )
+
+    val result =
+      session.authorize(
+        PairingMessage.AuthorizationRequest("0042", "removed-id", "Removed device"),
+        nowMillis = 1_500L,
+      )
+
+    assertThat(result)
+      .isEqualTo(PairingAuthorizationResult.Rejected(PairingRejectionReason.RevokedMember))
+  }
 }

@@ -69,6 +69,7 @@ class DeleteAllDataWorkManagerIntegrationTest {
               context,
               database.familyGroupMemberDao(),
               database.syncLogDao(),
+              database,
             ),
         )
         .execute()

@@ -30,7 +30,9 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,6 +48,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -66,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
+import com.woliveiras.petit.data.lan.LanSyncState
 import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.AppTheme
 import com.woliveiras.petit.domain.model.ConflictResolution
@@ -199,6 +203,15 @@ fun SettingsScreen(
         onManageGroup = onNavigateToFamilyGroup,
       )
 
+      if (uiState.familyGroupInfo != null) {
+        LanSyncSettingsCard(
+          enabled = uiState.lanSyncEnabled,
+          state = uiState.lanSyncState,
+          onEnabledChange = viewModel::setLanSyncEnabled,
+          onAttemptNow = viewModel::attemptLanSync,
+        )
+      }
+
       // Appearance section
       SettingsSectionHeader(title = stringResource(R.string.settings_section_appearance))
 
@@ -301,6 +314,57 @@ fun SettingsScreen(
           headlineContent = { Text(stringResource(R.string.settings_version)) },
           supportingContent = { Text("1.0.0") },
         )
+      }
+    }
+  }
+}
+
+@Composable
+private fun lanSyncStatusText(state: LanSyncState): String =
+  when (state) {
+    LanSyncState.Idle -> stringResource(R.string.lan_sync_idle)
+    LanSyncState.Discovering -> stringResource(R.string.lan_sync_discovering)
+    is LanSyncState.Syncing -> stringResource(R.string.lan_sync_syncing, state.peerName)
+    is LanSyncState.Synced -> stringResource(R.string.lan_sync_synced, state.peerName)
+    LanSyncState.PeerUnavailable -> stringResource(R.string.lan_sync_peer_unavailable)
+    is LanSyncState.Error -> stringResource(R.string.lan_sync_error)
+  }
+
+@Composable
+internal fun LanSyncSettingsCard(
+  enabled: Boolean,
+  state: LanSyncState,
+  onEnabledChange: (Boolean) -> Unit,
+  onAttemptNow: () -> Unit,
+) {
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    colors =
+      CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    shape = RoundedCornerShape(16.dp),
+  ) {
+    Column {
+      ListItem(
+        colors =
+          ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        leadingContent = {
+          Icon(
+            Icons.Default.Wifi,
+            contentDescription = stringResource(R.string.lan_sync_title),
+            tint = MaterialTheme.colorScheme.primary,
+          )
+        },
+        headlineContent = { Text(stringResource(R.string.lan_sync_title)) },
+        supportingContent = { Text(lanSyncStatusText(state)) },
+        trailingContent = { Switch(checked = enabled, onCheckedChange = onEnabledChange) },
+      )
+      TextButton(
+        onClick = onAttemptNow,
+        modifier = Modifier.align(Alignment.End).padding(horizontal = 8.dp),
+      ) {
+        Icon(Icons.Default.Refresh, contentDescription = null)
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(R.string.lan_sync_try_now))
       }
     }
   }

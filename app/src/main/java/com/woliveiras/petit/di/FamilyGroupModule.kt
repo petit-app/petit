@@ -1,5 +1,7 @@
 package com.woliveiras.petit.di
 
+import com.woliveiras.petit.data.lan.LanSyncController
+import com.woliveiras.petit.data.lan.LanSyncCoordinator
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
 import com.woliveiras.petit.data.repository.FamilyGroupRepositoryImpl
 import com.woliveiras.petit.data.repository.NearbyTransferRepository
@@ -26,4 +28,8 @@ abstract class FamilyGroupModule {
   abstract fun bindNearbyTransferRepository(
     nearbyTransferRepositoryImpl: NearbyTransferRepositoryImpl
   ): NearbyTransferRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindLanSyncController(coordinator: LanSyncCoordinator): LanSyncController
 }

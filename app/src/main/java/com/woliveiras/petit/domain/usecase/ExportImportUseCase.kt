@@ -110,6 +110,40 @@ constructor(
       )
     }
 
+  /** Export versions at or beyond an acknowledged cursor, including parent rows for validation. */
+  suspend fun exportShareableSince(sinceInclusive: Long): ExportBundle =
+    withContext(Dispatchers.IO) {
+      require(sinceInclusive >= 0) { "Sync cursor cannot be negative" }
+      val weights = database.weightEntryDao().getModifiedSince(sinceInclusive)
+      val vaccinations = database.vaccinationEntryDao().getModifiedSince(sinceInclusive)
+      val dewormings = database.dewormingEntryDao().getModifiedSince(sinceInclusive)
+      val tasks = database.taskDao().getModifiedSince(sinceInclusive)
+      val requiredPetIds = buildSet {
+        addAll(weights.map { it.petId })
+        addAll(vaccinations.map { it.petId })
+        addAll(dewormings.map { it.petId })
+        addAll(tasks.mapNotNull { it.petId })
+      }
+      val changedPets = database.petDao().getPetsModifiedSince(sinceInclusive)
+      val parents =
+        if (requiredPetIds.isEmpty()) emptyList()
+        else database.petDao().getByIdsIncludingDeleted(requiredPetIds)
+
+      ExportBundle(
+        metadata =
+          ExportMetadata(
+            appVersion = BuildConfig.VERSION_NAME,
+            exportDate = Instant.now().toString(),
+            schemaVersion = 1,
+          ),
+        pets = (changedPets + parents).distinctBy { it.id }.sortedBy { it.id }.toDomain(),
+        weightEntries = weights.toDomain(),
+        vaccinationEntries = vaccinations.toDomain(),
+        dewormingEntries = dewormings.toDomain(),
+        tasks = tasks.toDomain(),
+      )
+    }
+
   /** Export data for a specific pet. */
   suspend fun exportForPet(petId: String): ExportBundle =
     withContext(Dispatchers.IO) {

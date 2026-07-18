@@ -74,8 +74,7 @@ enum class SyncStatus {
   - Triggering task notifications (`TaskNotificationWorker` — one-shot)
   - Automating task creation when health records are saved (`AutoTaskService`)
   - Scheduling and canceling notifications (`TaskScheduler` / `TaskSchedulerImpl`)
-  - Local network sync through NSD (Network Service Discovery) — planned in
-    the local-sharing family
+  - Local network sync through lifecycle-bound NSD/TCP (`LanSyncWorker` for periodic attempts)
   - Remote sync through Firebase Firestore — cloud-sync family (on hold)
 
 ---
@@ -140,10 +139,11 @@ Firestore as its transport.
 
 ### Battery Use and Local Sync Protocols
 
-The planned local-sync design follows strict battery-use rules:
+The implemented local-sync design follows strict battery-use rules:
 
-- **Continuous sync** will use **NSD + TCP over infrastructure Wi-Fi** (the home router) — approximately 5–15 mW
+- **Continuous sync** uses **NSD + TCP over infrastructure Wi-Fi** (the home router)
 - **Wi-Fi Direct is NEVER used for continuous sync** — only for one-shot transfers
 - **Nearby Connections** (Google Play Services) automatically manages the one-shot transport (BLE → BT → Wi-Fi Direct)
-- **WorkManager** will control background sync with network constraints
-- **NSD will be lifecycle-aware**: active in the foreground and unregistered when the app closes
+- **WorkManager** controls unique periodic attempts with a connected-network constraint and exponential backoff
+- **NSD is lifecycle-aware**: active in the foreground and released in `ON_STOP`; discovery also has a timeout
+- **LAN payloads** are sent only after a bilateral HMAC handshake, then protected with directional AES-256-GCM keys

@@ -719,6 +719,12 @@
     <string name="family_group_members_title">Devices</string>
     <string name="family_group_actions_title">Actions</string>
     <string name="family_group_this_device">This device</string>
+    <string name="family_group_rename_device">Rename device</string>
+    <string name="family_group_device_name">Device name</string>
+    <string name="family_group_never_synced">Never synced</string>
+    <string name="family_group_member_last_sync">Last sync: %1$s</string>
+    <string name="family_group_no_devices">No devices are associated with this group.</string>
+    <string name="family_group_action_error">The group change could not be saved. Try again.</string>
     <string name="family_group_connection_request">%s wants to connect</string>
     <string name="family_group_sending">Sending data…</string>
     <string name="family_group_receiving">Receiving data…</string>
@@ -774,6 +780,7 @@
     <string name="family_group_error_authorization">The pairing request was invalid.</string>
     <string name="family_group_error_endpoint_lost">The device is no longer nearby. Try again.</string>
     <string name="family_group_error_persistence">Pairing succeeded, but the group couldn’t be saved. No partial group was kept.</string>
+    <string name="family_group_error_revoked_member">This device was removed from the family group and its previous access key is no longer authorized.</string>
     <string name="action_accept">Accept</string>
     <string name="action_reject">Reject</string>
     <string name="action_continue">Continue</string>
@@ -821,4 +828,12 @@
     <string name="color_golden">Golden</string>
     <string name="color_brindle">Brindle</string>
 
+    <string name="lan_sync_title">Local network sync</string>
+    <string name="lan_sync_try_now">Sync now</string>
+    <string name="lan_sync_idle">Automatic local sync is idle</string>
+    <string name="lan_sync_discovering">Looking for family devices on this network</string>
+    <string name="lan_sync_syncing">Syncing with %1$s</string>
+    <string name="lan_sync_synced">Synced with %1$s</string>
+    <string name="lan_sync_peer_unavailable">No family device found on this network</string>
+    <string name="lan_sync_error">Local sync failed. Try again.</string>
 </resources>

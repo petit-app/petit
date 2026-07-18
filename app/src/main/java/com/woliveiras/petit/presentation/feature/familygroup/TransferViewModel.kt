@@ -62,7 +62,11 @@ constructor(
       val endpointId = nearbyTransferRepository.connectedPeerId
       if (endpointId != null) {
         try {
-          sendDataUseCase(endpointId, nearbyTransferRepository.connectedPeerName.orEmpty())
+          sendDataUseCase(
+            endpointId,
+            nearbyTransferRepository.connectedPeerName.orEmpty(),
+            nearbyTransferRepository.connectedPeerDeviceId ?: endpointId,
+          )
         } catch (_: IllegalArgumentException) {
           _uiState.update {
             it.copy(transferState = TransferState.Error(TransferError.PayloadTooLarge))
@@ -105,7 +109,10 @@ constructor(
     val state = _uiState.value.transferState
     if (state !is TransferState.Complete) return
 
-    val peerId = nearbyTransferRepository.connectedPeerId ?: ""
+    val peerId =
+      nearbyTransferRepository.connectedPeerDeviceId
+        ?: nearbyTransferRepository.connectedPeerId
+        ?: ""
     val peerName = nearbyTransferRepository.connectedPeerName ?: ""
 
     viewModelScope.launch {

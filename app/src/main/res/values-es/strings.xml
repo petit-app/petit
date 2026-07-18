@@ -714,6 +714,12 @@
   <string name="family_group_members_title">Dispositivos</string>
   <string name="family_group_actions_title">Acciones</string>
   <string name="family_group_this_device">Este dispositivo</string>
+  <string name="family_group_rename_device">Cambiar nombre del dispositivo</string>
+  <string name="family_group_device_name">Nombre del dispositivo</string>
+  <string name="family_group_never_synced">Nunca sincronizado</string>
+  <string name="family_group_member_last_sync">Última sincronización: %1$s</string>
+  <string name="family_group_no_devices">No hay dispositivos asociados a este grupo.</string>
+  <string name="family_group_action_error">No se pudo guardar el cambio del grupo. Inténtalo de nuevo.</string>
   <string name="family_group_connection_request">%s quiere conectarse</string>
   <string name="family_group_sending">Enviando datos…</string>
   <string name="family_group_receiving">Recibiendo datos…</string>
@@ -769,9 +775,18 @@
   <string name="family_group_error_authorization">La solicitud de emparejamiento no era válida.</string>
   <string name="family_group_error_endpoint_lost">El dispositivo ya no está cerca. Inténtalo de nuevo.</string>
   <string name="family_group_error_persistence">El emparejamiento se realizó, pero no se pudo guardar el grupo. No se conservó ningún grupo parcial.</string>
+  <string name="family_group_error_revoked_member">Este dispositivo fue eliminado del grupo familiar y su clave de acceso anterior ya no está autorizada.</string>
   <string name="action_accept">Aceptar</string>
   <string name="action_reject">Rechazar</string>
   <string name="action_continue">Continuar</string>
   <string name="action_done">Listo</string>
 
+    <string name="lan_sync_title">Sincronización en la red local</string>
+    <string name="lan_sync_try_now">Sincronizar ahora</string>
+    <string name="lan_sync_idle">La sincronización local automática está inactiva</string>
+    <string name="lan_sync_discovering">Buscando dispositivos familiares en esta red</string>
+    <string name="lan_sync_syncing">Sincronizando con %1$s</string>
+    <string name="lan_sync_synced">Sincronizado con %1$s</string>
+    <string name="lan_sync_peer_unavailable">No se encontró ningún dispositivo familiar en esta red</string>
+    <string name="lan_sync_error">La sincronización local falló. Inténtalo de nuevo.</string>
 </resources>

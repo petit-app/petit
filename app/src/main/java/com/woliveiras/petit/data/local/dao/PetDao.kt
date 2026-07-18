@@ -47,8 +47,11 @@ interface PetDao {
   @Query("DELETE FROM pets WHERE id = :id") suspend fun hardDeletePet(id: String)
 
   /** Get all pets including deleted ones (for sync purposes). */
-  @Query("SELECT * FROM pets WHERE updatedAt > :since")
+  @Query("SELECT * FROM pets WHERE updatedAt >= :since ORDER BY id")
   suspend fun getPetsModifiedSince(since: Long): List<PetEntity>
+
+  @Query("SELECT * FROM pets WHERE id IN (:ids) ORDER BY id")
+  suspend fun getByIdsIncludingDeleted(ids: Set<String>): List<PetEntity>
 
   /** Delete all pets (for data cleanup). */
   @Query("DELETE FROM pets") suspend fun deleteAll()

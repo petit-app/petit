@@ -37,4 +37,5 @@ enum class PairingError {
   MalformedAuthorization,
   EndpointLost,
   PersistenceFailed,
+  RevokedMember,
 }

@@ -57,6 +57,8 @@ class DewormingEntryRepositoryImplTest {
 
     override suspend fun getAllIncludingDeleted(): List<DewormingEntryEntity> = emptyList()
 
+    override suspend fun getModifiedSince(since: Long): List<DewormingEntryEntity> = emptyList()
+
     override fun getLatestDewormingsForPet(petId: String): Flow<List<DewormingEntryEntity>> =
       MutableStateFlow(emptyList())
 

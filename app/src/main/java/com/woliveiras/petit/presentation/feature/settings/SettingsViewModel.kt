@@ -5,6 +5,8 @@ import android.text.format.DateUtils
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.R
+import com.woliveiras.petit.data.lan.LanSyncController
+import com.woliveiras.petit.data.lan.LanSyncState
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.model.AppLanguage
@@ -40,6 +42,8 @@ data class SettingsUiState(
   val isSavingPreference: Boolean = false,
   val languageRestartRequired: Boolean = false,
   val preferenceError: String? = null,
+  val lanSyncEnabled: Boolean = false,
+  val lanSyncState: LanSyncState = LanSyncState.Idle,
 )
 
 sealed class SettingsEvent {
@@ -57,6 +61,7 @@ constructor(
   private val familyGroupRepository: FamilyGroupRepository,
   private val deleteAllDataUseCase: DeleteAllDataAction,
   private val localeApplicator: LocaleApplicator,
+  private val lanSyncController: LanSyncController,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(SettingsUiState())
@@ -68,6 +73,35 @@ constructor(
   init {
     observePreferences()
     observeFamilyGroup()
+    observeLanSync()
+  }
+
+  private fun observeLanSync() {
+    viewModelScope.launch {
+      familyGroupRepository.isSyncEnabled.collect { enabled ->
+        _uiState.update { it.copy(lanSyncEnabled = enabled) }
+      }
+    }
+    viewModelScope.launch {
+      lanSyncController.state.collect { state -> _uiState.update { it.copy(lanSyncState = state) } }
+    }
+  }
+
+  fun setLanSyncEnabled(enabled: Boolean) {
+    viewModelScope.launch {
+      try {
+        familyGroupRepository.setSyncEnabled(enabled)
+        if (enabled) lanSyncController.startForeground() else lanSyncController.stopForeground()
+      } catch (exception: CancellationException) {
+        throw exception
+      } catch (_: Exception) {
+        _uiState.update { it.copy(preferenceError = context.getString(R.string.error_saving)) }
+      }
+    }
+  }
+
+  fun attemptLanSync() {
+    viewModelScope.launch { lanSyncController.attemptNow() }
   }
 
   private fun observePreferences() {

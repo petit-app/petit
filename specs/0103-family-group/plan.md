@@ -2,11 +2,17 @@
 
 Spec: [spec.md](./spec.md)
 
+## Implementation status
+
+Steps 1–5 are implemented and verified locally. Step 6 remains open only for
+physical two-device propagation and revocation validation.
+
 ## Starting point
 
-The app already lists and removes members locally, allows users to leave the
-group, and persists the required preferences. The next implementation should
-add an editable identity and make membership changes part of the sync protocol.
+The original app listed and removed members only locally. It now keeps the
+stable UUID separate from the editable name, queues deterministic membership
+changes, forwards them through the sharing bundle, and rejects revoked stable
+identities during authorization.
 
 ## Implementation sequence
 
@@ -21,7 +27,7 @@ add an editable identity and make membership changes part of the sync protocol.
 
 - Depends on the identity and key established by spec 0101.
 - Manual propagation can use spec 0102.
-- Future automatic propagation uses spec 0104.
+- Automatic propagation and the restricted offline-departure outbox use spec 0104.
 - Idempotent resolution follows spec 0105.
 
 ## Risks and mitigation

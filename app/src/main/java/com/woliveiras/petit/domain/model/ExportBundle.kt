@@ -14,10 +14,16 @@ data class ExportBundle(
   val vaccinationEntries: List<VaccinationEntry>,
   val dewormingEntries: List<DewormingEntry>,
   val tasks: List<Task>,
+  val membershipChanges: List<MembershipChange> = emptyList(),
 ) {
   val entityCount: Int
     get() =
-      pets.size + weightEntries.size + vaccinationEntries.size + dewormingEntries.size + tasks.size
+      pets.size +
+        weightEntries.size +
+        vaccinationEntries.size +
+        dewormingEntries.size +
+        tasks.size +
+        membershipChanges.size
 
   fun toJson(): JSONObject {
     return JSONObject().apply {
@@ -27,6 +33,7 @@ data class ExportBundle(
       put("vaccinationEntries", JSONArray(vaccinationEntries.map { it.toExportJson() }))
       put("dewormingEntries", JSONArray(dewormingEntries.map { it.toExportJson() }))
       put("tasks", JSONArray(tasks.map { it.toExportJson() }))
+      put("membershipChanges", JSONArray(membershipChanges.map { it.toExportJson() }))
     }
   }
 
@@ -70,6 +77,7 @@ data class ExportBundle(
         }
 
       val tasks = parseTasks(json)
+      val membershipChanges = parseMembershipChanges(json)
 
       return ExportBundle(
         metadata = metadata,
@@ -78,7 +86,19 @@ data class ExportBundle(
         vaccinationEntries = vaccinationEntries,
         dewormingEntries = dewormingEntries,
         tasks = tasks,
+        membershipChanges = membershipChanges,
       )
+    }
+
+    private fun parseMembershipChanges(json: JSONObject): List<MembershipChange> {
+      if (!json.has("membershipChanges")) return emptyList()
+      val array = json.getJSONArray("membershipChanges")
+      if (array.length() > MAX_ENTRIES_PER_LIST) {
+        throw IllegalArgumentException("Too many membership changes (max $MAX_ENTRIES_PER_LIST)")
+      }
+      return (0 until array.length()).map { index ->
+        MembershipChange.fromExportJson(array.getJSONObject(index))
+      }
     }
 
     /**
@@ -156,6 +176,21 @@ data class ExportBundle(
           errors.add("Descrição de tarefa muito longa (id: ${entry.id})")
         if (entry.petId != null && entry.petId !in petIds)
           errors.add("Tarefa referencia pet inexistente (petId: ${entry.petId})")
+      }
+
+      bundle.membershipChanges.forEach { change ->
+        if (!change.groupId.matches(Regex("[0-9a-f]{64}"))) {
+          errors.add("Alteração de associação com identificador de grupo inválido")
+        }
+        if (change.memberId.isBlank() || change.memberId.length > 128) {
+          errors.add("Alteração de associação com identidade inválida")
+        }
+        if (
+          change.type == MembershipChangeType.RENAME &&
+            (change.deviceName.isNullOrBlank() || change.deviceName.length > 80)
+        ) {
+          errors.add("Renomeação de dispositivo inválida")
+        }
       }
 
       return errors
@@ -425,6 +460,23 @@ fun Task.Companion.fromExportJson(json: JSONObject): Task {
     deletedAt = json.optLongOrNull("deletedAt"),
   )
 }
+
+private fun MembershipChange.toExportJson(): JSONObject =
+  JSONObject()
+    .put("groupId", groupId)
+    .put("memberId", memberId)
+    .put("type", type.name)
+    .put("deviceName", deviceName ?: JSONObject.NULL)
+    .put("timestamp", timestamp)
+
+private fun MembershipChange.Companion.fromExportJson(json: JSONObject): MembershipChange =
+  MembershipChange(
+    groupId = json.getString("groupId"),
+    memberId = json.getString("memberId"),
+    type = MembershipChangeType.valueOf(json.getString("type")),
+    deviceName = json.optStringOrNull("deviceName"),
+    timestamp = json.getLong("timestamp"),
+  )
 
 // Helper extension functions
 private fun JSONObject.optStringOrNull(key: String): String? {

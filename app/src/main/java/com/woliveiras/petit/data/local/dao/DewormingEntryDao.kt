@@ -25,6 +25,9 @@ interface DewormingEntryDao {
   @Query("SELECT * FROM deworming_entries ORDER BY id")
   suspend fun getAllIncludingDeleted(): List<DewormingEntryEntity>
 
+  @Query("SELECT * FROM deworming_entries WHERE updatedAt >= :since ORDER BY id")
+  suspend fun getModifiedSince(since: Long): List<DewormingEntryEntity>
+
   /** Get the latest deworming entry for each type for a pet. */
   @Query(
     """

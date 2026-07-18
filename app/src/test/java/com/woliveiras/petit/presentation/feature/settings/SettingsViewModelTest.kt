@@ -3,6 +3,8 @@ package com.woliveiras.petit.presentation.feature.settings
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.woliveiras.petit.data.lan.LanSyncController
+import com.woliveiras.petit.data.lan.LanSyncState
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
 import com.woliveiras.petit.data.repository.UserPreferences
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
@@ -41,23 +43,47 @@ class SettingsViewModelTest {
   private lateinit var preferences: FakeUserPreferencesRepository
   private lateinit var localeApplicator: FakeLocaleApplicator
   private lateinit var viewModel: SettingsViewModel
+  private lateinit var family: FakeFamilyGroupRepository
+  private lateinit var lanSync: FakeLanSyncController
 
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     preferences = FakeUserPreferencesRepository()
     localeApplicator = FakeLocaleApplicator()
+    family = FakeFamilyGroupRepository()
+    lanSync = FakeLanSyncController()
     viewModel =
       SettingsViewModel(
         context,
         preferences,
-        FakeFamilyGroupRepository(),
+        family,
         object : DeleteAllDataAction {
           override suspend fun execute(): Result<Unit> = Result.success(Unit)
         },
         localeApplicator,
+        lanSync,
       )
   }
+
+  @Test
+  fun localSyncToggleAndManualAttemptExposeControllerState() =
+    runTest(dispatcher) {
+      family.syncEnabled.value = true
+      lanSync.mutableState.value = LanSyncState.Discovering
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.lanSyncEnabled).isTrue()
+      assertThat(viewModel.uiState.value.lanSyncState).isEqualTo(LanSyncState.Discovering)
+
+      viewModel.setLanSyncEnabled(false)
+      viewModel.attemptLanSync()
+      advanceUntilIdle()
+
+      assertThat(family.syncEnabled.value).isFalse()
+      assertThat(lanSync.stopCalls).isEqualTo(1)
+      assertThat(lanSync.attemptCalls).isEqualTo(1)
+    }
 
   @After
   fun tearDown() {
@@ -242,7 +268,8 @@ class SettingsViewModelTest {
   private class FakeFamilyGroupRepository : FamilyGroupRepository {
     override val familyGroupInfo: Flow<FamilyGroupInfo?> = MutableStateFlow(null)
     override val localDevice: Flow<FamilyGroupMember?> = MutableStateFlow(null)
-    override val isSyncEnabled: Flow<Boolean> = MutableStateFlow(false)
+    val syncEnabled = MutableStateFlow(false)
+    override val isSyncEnabled: Flow<Boolean> = syncEnabled
 
     override suspend fun getFamilyGroupKey(): String? = null
 
@@ -264,7 +291,9 @@ class SettingsViewModelTest {
 
     override suspend fun updateLastSyncAt(memberId: String) = Unit
 
-    override suspend fun setSyncEnabled(enabled: Boolean) = Unit
+    override suspend fun setSyncEnabled(enabled: Boolean) {
+      syncEnabled.value = enabled
+    }
 
     override suspend fun recordSyncLog(syncLog: SyncLog) = Unit
 
@@ -273,5 +302,26 @@ class SettingsViewModelTest {
     override suspend fun getLatestSyncLog(): SyncLog? = null
 
     override suspend fun resetLocalPreferences() = Unit
+  }
+
+  private class FakeLanSyncController : LanSyncController {
+    val mutableState = MutableStateFlow<LanSyncState>(LanSyncState.Idle)
+    override val state = mutableState
+    var startCalls = 0
+    var stopCalls = 0
+    var attemptCalls = 0
+
+    override suspend fun startForeground() {
+      startCalls++
+    }
+
+    override suspend fun stopForeground() {
+      stopCalls++
+    }
+
+    override suspend fun attemptNow(): Boolean {
+      attemptCalls++
+      return true
+    }
   }
 }

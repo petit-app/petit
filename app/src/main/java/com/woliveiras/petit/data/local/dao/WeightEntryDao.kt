@@ -22,6 +22,9 @@ interface WeightEntryDao {
   @Query("SELECT * FROM weight_entries ORDER BY id")
   suspend fun getAllIncludingDeleted(): List<WeightEntryEntity>
 
+  @Query("SELECT * FROM weight_entries WHERE updatedAt >= :since ORDER BY id")
+  suspend fun getModifiedSince(since: Long): List<WeightEntryEntity>
+
   /** Get the latest weight entry for a pet. */
   @Query(
     "SELECT * FROM weight_entries WHERE petId = :petId AND deletedAt IS NULL ORDER BY date DESC LIMIT 1"

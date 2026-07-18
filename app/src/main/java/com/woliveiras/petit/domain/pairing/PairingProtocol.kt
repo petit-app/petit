@@ -23,6 +23,7 @@ enum class PairingRejectionReason {
   IncorrectCode,
   CodeExpired,
   MalformedRequest,
+  RevokedMember,
 }
 
 object PairingProtocol {
@@ -99,6 +100,7 @@ data class PairingAuthorizationSession(
   val familyGroupKey: String,
   val localDeviceId: String,
   val localDeviceName: String,
+  val revokedMemberIds: Set<String> = emptySet(),
 ) {
   fun authorize(
     request: PairingMessage.AuthorizationRequest,
@@ -106,16 +108,20 @@ data class PairingAuthorizationSession(
   ): PairingAuthorizationResult =
     when (pairingCode.validate(request.code, nowMillis)) {
       PairingCodeValidation.Valid ->
-        PairingAuthorizationResult.Accepted(
-          response =
-            PairingMessage.AuthorizationAccepted(
-              familyGroupKey = familyGroupKey,
-              deviceId = localDeviceId,
-              deviceName = localDeviceName,
-            ),
-          remoteDeviceId = request.deviceId,
-          remoteDeviceName = request.deviceName,
-        )
+        if (request.deviceId in revokedMemberIds) {
+          PairingAuthorizationResult.Rejected(PairingRejectionReason.RevokedMember)
+        } else {
+          PairingAuthorizationResult.Accepted(
+            response =
+              PairingMessage.AuthorizationAccepted(
+                familyGroupKey = familyGroupKey,
+                deviceId = localDeviceId,
+                deviceName = localDeviceName,
+              ),
+            remoteDeviceId = request.deviceId,
+            remoteDeviceName = request.deviceName,
+          )
+        }
       PairingCodeValidation.Expired ->
         PairingAuthorizationResult.Rejected(PairingRejectionReason.CodeExpired)
       PairingCodeValidation.Incorrect ->

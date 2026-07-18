@@ -2,8 +2,11 @@ package com.woliveiras.petit.data.repository
 
 import com.woliveiras.petit.domain.model.FamilyGroupInfo
 import com.woliveiras.petit.domain.model.FamilyGroupMember
+import com.woliveiras.petit.domain.model.MembershipChange
+import com.woliveiras.petit.domain.model.PendingDeparture
 import com.woliveiras.petit.domain.model.SyncLog
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /** Repository interface for family group operations. */
 interface FamilyGroupRepository {
@@ -17,8 +20,15 @@ interface FamilyGroupRepository {
   /** Flow indicating whether sync is enabled. */
   val isSyncEnabled: Flow<Boolean>
 
+  /** Security outbox may remain after the visible group association has been cleared. */
+  val hasPendingDeparture: Flow<Boolean>
+    get() = flowOf(false)
+
   /** Get the current family group key from preferences. */
   suspend fun getFamilyGroupKey(): String?
+
+  /** Return the installation-stable device UUID, creating it once when necessary. */
+  suspend fun getOrCreateLocalDeviceId(): String = error("Stable device identity is unavailable")
 
   /** Create a new family group and register the local device as the first member. */
   suspend fun createFamilyGroup(deviceName: String): String
@@ -41,6 +51,27 @@ interface FamilyGroupRepository {
 
   /** Remove a member from the family group. */
   suspend fun removeMember(memberId: String)
+
+  /** Rename the local device while preserving its stable identity and group key. */
+  suspend fun renameLocalDevice(deviceName: String): Unit = error("Rename is not implemented")
+
+  /** Return normalized membership changes retained for peer propagation. */
+  suspend fun getMembershipChanges(): List<MembershipChange> = emptyList()
+
+  /** Return offline departures whose group credential is restricted to membership-only delivery. */
+  suspend fun getPendingDepartures(): List<PendingDeparture> = emptyList()
+
+  /** Discard the restricted credential after a peer acknowledges the departure. */
+  suspend fun acknowledgeDeparture(groupId: String, memberId: String) = Unit
+
+  /** Apply and retain peer membership changes idempotently. */
+  suspend fun applyMembershipChanges(changes: List<MembershipChange>) = Unit
+
+  /** Reconcile visible credentials after membership changes have committed in Room. */
+  suspend fun reconcileActiveAssociation() = Unit
+
+  /** Whether the stable identity is allowed to use the supplied group key. */
+  suspend fun isMemberAuthorized(memberId: String, familyGroupKey: String): Boolean = true
 
   /** Update the last sync timestamp for a member. */
   suspend fun updateLastSyncAt(memberId: String)

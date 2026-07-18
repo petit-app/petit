@@ -718,6 +718,12 @@
   <string name="family_group_members_title">Dispositivos</string>
   <string name="family_group_actions_title">Ações</string>
   <string name="family_group_this_device">Este dispositivo</string>
+  <string name="family_group_rename_device">Renomear dispositivo</string>
+  <string name="family_group_device_name">Nome do dispositivo</string>
+  <string name="family_group_never_synced">Nunca sincronizado</string>
+  <string name="family_group_member_last_sync">Última sincronização: %1$s</string>
+  <string name="family_group_no_devices">Nenhum dispositivo está associado a este grupo.</string>
+  <string name="family_group_action_error">Não foi possível salvar a alteração do grupo. Tente novamente.</string>
   <string name="family_group_connection_request">%s deseja se conectar</string>
   <string name="family_group_sending">Enviando dados…</string>
   <string name="family_group_receiving">Recebendo dados…</string>
@@ -773,6 +779,7 @@
   <string name="family_group_error_authorization">A solicitação de pareamento era inválida.</string>
   <string name="family_group_error_endpoint_lost">O dispositivo não está mais próximo. Tente novamente.</string>
   <string name="family_group_error_persistence">O pareamento ocorreu, mas o grupo não pôde ser salvo. Nenhum grupo parcial foi mantido.</string>
+  <string name="family_group_error_revoked_member">Este dispositivo foi removido do grupo familiar e sua chave de acesso anterior não está mais autorizada.</string>
   <string name="action_accept">Aceitar</string>
   <string name="action_reject">Rejeitar</string>
   <string name="action_continue">Continuar</string>
@@ -820,4 +827,12 @@
   <string name="color_golden">Dourado</string>
   <string name="color_brindle">Malhado</string>
 
+    <string name="lan_sync_title">Sincronização na rede local</string>
+    <string name="lan_sync_try_now">Sincronizar agora</string>
+    <string name="lan_sync_idle">A sincronização local automática está ociosa</string>
+    <string name="lan_sync_discovering">Procurando dispositivos da família nesta rede</string>
+    <string name="lan_sync_syncing">Sincronizando com %1$s</string>
+    <string name="lan_sync_synced">Sincronizado com %1$s</string>
+    <string name="lan_sync_peer_unavailable">Nenhum dispositivo da família foi encontrado nesta rede</string>
+    <string name="lan_sync_error">A sincronização local falhou. Tente novamente.</string>
 </resources>

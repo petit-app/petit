@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.woliveiras.petit.data.lan.LanSyncCoordinator
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.model.AppTheme
 import com.woliveiras.petit.presentation.navigation.PetitBottomNavBar
@@ -35,6 +36,17 @@ class MainActivity : ComponentActivity() {
 
   @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
   @Inject lateinit var localeApplicator: LocaleApplicator
+  @Inject lateinit var lanSyncCoordinator: LanSyncCoordinator
+
+  override fun onStart() {
+    super.onStart()
+    lifecycleScope.launch { lanSyncCoordinator.startForeground() }
+  }
+
+  override fun onStop() {
+    lifecycleScope.launch { lanSyncCoordinator.stopForeground() }
+    super.onStop()
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)

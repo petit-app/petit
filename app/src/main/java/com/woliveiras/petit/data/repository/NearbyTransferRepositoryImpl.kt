@@ -16,6 +16,7 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy
+import com.woliveiras.petit.data.local.dao.FamilyGroupMemberDao
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.PairingError
 import com.woliveiras.petit.domain.model.PairingState
@@ -48,7 +49,10 @@ import org.json.JSONObject
 @Singleton
 class NearbyTransferRepositoryImpl
 @Inject
-constructor(@ApplicationContext private val context: Context) : NearbyTransferRepository {
+constructor(
+  @ApplicationContext private val context: Context,
+  private val familyGroupMemberDao: FamilyGroupMemberDao,
+) : NearbyTransferRepository {
 
   companion object {
     private const val SERVICE_ID = "com.woliveiras.petit.familygroup"
@@ -59,6 +63,8 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
     Advertiser,
     Discoverer,
   }
+
+  private data class RevokedIdentity(val familyGroupKey: String, val memberId: String)
 
   private val connectionsClient by lazy { Nearby.getConnectionsClient(context) }
   private val clock = Clock.systemUTC()
@@ -71,6 +77,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
 
   private val connectedEndpointIdRef = AtomicReference<String?>(null)
   private val authorizedEndpointIdRef = AtomicReference<String?>(null)
+  private val authorizedPeerDeviceIdRef = AtomicReference<String?>(null)
   private val pendingDeviceName = AtomicReference<String?>(null)
   private val pairingRole = AtomicReference<PairingRole?>(null)
   private val localDeviceId = AtomicReference<String?>(null)
@@ -78,6 +85,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
   private val enteredPairingCode = AtomicReference<String?>(null)
   private val authorizationSession = AtomicReference<PairingAuthorizationSession?>(null)
   private val pendingPairingError = AtomicReference<PairingError?>(null)
+  private val revokedIdentities = AtomicReference<Set<RevokedIdentity>>(emptySet())
   private val receivedPayloadData = StringBuffer()
   private val incomingPayloadId = AtomicReference<Long?>(null)
   private val outgoingPayloadId = AtomicReference<Long?>(null)
@@ -92,6 +100,9 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
 
   override val connectedPeerId: String?
     get() = authorizedEndpointIdRef.get()
+
+  override val connectedPeerDeviceId: String?
+    get() = authorizedPeerDeviceIdRef.get()
 
   override fun isAvailable(): Boolean =
     GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) ==
@@ -134,7 +145,9 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
 
       override fun onDisconnected(endpointId: String) {
         connectedEndpointIdRef.compareAndSet(endpointId, null)
-        authorizedEndpointIdRef.compareAndSet(endpointId, null)
+        if (authorizedEndpointIdRef.compareAndSet(endpointId, null)) {
+          authorizedPeerDeviceIdRef.set(null)
+        }
         val transferWasActive = incomingPayloadId.get() != null || outgoingPayloadId.get() != null
         cleanupIncomingTransfer()
         resolveOutgoingTransfer(IllegalStateException("Endpoint disconnected during transfer"))
@@ -278,7 +291,13 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
     localDeviceName.set(deviceName)
     val code = PairingCodeGenerator(clock = clock).generate()
     authorizationSession.set(
-      PairingAuthorizationSession(code, familyGroupKey, deviceId, deviceName)
+      PairingAuthorizationSession(
+        code,
+        familyGroupKey,
+        deviceId,
+        deviceName,
+        revokedMemberIds = familyGroupMemberDao.getRevokedMemberIds(familyGroupKey).toSet(),
+      )
     )
     _pairingState.value = PairingState.WaitingForConnection(code.value)
     val options = AdvertisingOptions.Builder().setStrategy(Strategy.P2P_STAR).build()
@@ -302,6 +321,12 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
     localDeviceId.set(deviceId)
     localDeviceName.set(deviceName)
     enteredPairingCode.set(pairingCode)
+    revokedIdentities.set(
+      familyGroupMemberDao
+        .getAllRevokedMembers()
+        .map { RevokedIdentity(it.familyGroupKey, it.id) }
+        .toSet()
+    )
     _pairingState.value = PairingState.WaitingForConnection(code = "")
     val options = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_STAR).build()
     connectionsClient
@@ -371,6 +396,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
 
   override fun disconnect() {
     authorizedEndpointIdRef.set(null)
+    authorizedPeerDeviceIdRef.set(null)
     connectedEndpointIdRef.getAndSet(null)?.let(connectionsClient::disconnectFromEndpoint)
     connectionsClient.stopAdvertising()
     connectionsClient.stopDiscovery()
@@ -389,6 +415,10 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
       is PairingMessage.AuthorizationAccepted -> {
         if (pairingRole.get() != PairingRole.Discoverer) {
           failPairing(PairingError.MalformedAuthorization, endpointId)
+        } else if (
+          RevokedIdentity(message.familyGroupKey, message.deviceId) in revokedIdentities.get()
+        ) {
+          failPairing(PairingError.RevokedMember, endpointId)
         } else {
           markAuthorized(endpointId, message.familyGroupKey, message.deviceId, message.deviceName)
         }
@@ -447,6 +477,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
     connectionsClient.stopDiscovery()
     connectedEndpointIdRef.set(endpointId)
     authorizedEndpointIdRef.set(endpointId)
+    authorizedPeerDeviceIdRef.set(peerDeviceId)
     pendingDeviceName.set(peerDeviceName)
     _pairingState.value =
       PairingState.Paired(familyGroupKey, peerDeviceName, peerDeviceId, endpointId)
@@ -523,6 +554,7 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
       PairingRejectionReason.IncorrectCode -> PairingError.IncorrectCode
       PairingRejectionReason.CodeExpired -> PairingError.CodeExpired
       PairingRejectionReason.MalformedRequest -> PairingError.MalformedAuthorization
+      PairingRejectionReason.RevokedMember -> PairingError.RevokedMember
     }
 
   private fun cleanupPairingReferences() {
@@ -532,5 +564,6 @@ constructor(@ApplicationContext private val context: Context) : NearbyTransferRe
     enteredPairingCode.set(null)
     authorizationSession.set(null)
     pendingPairingError.set(null)
+    revokedIdentities.set(emptySet())
   }
 }

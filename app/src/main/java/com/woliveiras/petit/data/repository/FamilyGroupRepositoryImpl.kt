@@ -7,12 +7,18 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.room.withTransaction
 import com.woliveiras.petit.data.local.dao.FamilyGroupMemberDao
 import com.woliveiras.petit.data.local.dao.SyncLogDao
+import com.woliveiras.petit.data.local.db.PetitDatabase
+import com.woliveiras.petit.data.local.entity.MembershipChangeEntity
 import com.woliveiras.petit.data.mapper.toDomain
 import com.woliveiras.petit.data.mapper.toEntity
 import com.woliveiras.petit.domain.model.FamilyGroupInfo
 import com.woliveiras.petit.domain.model.FamilyGroupMember
+import com.woliveiras.petit.domain.model.MembershipChange
+import com.woliveiras.petit.domain.model.MembershipChangeType
+import com.woliveiras.petit.domain.model.PendingDeparture
 import com.woliveiras.petit.domain.model.SyncLog
 import com.woliveiras.petit.domain.pairing.PairingCredentialsGenerator
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,6 +43,7 @@ constructor(
   @ApplicationContext private val context: Context,
   private val familyGroupMemberDao: FamilyGroupMemberDao,
   private val syncLogDao: SyncLogDao,
+  private val database: PetitDatabase,
 ) : FamilyGroupRepository {
 
   private object PreferencesKeys {
@@ -74,13 +81,27 @@ constructor(
   override val isSyncEnabled: Flow<Boolean> =
     context.familyGroupDataStore.data.map { prefs -> prefs[PreferencesKeys.SYNC_ENABLED] ?: false }
 
+  override val hasPendingDeparture: Flow<Boolean> =
+    database.membershipChangeDao().observePendingDepartureCount().map { it > 0 }
+
   override suspend fun getFamilyGroupKey(): String? {
+    val preferences = context.familyGroupDataStore.data.first()
+    val key = preferences[PreferencesKeys.FAMILY_GROUP_KEY] ?: return null
+    reconcileActiveAssociation(key, preferences[PreferencesKeys.LOCAL_DEVICE_ID])
     return context.familyGroupDataStore.data.first()[PreferencesKeys.FAMILY_GROUP_KEY]
+  }
+
+  override suspend fun getOrCreateLocalDeviceId(): String {
+    val existing = context.familyGroupDataStore.data.first()[PreferencesKeys.LOCAL_DEVICE_ID]
+    if (existing != null) return existing
+    return UUID.randomUUID().toString().also { id ->
+      context.familyGroupDataStore.edit { prefs -> prefs[PreferencesKeys.LOCAL_DEVICE_ID] = id }
+    }
   }
 
   override suspend fun createFamilyGroup(deviceName: String): String {
     val familyGroupKey = generateFamilyGroupKey()
-    val deviceId = UUID.randomUUID().toString()
+    val deviceId = getOrCreateLocalDeviceId()
     val now = System.currentTimeMillis()
 
     context.familyGroupDataStore.edit { prefs ->
@@ -106,7 +127,7 @@ constructor(
   }
 
   override suspend fun joinFamilyGroup(familyGroupKey: String, deviceName: String) {
-    val deviceId = UUID.randomUUID().toString()
+    val deviceId = getOrCreateLocalDeviceId()
     val now = System.currentTimeMillis()
 
     context.familyGroupDataStore.edit { prefs ->
@@ -139,6 +160,25 @@ constructor(
     require(localMember.familyGroupKey == familyGroupKey)
     require(remoteMember.familyGroupKey == familyGroupKey)
 
+    val groupId = MembershipChange.groupIdForKey(familyGroupKey)
+    val terminalIds =
+      getMembershipChanges()
+        .filter {
+          it.groupId == groupId &&
+            it.type in setOf(MembershipChangeType.REMOVE, MembershipChangeType.LEAVE)
+        }
+        .mapTo(mutableSetOf()) { it.memberId }
+    val existingRemote = familyGroupMemberDao.getMemberByIdIncludingDeleted(remoteMember.id)
+    if (
+      (existingRemote?.familyGroupKey == familyGroupKey && existingRemote.deletedAt != null) ||
+        remoteMember.id in terminalIds
+    ) {
+      throw SecurityException("Remote member identity was revoked")
+    }
+    if (localMember.id in terminalIds) {
+      throw SecurityException("Local member identity left this group")
+    }
+
     val previousLocal = familyGroupMemberDao.getLocalDevice()
     val previousRemote = familyGroupMemberDao.getMemberById(remoteMember.id)
     familyGroupMemberDao.insertPairingMembers(
@@ -166,17 +206,143 @@ constructor(
 
   override suspend fun leaveFamilyGroup() {
     val key = getFamilyGroupKey() ?: return
-    familyGroupMemberDao.deleteAllByGroupKey(key)
-    context.familyGroupDataStore.edit { prefs ->
-      prefs.remove(PreferencesKeys.FAMILY_GROUP_KEY)
-      prefs.remove(PreferencesKeys.LOCAL_DEVICE_ID)
-      prefs.remove(PreferencesKeys.LOCAL_DEVICE_NAME)
-      prefs[PreferencesKeys.SYNC_ENABLED] = false
+    val local = familyGroupMemberDao.getLocalDevice()
+    database.withTransaction {
+      if (local != null) {
+        appendMembershipChange(
+          MembershipChange(
+            groupId = MembershipChange.groupIdForKey(key),
+            memberId = local.id,
+            type = MembershipChangeType.LEAVE,
+            timestamp = nextTimestamp(local.updatedAt),
+          ),
+          deliveryKey = key,
+        )
+      }
+      familyGroupMemberDao.softDeleteAllByGroupKey(
+        key,
+        local?.let { nextTimestamp(it.updatedAt) } ?: System.currentTimeMillis(),
+      )
     }
+    reconcileActiveAssociation()
   }
 
   override suspend fun removeMember(memberId: String) {
-    familyGroupMemberDao.softDeleteMember(memberId)
+    val member = familyGroupMemberDao.getMemberByIdIncludingDeleted(memberId) ?: return
+    if (member.deletedAt != null) return
+    val timestamp = nextTimestamp(member.updatedAt)
+    database.withTransaction {
+      familyGroupMemberDao.softDeleteMember(memberId, timestamp)
+      appendMembershipChange(
+        MembershipChange(
+          groupId = MembershipChange.groupIdForKey(member.familyGroupKey),
+          memberId = memberId,
+          type = MembershipChangeType.REMOVE,
+          timestamp = timestamp,
+        )
+      )
+    }
+  }
+
+  override suspend fun renameLocalDevice(deviceName: String) {
+    val normalizedName = deviceName.trim()
+    require(normalizedName.isNotEmpty()) { "Device name cannot be blank" }
+    require(normalizedName.length <= 80) { "Device name is too long" }
+    val local = familyGroupMemberDao.getLocalDevice() ?: error("No local group member")
+    if (local.deviceName == normalizedName) return
+    val timestamp = nextTimestamp(local.updatedAt)
+    database.withTransaction {
+      familyGroupMemberDao.insertMember(
+        local.copy(deviceName = normalizedName, updatedAt = timestamp)
+      )
+      appendMembershipChange(
+        MembershipChange(
+          groupId = MembershipChange.groupIdForKey(local.familyGroupKey),
+          memberId = local.id,
+          type = MembershipChangeType.RENAME,
+          deviceName = normalizedName,
+          timestamp = timestamp,
+        )
+      )
+    }
+    reconcileActiveAssociation()
+  }
+
+  override suspend fun getMembershipChanges(): List<MembershipChange> =
+    database.membershipChangeDao().getAll().map { it.toDomain() }
+
+  override suspend fun getPendingDepartures(): List<PendingDeparture> =
+    database.membershipChangeDao().getPendingDepartures().map { entity ->
+      PendingDeparture(entity.toDomain(), checkNotNull(entity.deliveryKey))
+    }
+
+  override suspend fun acknowledgeDeparture(groupId: String, memberId: String) {
+    database.membershipChangeDao().clearDeliveryKey(groupId, memberId)
+  }
+
+  override suspend fun applyMembershipChanges(changes: List<MembershipChange>) {
+    val accepted =
+      MembershipChange.normalize(changes).filter { change ->
+        val member = familyGroupMemberDao.getMemberByIdIncludingDeleted(change.memberId)
+        member != null && MembershipChange.groupIdForKey(member.familyGroupKey) == change.groupId
+      }
+    for (change in accepted) {
+      val member = checkNotNull(familyGroupMemberDao.getMemberByIdIncludingDeleted(change.memberId))
+      when (change.type) {
+        MembershipChangeType.RENAME -> {
+          val name = change.deviceName?.trim().orEmpty()
+          if (
+            name.isNotEmpty() &&
+              name.length <= 80 &&
+              member.deletedAt == null &&
+              change.timestamp > member.updatedAt
+          ) {
+            familyGroupMemberDao.insertMember(
+              member.copy(deviceName = name, updatedAt = change.timestamp)
+            )
+          }
+        }
+        MembershipChangeType.REMOVE,
+        MembershipChangeType.LEAVE -> {
+          val effectiveTime = maxOf(member.updatedAt, member.deletedAt ?: Long.MIN_VALUE)
+          if (change.timestamp >= effectiveTime) {
+            familyGroupMemberDao.insertMember(
+              member.copy(updatedAt = change.timestamp, deletedAt = change.timestamp)
+            )
+          }
+        }
+      }
+    }
+    if (accepted.isNotEmpty()) {
+      saveMembershipChanges(MembershipChange.normalize(getMembershipChanges() + accepted))
+    }
+  }
+
+  override suspend fun reconcileActiveAssociation() {
+    val preferences = context.familyGroupDataStore.data.first()
+    val key = preferences[PreferencesKeys.FAMILY_GROUP_KEY] ?: return
+    reconcileActiveAssociation(key, preferences[PreferencesKeys.LOCAL_DEVICE_ID])
+  }
+
+  private suspend fun reconcileActiveAssociation(key: String, localId: String?) {
+    if (localId == null) {
+      clearActiveAssociation()
+      return
+    }
+    val local = familyGroupMemberDao.getMemberByIdIncludingDeleted(localId)
+    if (local == null) return
+    if (local.familyGroupKey != key || local.deletedAt != null) {
+      clearActiveAssociation()
+      return
+    }
+    context.familyGroupDataStore.edit { prefs ->
+      prefs[PreferencesKeys.LOCAL_DEVICE_NAME] = local.deviceName
+    }
+  }
+
+  override suspend fun isMemberAuthorized(memberId: String, familyGroupKey: String): Boolean {
+    val member = familyGroupMemberDao.getMemberByIdIncludingDeleted(memberId) ?: return true
+    return member.familyGroupKey == familyGroupKey && member.deletedAt == null
   }
 
   override suspend fun updateLastSyncAt(memberId: String) {
@@ -200,10 +366,50 @@ constructor(
   }
 
   override suspend fun resetLocalPreferences() {
-    context.familyGroupDataStore.edit { it.clear() }
+    val stableId = context.familyGroupDataStore.data.first()[PreferencesKeys.LOCAL_DEVICE_ID]
+    context.familyGroupDataStore.edit { prefs ->
+      prefs.clear()
+      if (stableId != null) prefs[PreferencesKeys.LOCAL_DEVICE_ID] = stableId
+    }
+    database.membershipChangeDao().deleteAll()
   }
 
   private fun generateFamilyGroupKey(): String {
     return PairingCredentialsGenerator().generate().familyGroupKey
   }
+
+  private suspend fun appendMembershipChange(
+    change: MembershipChange,
+    deliveryKey: String? = null,
+  ) {
+    val currentEntity = database.membershipChangeDao().get(change.groupId, change.memberId)
+    val selected =
+      MembershipChange.normalize(listOfNotNull(currentEntity?.toDomain(), change)).single()
+    database
+      .membershipChangeDao()
+      .upsert(selected.toEntity(deliveryKey ?: currentEntity?.deliveryKey))
+  }
+
+  private suspend fun saveMembershipChanges(changes: List<MembershipChange>) {
+    MembershipChange.normalize(changes).forEach {
+      val deliveryKey = database.membershipChangeDao().get(it.groupId, it.memberId)?.deliveryKey
+      database.membershipChangeDao().upsert(it.toEntity(deliveryKey))
+    }
+  }
+
+  private suspend fun clearActiveAssociation() {
+    context.familyGroupDataStore.edit { prefs ->
+      prefs.remove(PreferencesKeys.FAMILY_GROUP_KEY)
+      prefs.remove(PreferencesKeys.LOCAL_DEVICE_NAME)
+      prefs[PreferencesKeys.SYNC_ENABLED] = false
+    }
+  }
+
+  private fun nextTimestamp(previous: Long): Long = maxOf(System.currentTimeMillis(), previous + 1)
+
+  private fun MembershipChangeEntity.toDomain() =
+    MembershipChange(groupId, memberId, MembershipChangeType.valueOf(type), deviceName, timestamp)
+
+  private fun MembershipChange.toEntity(deliveryKey: String? = null) =
+    MembershipChangeEntity(groupId, memberId, type.name, deviceName, timestamp, deliveryKey)
 }

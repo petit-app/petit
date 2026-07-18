@@ -105,6 +105,20 @@ class PairingViewModelTest {
     }
 
   @Test
+  fun repeatedDiscoveryReusesTheInstallationStableIdentity() =
+    runTest(dispatcher) {
+      viewModel.onPairingCodeChanged("0042")
+
+      viewModel.startDiscovery()
+      advanceUntilIdle()
+      viewModel.startDiscovery()
+      advanceUntilIdle()
+
+      assertThat(nearby.discovery?.get(1)).isEqualTo("stable-local-id")
+      assertThat(family.stableIdCalls).isEqualTo(2)
+    }
+
+  @Test
   fun unavailablePlayServicesStopsBeforeAdvertising() =
     runTest(dispatcher) {
       nearby.available = false
@@ -147,6 +161,23 @@ class PairingViewModelTest {
       assertThat(viewModel.uiState.value.pairingPersisted).isFalse()
       assertThat(viewModel.uiState.value.pairingState)
         .isEqualTo(PairingState.Error(PairingError.PersistenceFailed))
+    }
+
+  @Test
+  fun revokedIdentityIsRejectedWithoutExposingASuccessfulPairing() =
+    runTest(dispatcher) {
+      family.rejectAsRevoked = true
+      viewModel.onPairingCodeChanged("0042")
+      viewModel.startDiscovery()
+      advanceUntilIdle()
+
+      nearby.pairing.value = PairingState.Paired("group-key", "Sender", "sender-id", "endpoint-1")
+      advanceUntilIdle()
+
+      assertThat(nearby.disconnectCalls).isEqualTo(1)
+      assertThat(viewModel.uiState.value.pairingPersisted).isFalse()
+      assertThat(viewModel.uiState.value.pairingState)
+        .isEqualTo(PairingState.Error(PairingError.RevokedMember))
     }
 
   private class FakeNearbyTransferRepository : NearbyTransferRepository {
@@ -208,8 +239,15 @@ class PairingViewModelTest {
     override val isSyncEnabled: Flow<Boolean> = MutableStateFlow(false)
     val persistCalls = mutableListOf<PersistCall>()
     var failPersistence = false
+    var rejectAsRevoked = false
+    var stableIdCalls = 0
 
     override suspend fun getFamilyGroupKey(): String? = null
+
+    override suspend fun getOrCreateLocalDeviceId(): String {
+      stableIdCalls++
+      return "stable-local-id"
+    }
 
     override suspend fun createFamilyGroup(deviceName: String): String = error("unused")
 
@@ -220,6 +258,7 @@ class PairingViewModelTest {
       localMember: FamilyGroupMember,
       remoteMember: FamilyGroupMember,
     ) {
+      if (rejectAsRevoked) throw SecurityException("revoked")
       if (failPersistence) error("persistence failed")
       persistCalls += PersistCall(familyGroupKey, localMember, remoteMember)
     }

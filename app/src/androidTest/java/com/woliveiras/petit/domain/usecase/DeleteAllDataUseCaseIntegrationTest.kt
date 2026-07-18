@@ -8,6 +8,8 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.local.db.PetitDatabase
 import com.woliveiras.petit.data.local.entity.DewormingEntryEntity
 import com.woliveiras.petit.data.local.entity.FamilyGroupMemberEntity
+import com.woliveiras.petit.data.local.entity.LanAppliedBatchEntity
+import com.woliveiras.petit.data.local.entity.LanSyncPeerEntity
 import com.woliveiras.petit.data.local.entity.PetEntity
 import com.woliveiras.petit.data.local.entity.SyncLogEntity
 import com.woliveiras.petit.data.local.entity.TaskEntity
@@ -49,7 +51,12 @@ class DeleteAllDataUseCaseIntegrationTest {
     scheduler = RecordingTaskScheduler()
     reminderPreferences = ReminderPreferencesRepositoryImpl(context)
     familyGroupRepository =
-      FamilyGroupRepositoryImpl(context, database.familyGroupMemberDao(), database.syncLogDao())
+      FamilyGroupRepositoryImpl(
+        context,
+        database.familyGroupMemberDao(),
+        database.syncLogDao(),
+        database,
+      )
     userPreferences = UserPreferencesRepositoryImpl(context)
   }
 
@@ -252,6 +259,10 @@ class DeleteAllDataUseCaseIntegrationTest {
           syncType = "MANUAL",
         )
       )
+    database.lanSyncDao().upsertPeer(LanSyncPeerEntity("remote-device", 10L, 10L))
+    database
+      .lanSyncDao()
+      .insertAppliedBatch(LanAppliedBatchEntity("batch-1", "remote-device", 10L, 10L))
     reminderPreferences.updateVaccinationSettings(enabled = false, daysBefore = 3)
     reminderPreferences.updateDewormingSettings(enabled = false, daysBefore = 4)
     reminderPreferences.updateWeightSettings(enabled = true, intervalDays = 14)
@@ -271,6 +282,8 @@ class DeleteAllDataUseCaseIntegrationTest {
     assertThat(database.taskDao().getAllTasks().first()).isEmpty()
     assertThat(database.familyGroupMemberDao().getMemberCount(familyGroupKey).first()).isEqualTo(0)
     assertThat(database.syncLogDao().getAllSyncLogs().first()).isEmpty()
+    assertThat(database.lanSyncDao().getPeer("remote-device")).isNull()
+    assertThat(database.lanSyncDao().getAppliedBatch("batch-1", "remote-device")).isNull()
   }
 
   private suspend fun assertUserExperiencePreferencesRetained() {

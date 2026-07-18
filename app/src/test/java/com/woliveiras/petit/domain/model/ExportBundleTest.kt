@@ -51,6 +51,24 @@ class ExportBundleTest {
   }
 
   @Test
+  fun membershipChangesRoundTripAndContributeToTheTransferredEntityCount() {
+    val change =
+      MembershipChange(
+        groupId = MembershipChange.groupIdForKey("group-key"),
+        memberId = "member-1",
+        type = MembershipChangeType.RENAME,
+        deviceName = "Kitchen tablet",
+        timestamp = 20L,
+      )
+    val bundle = emptyBundle().copy(membershipChanges = listOf(change))
+
+    val restored = ExportBundle.fromJson(bundle.toJson())
+
+    assertThat(restored.membershipChanges).containsExactly(change)
+    assertThat(restored.entityCount).isEqualTo(1)
+  }
+
+  @Test
   fun legacyRemindersAreConvertedToCurrentTasksBeforeValidation() {
     val legacy =
       emptyBundleJson().apply {

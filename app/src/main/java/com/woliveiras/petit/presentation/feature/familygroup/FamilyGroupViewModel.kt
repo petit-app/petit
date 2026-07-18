@@ -18,6 +18,8 @@ data class FamilyGroupUiState(
   val isSyncEnabled: Boolean = false,
   val latestSyncLog: SyncLog? = null,
   val isLoading: Boolean = true,
+  val operationFailed: Boolean = false,
+  val hasLeftGroup: Boolean = false,
 )
 
 @HiltViewModel
@@ -62,10 +64,24 @@ constructor(private val familyGroupRepository: FamilyGroupRepository) : ViewMode
   }
 
   fun removeMember(memberId: String) {
-    viewModelScope.launch { familyGroupRepository.removeMember(memberId) }
+    viewModelScope.launch {
+      runCatching { familyGroupRepository.removeMember(memberId) }
+        .onFailure { _uiState.update { it.copy(operationFailed = true) } }
+    }
+  }
+
+  fun renameLocalDevice(deviceName: String) {
+    viewModelScope.launch {
+      runCatching { familyGroupRepository.renameLocalDevice(deviceName) }
+        .onFailure { _uiState.update { it.copy(operationFailed = true) } }
+    }
   }
 
   fun leaveGroup() {
-    viewModelScope.launch { familyGroupRepository.leaveFamilyGroup() }
+    viewModelScope.launch {
+      runCatching { familyGroupRepository.leaveFamilyGroup() }
+        .onSuccess { _uiState.update { it.copy(hasLeftGroup = true) } }
+        .onFailure { _uiState.update { it.copy(operationFailed = true) } }
+    }
   }
 }

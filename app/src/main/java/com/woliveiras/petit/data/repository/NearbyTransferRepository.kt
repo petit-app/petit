@@ -50,6 +50,10 @@ interface NearbyTransferRepository {
   /** The endpoint ID of the currently connected peer device. */
   val connectedPeerId: String?
 
+  /** Stable device UUID learned during the authorized pairing handshake. */
+  val connectedPeerDeviceId: String?
+    get() = connectedPeerId
+
   /** Disconnect from the remote device. */
   fun disconnect()
 }

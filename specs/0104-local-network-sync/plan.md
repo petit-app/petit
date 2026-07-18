@@ -2,11 +2,13 @@
 
 Spec: [spec.md](./spec.md)
 
-## Starting point
+## Implementation status
 
-There is no NSD/TCP implementation in the project. This plan should begin only
-after explicit approval of the spec and assumes identity/key (0101), a local
-group (0103), and deterministic conflict rules (0105).
+Steps 1–7 and the two-process protected transport test are implemented and
+verified locally. Step 8 remains open for two physical devices and real
+Wi-Fi/background conditions. The implementation
+depends on identity/key (0101), group membership (0103), and the single
+deterministic resolver and transaction boundary from 0105.
 
 ## Implementation sequence
 
@@ -17,16 +19,21 @@ group (0103), and deterministic conflict rules (0105).
 5. Integrate the lifecycle: start in `ON_START`, stop in `ON_STOP`, and clean up listeners/sockets.
 6. Create unique periodic work with `NetworkType.CONNECTED`, backoff, and a minimum interval of 15 minutes.
 7. Implement the on/off setting, manual action, and accessible global indicator.
-8. Test in two processes and then on two devices on the same network.
+8. Test the protected exchange in two processes, then validate full discovery and convergence on two physical devices on the same network.
 
 ## Protocol flow
 
-1. The client sends `HELLO {protocolVersion, familyGroupKey, deviceId, lastSyncTimestamp}`.
-2. The server validates the version, key, and member; an error closes the session.
-3. The server responds with `HELLO_ACK {deviceId, lastSyncTimestamp}`.
-4. Both exchange `CHANGESET` messages with entities newer than the known timestamp.
-5. Each side applies the batch idempotently and responds with `ACK {newSyncTimestamp}`.
-6. Both close the session; without an ACK, the batch can be safely resent.
+1. The client sends `HELLO {version, deviceId, lastSyncTimestamp, nonce, scope, HMAC}`; the group key never crosses the socket.
+2. The server validates version, HMAC, stable member, nonce replay, and scope before returning data.
+3. `HELLO_ACK` provides the server identity, a second nonce, cursor, scope, and bilateral HMAC proof.
+4. Both derive directional AES-256-GCM keys; all later messages carry strict sequence numbers.
+5. Each side filters stable per-entity batch IDs through a per-group/per-peer durable ACK ledger, combines pending units into bounded `CHANGESET` batches, and advances its informational cursor only after the matching `ACK`. This does not lose a new write when a device clock moves backwards.
+6. Room applies a new batch, its replay ledger, membership events, and `SyncLog` in one transaction; a lost ACK returns the durable result without reapplying.
+7. `CLOSE` ends each outbound phase and then the socket. The lower stable UUID is the normal session initiator.
+
+An offline `LEAVE` uses `MEMBERSHIP_ONLY`: it can carry only the caller's own
+departure and is rejected if it contains clinical entities. Its restricted
+credential is erased after the first protected ACK.
 
 ## Battery and lifecycle
 

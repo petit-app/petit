@@ -10,7 +10,9 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.local.db.PetitDatabase
 import com.woliveiras.petit.data.local.entity.PetEntity
 import com.woliveiras.petit.data.local.entity.TaskEntity
+import com.woliveiras.petit.data.local.entity.WeightEntryEntity
 import com.woliveiras.petit.data.repository.DewormingEntryRepositoryImpl
+import com.woliveiras.petit.data.repository.FamilyGroupRepositoryImpl
 import com.woliveiras.petit.data.repository.PetRepositoryImpl
 import com.woliveiras.petit.data.repository.TaskRepositoryImpl
 import com.woliveiras.petit.data.repository.VaccinationEntryRepositoryImpl
@@ -206,7 +208,17 @@ class ExportImportUseCaseIntegrationTest {
       """
         .trimIndent()
     )
-    val mergeData = MergeDataUseCase(useCase, database)
+    val mergeData =
+      MergeDataUseCase(
+        useCase,
+        database,
+        FamilyGroupRepositoryImpl(
+          context,
+          database.familyGroupMemberDao(),
+          database.syncLogDao(),
+          database,
+        ),
+      )
 
     val failure = runCatching {
       mergeData(
@@ -219,6 +231,36 @@ class ExportImportUseCaseIntegrationTest {
     assertThat(failure.exceptionOrNull()).isNotNull()
     assertThat(database.petDao().getAllPets().first()).isEmpty()
     assertThat(database.syncLogDao().getLatestSyncLog()).isNull()
+  }
+
+  @Test
+  fun incrementalShareableExportIncludesBoundaryTombstonesAndRequiredParents() = runTest {
+    database
+      .petDao()
+      .insertPet(PetEntity(id = "old-parent", name = "Mimi", createdAt = 1L, updatedAt = 2L))
+    database
+      .petDao()
+      .insertPet(PetEntity(id = "changed-pet", name = "Luna", createdAt = 1L, updatedAt = 11L))
+    database
+      .weightEntryDao()
+      .insertWeightEntry(
+        WeightEntryEntity(
+          id = "deleted-weight",
+          petId = "old-parent",
+          date = 1L,
+          weightGrams = 4_000,
+          createdAt = 1L,
+          updatedAt = 10L,
+          deletedAt = 10L,
+        )
+      )
+
+    val exported = useCase.exportShareableSince(10L)
+
+    assertThat(exported.pets.map { it.id }).containsExactly("changed-pet", "old-parent")
+    assertThat(exported.weightEntries.map { it.id }).containsExactly("deleted-weight")
+    assertThat(exported.weightEntries.single().deletedAt).isEqualTo(10L)
+    assertThat(ExportBundle.validate(exported)).isEmpty()
   }
 
   private fun backupUri(filename: String) =

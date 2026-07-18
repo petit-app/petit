@@ -41,6 +41,11 @@ constructor(
           database.weightEntryDao().deleteAll()
           database.petDao().deleteAll()
           database.familyGroupMemberDao().deleteAll()
+          database.membershipChangeDao().deleteAll()
+          database.lanSyncDao().deleteAllBatches()
+          database.lanSyncDao().deleteAllOutboundAcks()
+          database.lanSyncDao().deleteAllSeenNonces()
+          database.lanSyncDao().deleteAllPeers()
           database.syncLogDao().deleteAll()
         }
         reminderPreferencesRepository.reset()

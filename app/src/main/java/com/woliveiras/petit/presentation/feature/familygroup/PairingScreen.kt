@@ -400,4 +400,5 @@ private fun PairingError.stringResource(): Int =
     PairingError.MalformedAuthorization -> R.string.family_group_error_authorization
     PairingError.EndpointLost -> R.string.family_group_error_endpoint_lost
     PairingError.PersistenceFailed -> R.string.family_group_error_persistence
+    PairingError.RevokedMember -> R.string.family_group_error_revoked_member
   }

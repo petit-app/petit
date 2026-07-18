@@ -1,8 +1,8 @@
 # Local Sharing Protocols Between Android Devices
 
-> **Last update:** 2026-07-17. The decisions apply to Petit and generic
-> Android devices. Code examples are illustrative; the current
-> implementation uses Nearby Connections, while NSD + TCP remains planned in
+> **Last update:** 2026-07-18. The decisions apply to Petit and generic
+> Android devices. Petit uses Nearby Connections for pairing/one-shot transfer
+> and protected NSD + TCP for local-network sync in
 > [spec 0104](../specs/0104-local-network-sync/spec.md).
 
 ## Introduction
@@ -459,67 +459,37 @@ NFC could be used to start pairing (by touching the phones together), but not to
 
 ### Handshake (TCP over NSD)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                  PETIT SYNC PROTOCOL v1                 │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  1. HELLO                                               │
-│     Client → Server                                     │
-│     {                                                   │
-│       "type": "HELLO",                                  │
-│       "familyGroupKey": "family-group-uuid",            │
-│       "deviceId": "device-uuid",                        │
-│       "deviceName": "Device A",                         │
-│       "lastSyncTimestamp": 1712345678000,               │
-│       "protocolVersion": 1                              │
-│     }                                                   │
-│                                                         │
-│  2. HELLO_ACK (if familyGroupKey is valid)              │
-│     Server → Client                                     │
-│     {                                                   │
-│       "type": "HELLO_ACK",                              │
-│       "deviceId": "server-uuid",                        │
-│       "deviceName": "Device B",                         │
-│       "lastSyncTimestamp": 1712345600000                │
-│     }                                                   │
-│                                                         │
-│  2b. ERROR (if familyGroupKey is invalid)               │
-│     Server → Client                                     │
-│     {                                                   │
-│       "type": "ERROR",                                  │
-│       "code": "INVALID_FAMILY_GROUP_KEY"                │
-│     }                                                   │
-│     → Server disconnects                                │
-│                                                         │
-│  3. CHANGESET (Server → Client)                         │
-│     {                                                   │
-│       "type": "CHANGESET",                              │
-│       "since": 1712345678000,                           │
-│       "pets": [...modified entities...],                │
-│       "weightEntries": [...],                           │
-│       "vaccinationEntries": [...],                      │
-│       "dewormingEntries": [...],                        │
-│       "tasks": [...]                                    │
-│     }                                                   │
-│                                                         │
-│  4. CHANGESET (Client → Server)                         │
-│     (same structure, with the client's changes)         │
-│                                                         │
-│  5. ACK (both)                                          │
-│     {                                                   │
-│       "type": "ACK",                                    │
-│       "syncTimestamp": 1712346000000                    │
-│     }                                                   │
-│                                                         │
-│  6. CLOSE (both sides close the TCP connection)         │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+1. `HELLO` carries protocol version, stable device UUID, acknowledged cursor,
+   a 256-bit random nonce, session scope, and HMAC-SHA256 proof. The group key
+   is never transmitted.
+2. The server validates version, group proof, known active member, and nonce
+   replay before returning `HELLO_ACK` with its identity, nonce, cursor, scope,
+   and bilateral HMAC proof. Invalid input receives `ERROR` and `CLOSE` before
+   any health data.
+3. Both sides derive separate client-to-server and server-to-client AES-256-GCM
+   keys. Every protected packet has a strict sequence number; tamper, replay,
+   and out-of-order packets are rejected.
+4. `CHANGESET` carries a deterministic batch UUID, cursor, and bounded
+   `ExportBundle` payload (maximum 512 KiB). The receiver validates the entire
+   bundle, applies it with the 0105 resolver, writes the replay ledger and
+   `SyncLog` in the same Room transaction, then returns a matching `ACK`.
+5. A per-group/per-peer ledger retains stable IDs for the constituent entity
+   units confirmed by each ACK. A missing ACK leaves them pending; an
+   already-applied batch returns its durable ACK without a second log. Selection
+   therefore remains complete even if the local clock moves backwards.
+6. `CLOSE` ends each outbound phase. The lower stable UUID initiates the normal
+   session, preventing duplicate simultaneous sessions.
+
+The `MEMBERSHIP_ONLY` scope is reserved for a queued offline `LEAVE`. It accepts
+only the caller's own departure event and cannot carry pets or health records.
+Its restricted delivery credential is removed after ACK.
 
 ### Changeset Format
 
-The changeset uses the same format as ExportBundle (JSON), but contains only entities with `updatedAt > lastSyncTimestamp`:
+The changeset uses the same format as ExportBundle (JSON), includes tombstones,
+and contains versions at the acknowledged cursor boundary or newer. Required
+parent pets accompany changed child records so validation completes before the
+transaction begins:
 
 ```json
 {

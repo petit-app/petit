@@ -31,6 +31,24 @@ interface FamilyGroupMemberDao {
   @Query("SELECT * FROM family_group_members WHERE id = :id AND deletedAt IS NULL")
   suspend fun getMemberById(id: String): FamilyGroupMemberEntity?
 
+  /** Get a member including a revocation tombstone. */
+  @Query("SELECT * FROM family_group_members WHERE id = :id")
+  suspend fun getMemberByIdIncludingDeleted(id: String): FamilyGroupMemberEntity?
+
+  /** Get revoked stable identities for transport authorization. */
+  @Query(
+    "SELECT id FROM family_group_members WHERE familyGroupKey = :familyGroupKey AND deletedAt IS NOT NULL"
+  )
+  suspend fun getRevokedMemberIds(familyGroupKey: String): List<String>
+
+  @Query("SELECT * FROM family_group_members WHERE deletedAt IS NOT NULL")
+  suspend fun getAllRevokedMembers(): List<FamilyGroupMemberEntity>
+
+  @Query("SELECT * FROM family_group_members WHERE familyGroupKey = :familyGroupKey ORDER BY id")
+  suspend fun getAllByGroupKeyIncludingDeleted(
+    familyGroupKey: String
+  ): List<FamilyGroupMemberEntity>
+
   /** Get the count of active members in a group. */
   @Query(
     "SELECT COUNT(*) FROM family_group_members WHERE familyGroupKey = :familyGroupKey AND deletedAt IS NULL"
@@ -51,7 +69,7 @@ interface FamilyGroupMemberDao {
 
   /** Update the last sync timestamp for a member. */
   @Query(
-    "UPDATE family_group_members SET lastSyncAt = :timestamp, updatedAt = :timestamp WHERE id = :id"
+    "UPDATE family_group_members SET lastSyncAt = :timestamp WHERE id = :id AND deletedAt IS NULL"
   )
   suspend fun updateLastSyncAt(id: String, timestamp: Long = System.currentTimeMillis())
 
@@ -67,6 +85,15 @@ interface FamilyGroupMemberDao {
   /** Delete all members of a group. */
   @Query("DELETE FROM family_group_members WHERE familyGroupKey = :familyGroupKey")
   suspend fun deleteAllByGroupKey(familyGroupKey: String)
+
+  /**
+   * Retain stable peer identities after leaving so a membership-only retry can be authenticated.
+   */
+  @Query(
+    "UPDATE family_group_members SET deletedAt = :timestamp, updatedAt = :timestamp " +
+      "WHERE familyGroupKey = :familyGroupKey AND deletedAt IS NULL"
+  )
+  suspend fun softDeleteAllByGroupKey(familyGroupKey: String, timestamp: Long)
 
   /** Delete all members. */
   @Query("DELETE FROM family_group_members") suspend fun deleteAll()

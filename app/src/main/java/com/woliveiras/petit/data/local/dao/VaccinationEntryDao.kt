@@ -25,6 +25,9 @@ interface VaccinationEntryDao {
   @Query("SELECT * FROM vaccination_entries ORDER BY id")
   suspend fun getAllIncludingDeleted(): List<VaccinationEntryEntity>
 
+  @Query("SELECT * FROM vaccination_entries WHERE updatedAt >= :since ORDER BY id")
+  suspend fun getModifiedSince(since: Long): List<VaccinationEntryEntity>
+
   /** Get the latest vaccination entry for each vaccine type for a pet. */
   @Query(
     """

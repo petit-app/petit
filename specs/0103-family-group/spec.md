@@ -2,7 +2,7 @@
 spec: "0103"
 title: Local family group
 family: local-sharing
-status: In Progress
+status: Implemented
 owner: woliveiras
 depends_on: ["0101"]
 ---
@@ -19,7 +19,7 @@ This spec consolidates the canonical `us-103-family-group` story; the
 `us-103-household-group` variant contained only outdated navigation and a
 wireframe, with no additional requirements.
 
-## Current state
+## Baseline before implementation
 
 The member list, local removal, leaving the group, and DataStore preferences
 already exist, but group creation persists state before pairing authorization
@@ -35,17 +35,17 @@ or propagation of membership changes during a later transfer.
 - [x] Remove a member from the local list after confirmation.
 - [x] Leave the group by removing the local key while preserving pet data.
 - [x] Manage the group key, ID, and local name in group preferences.
-- [ ] Allow the local device to be renamed.
-- [ ] Propagate renaming, removal, and departure to other members.
-- [ ] Display the last sync time or “never synced” for each member.
-- [ ] Ensure that a removed device loses authorization for future syncs.
+- [x] Allow the local device to be renamed.
+- [x] Propagate renaming, removal, and departure to other members.
+- [x] Display the last sync time or “never synced” for each member.
+- [x] Ensure that a removed device loses authorization for future syncs.
 
 ### Non-functional
 
-- [ ] Consistency: repeated removal and departure operations must be idempotent.
-- [ ] Privacy: health data remains local when access is removed.
-- [ ] Accessibility: confirmations and destructive actions have appropriate labels and targets.
-- [ ] Internationalization: visible text remains in `strings.xml` for pt-BR, en, and es.
+- [x] Consistency: repeated removal and departure operations must be idempotent.
+- [x] Privacy: health data remains local when access is removed.
+- [x] Accessibility: confirmations and destructive actions have appropriate labels and targets.
+- [x] Internationalization: visible text remains in `strings.xml` for pt-BR, en, and es.
 
 ## Test strategy
 
@@ -56,11 +56,25 @@ available, in the LAN channel.
 
 ## Acceptance criteria
 
-- [ ] Given an existing group, when the screen opens, then it lists members, marks the local device, and shows each member's last sync.
+- [x] Given an existing group, when the screen opens, then it lists members, marks the local device, and shows each member's last sync.
 - [ ] Given the local member, when its name changes, then the new name is persisted and appears on the other device after syncing.
 - [ ] Given a remote member, when its removal is confirmed, then it leaves the list and cannot start a new sync with the previous key.
-- [ ] Given a member that chooses to leave, when it confirms, then the key and local associations are removed, but pet data remains.
+- [x] Given a member that chooses to leave, when it confirms, then the key and local associations are removed, but pet data remains.
 - [ ] Given an offline removal or departure, when the devices communicate again, then the membership change is propagated idempotently.
+
+## Implemented propagation rule
+
+Rename, remove, and leave operations produce a minimal non-clinical
+`MembershipChange` keyed by a one-way SHA-256 group identifier and stable member UUID, so a
+departure can be queued after the visible association is cleared. A local
+`LEAVE` retains the group credential only in a Room outbox until a protected
+membership-only session receives an ACK; that scope cannot carry clinical
+entities. Peers keep
+only the deterministic final change per member (timestamp, destructive-event
+priority, then name), apply it idempotently, and forward it in one-shot and LAN
+bundles only within the matching group. A removal tombstone is loaded into the
+pairing authorization session so the old stable identity cannot reuse the
+previous group access.
 
 ## Edge cases
 

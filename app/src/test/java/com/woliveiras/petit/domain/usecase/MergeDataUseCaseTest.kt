@@ -7,12 +7,16 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.local.db.PetitDatabase
 import com.woliveiras.petit.data.local.entity.PetEntity
 import com.woliveiras.petit.data.repository.DewormingEntryRepositoryImpl
+import com.woliveiras.petit.data.repository.FamilyGroupRepositoryImpl
 import com.woliveiras.petit.data.repository.PetRepositoryImpl
 import com.woliveiras.petit.data.repository.TaskRepositoryImpl
 import com.woliveiras.petit.data.repository.VaccinationEntryRepositoryImpl
 import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
+import com.woliveiras.petit.domain.model.FamilyGroupMember
+import com.woliveiras.petit.domain.model.MembershipChange
+import com.woliveiras.petit.domain.model.MembershipChangeType
 import com.woliveiras.petit.domain.model.Pet
 import java.time.Clock
 import kotlinx.coroutines.flow.first
@@ -27,6 +31,7 @@ import org.robolectric.RobolectricTestRunner
 class MergeDataUseCaseTest {
   private lateinit var database: PetitDatabase
   private lateinit var useCase: MergeDataUseCase
+  private lateinit var familyGroupRepository: FamilyGroupRepositoryImpl
 
   @Before
   fun setUp() {
@@ -45,7 +50,14 @@ class MergeDataUseCaseTest {
         DewormingEntryRepositoryImpl(database.dewormingEntryDao(), Clock.systemUTC()),
         TaskRepositoryImpl(database.taskDao()),
       )
-    useCase = MergeDataUseCase(exportImport, database)
+    familyGroupRepository =
+      FamilyGroupRepositoryImpl(
+        context,
+        database.familyGroupMemberDao(),
+        database.syncLogDao(),
+        database,
+      )
+    useCase = MergeDataUseCase(exportImport, database, familyGroupRepository)
   }
 
   @After
@@ -79,6 +91,31 @@ class MergeDataUseCaseTest {
   }
 
   @Test
+  fun receivedMembershipChangeIsAppliedAndCanBeRetried() = runTest {
+    familyGroupRepository.persistAuthorizedPairing(
+      "group-key",
+      member("local-id", "This device", true),
+      member("remote-id", "Old peer", false),
+    )
+    val change =
+      MembershipChange(
+        MembershipChange.groupIdForKey("group-key"),
+        "remote-id",
+        MembershipChangeType.RENAME,
+        deviceName = "Kitchen tablet",
+        timestamp = 20L,
+      )
+    val incoming = bundle("remote-pet").copy(membershipChanges = listOf(change))
+
+    useCase(incoming, "peer-1", "Kitchen tablet")
+    useCase(incoming, "peer-1", "Kitchen tablet")
+
+    val remote =
+      familyGroupRepository.familyGroupInfo.first()?.members?.single { it.id == "remote-id" }
+    assertThat(remote?.deviceName).isEqualTo("Kitchen tablet")
+  }
+
+  @Test
   fun syncLogFailureRollsBackAppliedEntities() = runTest {
     database.petDao().insertPet(PetEntity(id = "local-pet", name = "Local"))
     database.openHelper.writableDatabase.execSQL(
@@ -108,4 +145,7 @@ class MergeDataUseCaseTest {
       dewormingEntries = emptyList(),
       tasks = emptyList(),
     )
+
+  private fun member(id: String, name: String, local: Boolean) =
+    FamilyGroupMember(id, name, "group-key", local, null, 1L, 1L)
 }

@@ -24,6 +24,9 @@ interface TaskDao {
 
   @Query("SELECT * FROM tasks ORDER BY id") suspend fun getAllIncludingDeleted(): List<TaskEntity>
 
+  @Query("SELECT * FROM tasks WHERE updatedAt >= :since ORDER BY id")
+  suspend fun getModifiedSince(since: Long): List<TaskEntity>
+
   /** Get all tasks for a specific pet. */
   @Query("SELECT * FROM tasks WHERE petId = :petId AND deletedAt IS NULL ORDER BY scheduledFor ASC")
   fun getTasksForPet(petId: String): Flow<List<TaskEntity>>
