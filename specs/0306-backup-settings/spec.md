@@ -68,17 +68,32 @@ THEN a manual backup begins immediately through the shared backup use case
 AND it does not reset, duplicate, or replace the periodic schedule
 ```
 
-### Scenario 6: View accurate history and schedule state
+### Scenario 6: Preview accurate history and schedule state
 
 ```gherkin
 GIVEN backup attempts exist
-WHEN I open Backup settings or history
-THEN I see trigger, start time, completion time, status, size, and non-clinical counts
+WHEN I open Backup settings
+THEN I see at most the three most recent attempts
+AND I can open the complete backup history
+AND each preview shows trigger, start time, completion time, status, size, and non-clinical counts
 AND scheduled work is described as inexact
 AND failures provide an actionable category without sensitive data
 ```
 
-### Scenario 7: Disconnect Google Drive
+### Scenario 7: Browse backup history incrementally
+
+```gherkin
+GIVEN more than five backup attempts exist
+WHEN I open Backup history
+THEN the five most recent attempts are shown first
+WHEN I choose "Load more"
+THEN the next five attempts are appended in stable newest-first order
+AND attempts already shown are not duplicated
+AND loading does not delete or retain attempts differently
+AND "Load more" is hidden when no additional attempts exist
+```
+
+### Scenario 8: Disconnect Google Drive
 
 ```gherkin
 GIVEN Google Drive is connected
@@ -108,14 +123,17 @@ premium flag, exact run time, or provider credential.
 - Do not show an exact future execution time WorkManager cannot guarantee.
 - Keep actionable errors distinct from transient background retries.
 - Never expose pet names, clinical values, access tokens, or file contents in history or notifications.
+- Retrieve history through a bounded page contract so the dedicated screen does
+  not require every stored attempt in memory.
+- Keep history ordering stable by start time and a deterministic attempt-ID tie-breaker.
 
 ## Test strategy
 
 | Scope | Expected coverage |
 | --- | --- |
-| Unit | Defaults, persistence mapping, state copy, notification policy, and schedule descriptions. |
-| Integration | DataStore, WorkManager update/cancel, history, manual action, and disconnect. |
-| Instrumented | Settings accessibility, authorization launcher, toggles, history, and confirmations. |
+| Unit | Defaults, persistence mapping, state copy, notification policy, schedule descriptions, stable ordering, and page boundaries. |
+| Integration | DataStore, WorkManager update/cancel, bounded history retrieval, manual action, and disconnect. |
+| Instrumented | Settings accessibility, authorization launcher, toggles, three-item history preview, five-item history pages, load-more states, and confirmations. |
 
 ## Acceptance criteria
 
@@ -131,6 +149,9 @@ before the status can advance to `Implemented`.
 | Network default | Unmetered | Reduces unexpected mobile-data use. |
 | Schedule presentation | Inexact | WorkManager does not promise a precise execution time. |
 | Manual backup | Always available with Drive authorization | Automation settings must not gate basic backup. |
+| Settings history preview | Three most recent attempts | Keeps settings concise while retaining immediate operational context. |
+| Dedicated history page | Five attempts per load | Supports incremental browsing with a predictable accessible action. |
+| History retention | Unchanged by pagination | Viewing fewer attempts must never delete stored history. |
 | Retention controls | None | Petit does not delete user-owned backups automatically. |
 
 ## Out of scope
