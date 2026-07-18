@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.woliveiras.petit.data.local.entity.FamilyGroupMemberEntity
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +40,11 @@ interface FamilyGroupMemberDao {
   /** Insert a new member. */
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertMember(member: FamilyGroupMemberEntity)
+
+  @Transaction
+  suspend fun insertPairingMembers(members: List<FamilyGroupMemberEntity>) {
+    members.forEach { insertMember(it) }
+  }
 
   /** Update an existing member. */
   @Update suspend fun updateMember(member: FamilyGroupMemberEntity)

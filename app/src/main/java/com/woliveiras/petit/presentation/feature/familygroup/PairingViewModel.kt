@@ -6,15 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
 import com.woliveiras.petit.data.repository.NearbyTransferRepository
 import com.woliveiras.petit.domain.model.FamilyGroupMember
+import com.woliveiras.petit.domain.model.PairingError
 import com.woliveiras.petit.domain.model.PairingState
-import com.woliveiras.petit.domain.usecase.CreateFamilyGroupUseCase
-import com.woliveiras.petit.domain.usecase.JoinFamilyGroupUseCase
+import com.woliveiras.petit.domain.pairing.PairingCredentialsGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,6 +22,10 @@ data class PairingUiState(
   val pairingState: PairingState = PairingState.Idle,
   val isCreatingGroup: Boolean = true,
   val familyGroupKey: String? = null,
+  val localDeviceId: String? = null,
+  val pairingCodeInput: String = "",
+  val isPairingCodeInvalid: Boolean = false,
+  val pairingPersisted: Boolean = false,
 )
 
 @HiltViewModel
@@ -30,8 +34,7 @@ class PairingViewModel
 constructor(
   private val nearbyTransferRepository: NearbyTransferRepository,
   private val familyGroupRepository: FamilyGroupRepository,
-  private val createFamilyGroupUseCase: CreateFamilyGroupUseCase,
-  private val joinFamilyGroupUseCase: JoinFamilyGroupUseCase,
+  private val credentialsGenerator: PairingCredentialsGenerator,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(PairingUiState())
@@ -45,30 +48,61 @@ constructor(
     viewModelScope.launch {
       nearbyTransferRepository.pairingState.collect { state ->
         _uiState.update { it.copy(pairingState = state) }
-
-        if (state is PairingState.Paired) {
-          onPairingComplete(state)
+        if (state is PairingState.Paired && !_uiState.value.pairingPersisted) {
+          persistAuthorizedPairing(state)
         }
       }
     }
   }
 
+  fun onPairingCodeChanged(value: String) {
+    val normalized = value.filter(Char::isDigit).take(4)
+    _uiState.update { it.copy(pairingCodeInput = normalized, isPairingCodeInvalid = false) }
+  }
+
   fun startAdvertising() {
+    if (!ensureTransportAvailable()) return
     viewModelScope.launch {
-      _uiState.update { it.copy(isCreatingGroup = true) }
-      val deviceName = Build.MODEL
-      val key = createFamilyGroupUseCase(deviceName)
-      _uiState.update { it.copy(familyGroupKey = key) }
-      nearbyTransferRepository.startAdvertising(deviceName, key)
+      val existingLocal = familyGroupRepository.localDevice.first()
+      val existingKey = familyGroupRepository.getFamilyGroupKey()
+      val credentials = credentialsGenerator.generate()
+      val deviceId = existingLocal?.id ?: credentials.deviceId
+      val familyGroupKey = existingKey ?: credentials.familyGroupKey
+      _uiState.update {
+        it.copy(
+          isCreatingGroup = true,
+          familyGroupKey = familyGroupKey,
+          localDeviceId = deviceId,
+          pairingPersisted = false,
+        )
+      }
+      nearbyTransferRepository.startAdvertising(Build.MODEL, deviceId, familyGroupKey)
     }
   }
 
   fun startDiscovery() {
-    viewModelScope.launch {
-      _uiState.update { it.copy(isCreatingGroup = false) }
-      // Discovery doesn't require a group key — the advertiser sends it after connection
-      nearbyTransferRepository.startDiscovery("")
+    val code = _uiState.value.pairingCodeInput
+    if (code.length != 4) {
+      _uiState.update { it.copy(isPairingCodeInvalid = true) }
+      return
     }
+    if (!ensureTransportAvailable()) return
+    viewModelScope.launch {
+      val credentials = credentialsGenerator.generate()
+      _uiState.update {
+        it.copy(
+          isCreatingGroup = false,
+          familyGroupKey = null,
+          localDeviceId = credentials.deviceId,
+          pairingPersisted = false,
+        )
+      }
+      nearbyTransferRepository.startDiscovery(Build.MODEL, credentials.deviceId, code)
+    }
+  }
+
+  fun requestConnection(endpointId: String) {
+    viewModelScope.launch { nearbyTransferRepository.requestConnection(endpointId) }
   }
 
   fun acceptConnection(endpointId: String) {
@@ -80,44 +114,65 @@ constructor(
   }
 
   fun cancel() {
-    nearbyTransferRepository.stopAdvertising()
-    nearbyTransferRepository.stopDiscovery()
     nearbyTransferRepository.disconnect()
-    _uiState.update { it.copy(pairingState = PairingState.Idle) }
+    _uiState.update {
+      it.copy(
+        pairingState = PairingState.Idle,
+        familyGroupKey = null,
+        localDeviceId = null,
+        pairingPersisted = false,
+      )
+    }
   }
 
   fun onPermissionDenied() {
-    _uiState.update {
-      it.copy(pairingState = PairingState.Error("Nearby permissions are required to pair devices"))
-    }
+    _uiState.update { it.copy(pairingState = PairingState.Error(PairingError.PermissionDenied)) }
   }
 
-  private suspend fun onPairingComplete(state: PairingState.Paired) {
-    val familyGroupKey = state.familyGroupKey
-    if (familyGroupKey.isBlank()) return
-
-    if (!_uiState.value.isCreatingGroup) {
-      // Joining device: register in the group with the key received from the advertiser
-      joinFamilyGroupUseCase(familyGroupKey, Build.MODEL)
+  private fun ensureTransportAvailable(): Boolean {
+    if (nearbyTransferRepository.isAvailable()) return true
+    _uiState.update {
+      it.copy(pairingState = PairingState.Error(PairingError.PlayServicesUnavailable))
     }
-    _uiState.update { it.copy(familyGroupKey = familyGroupKey) }
+    return false
+  }
 
-    // Register the remote device as a member
-    val remoteMember =
-      FamilyGroupMember(
-        id = UUID.randomUUID().toString(),
-        deviceName = state.deviceName,
-        familyGroupKey = familyGroupKey,
-        isLocalDevice = false,
-        lastSyncAt = null,
-        createdAt = System.currentTimeMillis(),
-        updatedAt = System.currentTimeMillis(),
+  private suspend fun persistAuthorizedPairing(state: PairingState.Paired) {
+    val localId = _uiState.value.localDeviceId ?: return
+    val now = System.currentTimeMillis()
+    try {
+      familyGroupRepository.persistAuthorizedPairing(
+        familyGroupKey = state.familyGroupKey,
+        localMember =
+          FamilyGroupMember(
+            id = localId,
+            deviceName = Build.MODEL,
+            familyGroupKey = state.familyGroupKey,
+            isLocalDevice = true,
+            lastSyncAt = null,
+            createdAt = now,
+            updatedAt = now,
+          ),
+        remoteMember =
+          FamilyGroupMember(
+            id = state.deviceId,
+            deviceName = state.deviceName,
+            familyGroupKey = state.familyGroupKey,
+            isLocalDevice = false,
+            lastSyncAt = null,
+            createdAt = now,
+            updatedAt = now,
+          ),
       )
-    familyGroupRepository.addRemoteMember(remoteMember)
+      _uiState.update { it.copy(familyGroupKey = state.familyGroupKey, pairingPersisted = true) }
+    } catch (_: Exception) {
+      nearbyTransferRepository.disconnect()
+      _uiState.update { it.copy(pairingState = PairingState.Error(PairingError.PersistenceFailed)) }
+    }
   }
 
   override fun onCleared() {
+    nearbyTransferRepository.disconnect()
     super.onCleared()
-    cancel()
   }
 }

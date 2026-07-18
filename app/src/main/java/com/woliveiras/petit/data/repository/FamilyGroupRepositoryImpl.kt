@@ -14,6 +14,7 @@ import com.woliveiras.petit.data.mapper.toEntity
 import com.woliveiras.petit.domain.model.FamilyGroupInfo
 import com.woliveiras.petit.domain.model.FamilyGroupMember
 import com.woliveiras.petit.domain.model.SyncLog
+import com.woliveiras.petit.domain.pairing.PairingCredentialsGenerator
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import javax.inject.Inject
@@ -128,6 +129,37 @@ constructor(
     familyGroupMemberDao.insertMember(localMember.toEntity())
   }
 
+  override suspend fun persistAuthorizedPairing(
+    familyGroupKey: String,
+    localMember: FamilyGroupMember,
+    remoteMember: FamilyGroupMember,
+  ) {
+    require(localMember.isLocalDevice) { "Local pairing member must be marked as local" }
+    require(!remoteMember.isLocalDevice) { "Remote pairing member cannot be marked as local" }
+    require(localMember.familyGroupKey == familyGroupKey)
+    require(remoteMember.familyGroupKey == familyGroupKey)
+
+    val previousLocal = familyGroupMemberDao.getLocalDevice()
+    val previousRemote = familyGroupMemberDao.getMemberById(remoteMember.id)
+    familyGroupMemberDao.insertPairingMembers(
+      listOf(localMember.toEntity(), remoteMember.toEntity())
+    )
+    try {
+      context.familyGroupDataStore.edit { prefs ->
+        prefs[PreferencesKeys.FAMILY_GROUP_KEY] = familyGroupKey
+        prefs[PreferencesKeys.LOCAL_DEVICE_ID] = localMember.id
+        prefs[PreferencesKeys.LOCAL_DEVICE_NAME] = localMember.deviceName
+        prefs[PreferencesKeys.SYNC_ENABLED] = true
+      }
+    } catch (error: Exception) {
+      if (previousLocal == null) familyGroupMemberDao.deleteMember(localMember.id)
+      else familyGroupMemberDao.insertMember(previousLocal)
+      if (previousRemote == null) familyGroupMemberDao.deleteMember(remoteMember.id)
+      else familyGroupMemberDao.insertMember(previousRemote)
+      throw error
+    }
+  }
+
   override suspend fun addRemoteMember(member: FamilyGroupMember) {
     familyGroupMemberDao.insertMember(member.toEntity())
   }
@@ -172,6 +204,6 @@ constructor(
   }
 
   private fun generateFamilyGroupKey(): String {
-    return UUID.randomUUID().toString().take(8).uppercase()
+    return PairingCredentialsGenerator().generate().familyGroupKey
   }
 }

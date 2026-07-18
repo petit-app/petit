@@ -36,6 +36,11 @@ parts and complete the explicit code protocol and inter-device validation.
 
 ## Final verification
 
+Automated implementation is complete. The JVM suite covers the authorization
+protocol, code expiry, retries, permission matrices, state transitions, and
+cleanup. Room/DataStore instrumentation covers idempotent unpairing and local
+data preservation. The two-device matrix below remains pending.
+
 1. Run `./gradlew spotlessCheck` and `./gradlew test`.
 2. Run `./gradlew assembleDebug && ./gradlew installDebug` on the first device.
 3. Install the same APK on the second device.

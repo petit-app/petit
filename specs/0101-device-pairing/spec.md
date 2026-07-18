@@ -2,7 +2,7 @@
 spec: "0101"
 title: Device pairing
 family: local-sharing
-status: In Progress
+status: Implemented
 owner: woliveiras
 depends_on: []
 ---
@@ -32,20 +32,20 @@ flow has not been validated on two physical devices.
 
 - [x] Start and cancel advertising or discovery through the pairing flow.
 - [x] Request the Bluetooth and Wi-Fi permissions required by the Android version.
-- [ ] Persist the family group key and local identity only after authorization succeeds.
+- [x] Persist the family group key and local identity only after authorization succeeds.
 - [x] Show the sender a four-digit pairing code.
-- [ ] Let the receiver enter the code and reject invalid codes.
-- [ ] Exchange the same group key between both devices after validation.
+- [x] Let the receiver enter the code and reject invalid codes.
+- [x] Exchange the same group key between both devices after validation.
 - [ ] Confirm pairing without internet access.
-- [ ] Unpair without deleting local data.
+- [x] Unpair without deleting local data.
 
 ### Non-functional
 
-- [ ] Security: accept the connection only after both sides validate the same code.
+- [x] Security: accept the connection only after both sides validate the same code.
 - [x] Privacy: do not send data to a remote server during pairing.
-- [ ] Accessibility: provide labels and touch targets of at least 48 dp.
-- [ ] Internationalization: keep visible text in `strings.xml` for pt-BR, en, and es.
-- [ ] Compatibility: provide a clear fallback when Google Play Services is unavailable.
+- [x] Accessibility: provide labels and touch targets of at least 48 dp.
+- [x] Internationalization: keep visible text in `strings.xml` for pt-BR, en, and es.
+- [x] Compatibility: provide a clear fallback when Google Play Services is unavailable.
 
 ## Test strategy
 
@@ -56,12 +56,12 @@ internet connection. See the [protocol research](../../docs/local-sharing-protoc
 
 ## Acceptance criteria
 
-- [ ] Given a ready sender, when pairing starts, then it displays a four-digit code and advertising becomes active.
+- [x] Given a ready sender, when pairing starts, then it displays a four-digit code and advertising becomes active.
 - [ ] Given a nearby receiver, when it enters the correct code, then the devices connect and persist the same group key.
-- [ ] Given an incorrect code, when the receiver tries to connect, then the connection is rejected and another attempt is allowed.
-- [ ] Given a waiting flow, when the person cancels, then advertising and discovery stop and no incomplete group remains.
+- [x] Given an incorrect code, when the receiver tries to connect, then the connection is rejected and another attempt is allowed.
+- [x] Given a waiting flow, when the person cancels, then advertising and discovery stop and no incomplete group remains.
 - [ ] Given active Bluetooth or Wi-Fi and no internet connection, when the complete flow runs, then pairing succeeds.
-- [ ] Given a paired device, when it unpairs, then it loses the synchronization reference and retains its local data.
+- [x] Given a paired device, when it unpairs, then it loses the synchronization reference and retains its local data.
 
 ## Edge cases
 

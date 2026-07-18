@@ -52,7 +52,7 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 
 | Spec                                           | Title                     | Status      | Depends on |
 | ---------------------------------------------- | ------------------------- | ----------- | ---------- |
-| [0101](0101-device-pairing/spec.md)            | Device pairing            | In Progress | —          |
+| [0101](0101-device-pairing/spec.md)            | Device pairing            | Implemented | —          |
 | [0102](0102-one-shot-transfer/spec.md)         | One-shot data transfer    | In Progress | 0101       |
 | [0103](0103-family-group/spec.md)              | Local family group        | In Progress | 0101       |
 | [0104](0104-local-network-sync/spec.md)        | Local network sync        | In Progress | 0101, 0103, 0105 |

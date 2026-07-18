@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 /** Repository interface for device-to-device transfer via Nearby Connections. */
 interface NearbyTransferRepository {
 
+  /** Whether the Google Play Services transport is available on this device. */
+  fun isAvailable(): Boolean = true
+
   /** Flow of the current pairing state. */
   val pairingState: Flow<PairingState>
 
@@ -15,13 +18,16 @@ interface NearbyTransferRepository {
   val transferState: Flow<TransferState>
 
   /** Start advertising this device for pairing. */
-  suspend fun startAdvertising(deviceName: String, familyGroupKey: String)
+  suspend fun startAdvertising(deviceName: String, deviceId: String, familyGroupKey: String)
 
   /** Stop advertising. */
   fun stopAdvertising()
 
   /** Start discovering nearby devices. */
-  suspend fun startDiscovery(familyGroupKey: String)
+  suspend fun startDiscovery(deviceName: String, deviceId: String, pairingCode: String)
+
+  /** Explicitly request a connection to a discovered endpoint. */
+  suspend fun requestConnection(endpointId: String)
 
   /** Stop discovery. */
   fun stopDiscovery()

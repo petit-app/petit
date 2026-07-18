@@ -173,6 +173,22 @@ class DeleteAllDataUseCaseIntegrationTest {
     assertUserExperiencePreferencesRetained()
   }
 
+  @Test
+  fun leavingFamilyGroupIsIdempotentAndPreservesAllPetData() = runTest {
+    seedEveryStore()
+
+    familyGroupRepository.leaveFamilyGroup()
+    familyGroupRepository.leaveFamilyGroup()
+
+    assertThat(familyGroupRepository.getFamilyGroupKey()).isNull()
+    assertThat(database.petDao().getAllPets().first()).hasSize(1)
+    assertThat(database.weightEntryDao().getWeightEntriesForPet("pet-1").first()).hasSize(1)
+    assertThat(database.vaccinationEntryDao().getVaccinationEntriesForPet("pet-1").first())
+      .hasSize(1)
+    assertThat(database.dewormingEntryDao().getDewormingEntriesForPet("pet-1").first()).hasSize(1)
+    assertThat(database.taskDao().getAllTasks().first()).hasSize(1)
+  }
+
   private suspend fun seedEveryStore() {
     database.petDao().insertPet(PetEntity(id = "pet-1", name = "Mimi"))
     database

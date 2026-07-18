@@ -26,6 +26,13 @@ interface FamilyGroupRepository {
   /** Join an existing family group with the given key and register the local device. */
   suspend fun joinFamilyGroup(familyGroupKey: String, deviceName: String)
 
+  /** Persist local and remote identities only after the transport authorizes the peer. */
+  suspend fun persistAuthorizedPairing(
+    familyGroupKey: String,
+    localMember: FamilyGroupMember,
+    remoteMember: FamilyGroupMember,
+  )
+
   /** Add a remote member to the family group. */
   suspend fun addRemoteMember(member: FamilyGroupMember)
 

@@ -11,14 +11,14 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - acceptance criteria: the current flow starts the Nearby modes and displays a non-empty four-digit sender code without a cloud dependency.
   - verification: `./gradlew test`
 
-- [ ] **Authorize pairing with a four-digit code** (test-type: both)
+- [x] **Authorize pairing with a four-digit code** (test-type: both)
   - blocked-by: discovery and group persistence
   - summary: generate, display, receive, validate, and expire the code.
   - desired behavior: only the receiver with the correct code completes pairing.
   - acceptance criteria: the correct code connects; an incorrect code is rejected; another attempt is allowed.
   - verification: `./gradlew test`
 
-- [ ] **Persist pairing atomically and clean up failures** (test-type: both)
+- [x] **Persist pairing atomically and clean up failures** (test-type: both)
   - blocked-by: code authorization
   - summary: persist the key and members only after authorization, then clean up advertising, discovery, the connection, and incomplete state.
   - desired behavior: interruptions never leave a partially persisted key or member.

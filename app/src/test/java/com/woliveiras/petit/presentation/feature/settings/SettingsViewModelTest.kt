@@ -250,6 +250,12 @@ class SettingsViewModelTest {
 
     override suspend fun joinFamilyGroup(familyGroupKey: String, deviceName: String) = Unit
 
+    override suspend fun persistAuthorizedPairing(
+      familyGroupKey: String,
+      localMember: FamilyGroupMember,
+      remoteMember: FamilyGroupMember,
+    ) = Unit
+
     override suspend fun addRemoteMember(member: FamilyGroupMember) = Unit
 
     override suspend fun leaveFamilyGroup() = Unit
