@@ -1,0 +1,35 @@
+# Terraform working directories and local backend configuration
+**/.terraform/**
+*.gcs.tfbackend
+!*.gcs.tfbackend.example
+
+# State, state recovery artifacts, and saved plans
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+*.plan
+crash.log
+crash.*.log
+
+# Real environment inputs and local overrides
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+!terraform.tfvars.example
+
+*.tfvars
+*.tfvars.json
+*.tfbackend
+application_default_credentials.json
+*.pem
+*.p12
+
+# Credentials must be supplied by the execution environment, never by files
+*credentials*.json
+*service-account*.json

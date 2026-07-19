@@ -69,14 +69,15 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 
 ### backup-recovery
 
-| Spec                                  | Title                         | Status      | Depends on |
-| ------------------------------------- | ----------------------------- | ----------- | ---------- |
-| [0301](0301-manual-backup/spec.md)    | Manual Google Drive backup    | In Progress | 0006, 0204 |
-| [0302](0302-restore-backup/spec.md)   | Restore Google Drive backup   | In Progress | 0301       |
-| [0303](0303-manage-backups/spec.md)   | Manage Google Drive backups   | In Progress | 0301       |
-| [0305](0305-automatic-backup/spec.md) | Automatic Google Drive backup | In Progress | 0301       |
-| [0306](0306-backup-settings/spec.md)  | Backup settings               | In Progress | 0305       |
-| [0307](0307-backup-triggers/spec.md)  | Backup triggers               | In Progress | 0305, 0306 |
+| Spec                                                        | Title                             | Status      | Depends on |
+| ----------------------------------------------------------- | --------------------------------- | ----------- | ---------- |
+| [0301](0301-manual-backup/spec.md)                          | Manual Google Drive backup        | In Progress | 0006, 0204 |
+| [0302](0302-restore-backup/spec.md)                         | Restore Google Drive backup       | In Progress | 0301       |
+| [0303](0303-manage-backups/spec.md)                         | Manage Google Drive backups       | In Progress | 0301       |
+| [0305](0305-automatic-backup/spec.md)                       | Automatic Google Drive backup     | In Progress | 0301       |
+| [0306](0306-backup-settings/spec.md)                        | Backup settings                   | In Progress | 0305       |
+| [0307](0307-backup-triggers/spec.md)                        | Backup triggers                   | In Progress | 0305, 0306 |
+| [0308](0308-google-drive-cloud-infrastructure/spec.md)      | Google Drive Cloud infrastructure | In Progress | 0204       |
 
 ### cloud-sync
 

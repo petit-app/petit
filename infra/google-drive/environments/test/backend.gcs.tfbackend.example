@@ -1,0 +1,3 @@
+bucket = "example-drive-test-tfstate"
+prefix = "google-drive"
+impersonate_service_account = "tf-test@example-drive-test.iam.gserviceaccount.com"

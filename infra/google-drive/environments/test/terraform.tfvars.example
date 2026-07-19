@@ -1,0 +1,19 @@
+# Existing dedicated test project. Replace only with the approved test project ID.
+project_id                            = "example-drive-test"
+expected_project_number               = "000000000000"
+terraform_impersonate_service_account = "tf-test@example-drive-test.iam.gserviceaccount.com"
+create_project                        = false
+
+# Approved infrastructure-only test executor. It has no access to production
+# state and no user-managed key.
+terraform_test_admin_members = [
+  "serviceAccount:tf-test@example-drive-test.iam.gserviceaccount.com",
+]
+oauth_config_editor_members  = []
+oauth_config_viewer_members  = []
+monitoring_viewer_members    = []
+
+# Keep disabled until Drive traffic has produced the exact filtered metric in
+# this project and the threshold and notification channels are approved.
+enable_drive_api_error_alert = false
+metric_emission_confirmed    = false

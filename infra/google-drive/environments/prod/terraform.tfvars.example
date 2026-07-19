@@ -1,0 +1,22 @@
+# Existing dedicated production project. Replace only with the approved
+# production project ID. Never use the test project here.
+project_id                            = "example-drive-prod"
+expected_project_number               = "000000000000"
+terraform_impersonate_service_account = "tf-prod-plan@example-drive-prod.iam.gserviceaccount.com"
+create_project                        = false
+
+# Approved infrastructure-only identities. Neither has a user-managed key.
+terraform_plan_members = [
+  "serviceAccount:tf-prod-plan@example-drive-prod.iam.gserviceaccount.com",
+]
+terraform_apply_members = [
+  "serviceAccount:tf-prod-apply@example-drive-prod.iam.gserviceaccount.com",
+]
+oauth_config_editor_members = []
+oauth_config_viewer_members = []
+monitoring_viewer_members   = []
+
+# Keep disabled until production Drive traffic has produced the exact filtered
+# metric and a production-specific threshold and channels are approved.
+enable_drive_api_error_alert = false
+metric_emission_confirmed    = false
