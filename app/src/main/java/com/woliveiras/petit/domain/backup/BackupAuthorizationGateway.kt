@@ -6,6 +6,12 @@ import kotlinx.coroutines.flow.StateFlow
 interface BackupAuthorizationGateway {
   val state: StateFlow<BackupAuthorizationState>
 
+  /**
+   * Refreshes authorization without launching user interaction. Background callers use this before
+   * preparing sensitive backup content. Provider-neutral fakes may return their current state.
+   */
+  suspend fun refresh(): BackupAuthorizationState = state.value
+
   /** Starts provider consent. Foreground callers only; workers must inspect [state] instead. */
   suspend fun authorize(): BackupAuthorizationResult
 

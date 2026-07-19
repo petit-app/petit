@@ -5,8 +5,8 @@ Spec: [spec.md](./spec.md)
 ## Status
 
 This plan is **In Progress**. The provider-independent scheduler, worker, and
-attempt history are implemented. Real Google authorization and physical-device
-background validation remain open.
+attempt history are implemented and use the Google Drive adapter. Physical-device
+background validation remains open.
 
 ## Dependencies
 
@@ -34,10 +34,10 @@ background validation remain open.
 
 ## Progress
 
-- Steps 1-5 are implemented and verified with WorkManager and deterministic
-  provider tests.
-- Step 6 has a provider-neutral authorization-required state; the foreground
-  reconnect UI is completed with spec 0306.
+- Steps 1-5 are implemented and verified with WorkManager, deterministic provider
+  tests, stable retry operation IDs, and silent Google authorization refresh.
+- Step 6 records authorization-required without launching UI; foreground reconnect
+  is completed by spec 0306.
 - Step 7 remains pending for physical-device validation.
 
 ## Planned verification
@@ -47,6 +47,7 @@ background validation remain open.
 - No-duplicate schedule and upload tests.
 - Instrumented settings tests.
 - Physical-device background runbook created during implementation.
+- [Physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md).
 - `./gradlew spotlessCheck`
 - `./gradlew test`
 

@@ -122,6 +122,8 @@ dependencies {
 
   // Google Play Services
   implementation(libs.play.services.nearby)
+  implementation(libs.play.services.auth)
+  implementation(libs.gson)
 
   // Testing
   testImplementation(libs.junit)

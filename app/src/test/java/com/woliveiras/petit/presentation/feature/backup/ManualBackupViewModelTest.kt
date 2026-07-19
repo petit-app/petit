@@ -91,6 +91,23 @@ class ManualBackupViewModelTest {
     }
 
   @Test
+  fun revokedAuthorizationAfterCompletionReturnsToAnActionableState() =
+    runTest(dispatcher) {
+      val authorization = FakeAuthorization(BackupAuthorizationState.Authorized())
+      val viewModel = ManualBackupViewModel(authorization, FakeCreateBackupAction()) { "backup-1" }
+      viewModel.backUpNow()
+      advanceUntilIdle()
+      assertThat(viewModel.uiState.value.operation)
+        .isInstanceOf(ManualBackupOperation.Complete::class.java)
+
+      authorization.setState(BackupAuthorizationState.AuthorizationRequired)
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.operation)
+        .isEqualTo(ManualBackupOperation.AuthorizationRequired)
+    }
+
+  @Test
   fun unexpectedActionFailureLeavesCreatingWithSafeErrorState() =
     runTest(dispatcher) {
       val authorization = FakeAuthorization(BackupAuthorizationState.Authorized())
@@ -124,6 +141,10 @@ class ManualBackupViewModelTest {
 
     override suspend fun disconnect() {
       mutableState.value = BackupAuthorizationState.Disconnected
+    }
+
+    fun setState(state: BackupAuthorizationState) {
+      mutableState.value = state
     }
   }
 

@@ -133,6 +133,26 @@ class SavedBackupsViewModelTest {
     }
 
   @Test
+  fun revokedAuthorizationDuringMetadataLookupShowsReconnectState() =
+    runTest(dispatcher) {
+      val gateway = DeterministicBackupStorageGateway()
+      gateway.seed(metadata("one"), ByteArray(1))
+      val viewModel = viewModel(gateway)
+      advanceUntilIdle()
+      gateway.failNext(
+        DeterministicBackupStorageGateway.Operation.GET,
+        BackupProviderException.AuthorizationRequired(),
+      )
+
+      viewModel.showDetails("remote-one")
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.content)
+        .isEqualTo(SavedBackupsContent.AuthorizationRequired)
+      assertThat(viewModel.uiState.value.details).isNull()
+    }
+
+  @Test
   fun disconnectPreservesRemoteFilesAndReconnectRestoresList() =
     runTest(dispatcher) {
       val gateway = DeterministicBackupStorageGateway()

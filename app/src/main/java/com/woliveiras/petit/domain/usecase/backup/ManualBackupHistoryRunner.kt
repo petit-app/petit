@@ -8,6 +8,7 @@ import com.woliveiras.petit.domain.backup.BackupTrigger
 import java.time.Clock
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.withLock
 
 class ManualBackupHistoryRunner
@@ -36,84 +37,93 @@ internal constructor(
     clock: Clock,
   ) : this(createBackupAction, attemptRepository, clock, NoOpBackupRevisionCompletion)
 
-  suspend fun run(backupId: String): BackupAttemptStatus {
-    val startedAt = clock.instant()
-    val targetRevision = revisionCompletion.capture()
-    attemptRepository.upsert(
-      BackupAttempt(
-        id = backupId,
-        trigger = BackupTrigger.MANUAL,
-        startedAt = startedAt,
-        status = BackupAttemptStatus.RUNNING,
+  suspend fun run(requestedBackupId: String): BackupAttemptStatus =
+    ProviderNeutralBackupExecutionGate.mutex.withLock {
+      val retry =
+        attemptRepository.attempts
+          .first()
+          .filter {
+            it.trigger == BackupTrigger.MANUAL &&
+              it.status == BackupAttemptStatus.RETRYING &&
+              it.completedAt == null
+          }
+          .maxWithOrNull(compareBy<BackupAttempt> { it.startedAt }.thenBy { it.id })
+      val backupId = retry?.id ?: requestedBackupId
+      val startedAt = retry?.startedAt ?: clock.instant()
+      val targetRevision = revisionCompletion.capture()
+      attemptRepository.upsert(
+        BackupAttempt(
+          id = backupId,
+          trigger = BackupTrigger.MANUAL,
+          startedAt = startedAt,
+          status = BackupAttemptStatus.RUNNING,
+        )
       )
-    )
-    return try {
-      val result =
-        ProviderNeutralBackupExecutionGate.mutex.withLock {
+      try {
+        val result =
           createBackupAction.execute(backupId, BackupTrigger.MANUAL).also { created ->
             if (created is BackupCreationResult.Success) {
               revisionCompletion.completed(targetRevision)
             }
           }
-        }
-      when (result) {
-        is BackupCreationResult.Success -> {
-          val status =
-            record(
-              BackupAttempt(
-                id = backupId,
-                trigger = BackupTrigger.MANUAL,
-                startedAt = startedAt,
-                completedAt = clock.instant(),
-                status = BackupAttemptStatus.SUCCEEDED,
-                archiveSizeBytes = result.metadata.archiveSizeBytes,
-                contentCounts = result.metadata.contentCounts,
+        when (result) {
+          is BackupCreationResult.Success -> {
+            val status =
+              record(
+                BackupAttempt(
+                  id = backupId,
+                  trigger = BackupTrigger.MANUAL,
+                  startedAt = startedAt,
+                  completedAt = clock.instant(),
+                  status = BackupAttemptStatus.SUCCEEDED,
+                  archiveSizeBytes = result.metadata.archiveSizeBytes,
+                  contentCounts = result.metadata.contentCounts,
+                )
               )
+            status
+          }
+          BackupCreationResult.AuthorizationRequired ->
+            recordFailure(
+              backupId,
+              startedAt,
+              BackupAttemptStatus.AUTHORIZATION_REQUIRED,
+              BackupFailureCategory.AUTHORIZATION_REQUIRED,
             )
-          status
+          BackupCreationResult.QuotaExceeded ->
+            recordFailure(
+              backupId,
+              startedAt,
+              BackupAttemptStatus.FAILED,
+              BackupFailureCategory.QUOTA_EXCEEDED,
+            )
+          is BackupCreationResult.RetryableFailure ->
+            recordFailure(
+              backupId,
+              startedAt,
+              BackupAttemptStatus.RETRYING,
+              BackupFailureCategory.RETRYABLE,
+              completed = false,
+            )
+          is BackupCreationResult.PermanentFailure ->
+            recordFailure(
+              backupId,
+              startedAt,
+              BackupAttemptStatus.FAILED,
+              BackupFailureCategory.PERMANENT,
+            )
         }
-        BackupCreationResult.AuthorizationRequired ->
-          recordFailure(
-            backupId,
-            startedAt,
-            BackupAttemptStatus.AUTHORIZATION_REQUIRED,
-            BackupFailureCategory.AUTHORIZATION_REQUIRED,
-          )
-        BackupCreationResult.QuotaExceeded ->
-          recordFailure(
-            backupId,
-            startedAt,
-            BackupAttemptStatus.FAILED,
-            BackupFailureCategory.QUOTA_EXCEEDED,
-          )
-        is BackupCreationResult.RetryableFailure ->
-          recordFailure(
-            backupId,
-            startedAt,
-            BackupAttemptStatus.RETRYING,
-            BackupFailureCategory.RETRYABLE,
-            completed = false,
-          )
-        is BackupCreationResult.PermanentFailure ->
-          recordFailure(
-            backupId,
-            startedAt,
-            BackupAttemptStatus.FAILED,
-            BackupFailureCategory.PERMANENT,
-          )
+      } catch (cancellation: CancellationException) {
+        recordFailure(backupId, startedAt, BackupAttemptStatus.CANCELLED, category = null)
+        throw cancellation
+      } catch (_: Exception) {
+        recordFailure(
+          backupId,
+          startedAt,
+          BackupAttemptStatus.FAILED,
+          BackupFailureCategory.PERMANENT,
+        )
       }
-    } catch (cancellation: CancellationException) {
-      recordFailure(backupId, startedAt, BackupAttemptStatus.CANCELLED, category = null)
-      throw cancellation
-    } catch (_: Exception) {
-      recordFailure(
-        backupId,
-        startedAt,
-        BackupAttemptStatus.FAILED,
-        BackupFailureCategory.PERMANENT,
-      )
     }
-  }
 
   private suspend fun recordFailure(
     backupId: String,

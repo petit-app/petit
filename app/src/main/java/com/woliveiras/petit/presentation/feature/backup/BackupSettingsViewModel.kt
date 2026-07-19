@@ -48,7 +48,7 @@ internal constructor(
   private val settingsCoordinator: BackupSettingsCoordinator,
   private val connectionCoordinator: BackupConnectionCoordinator,
   private val manualRunner: ManualBackupHistoryRunner,
-  authorizationState: StateFlow<BackupAuthorizationState>,
+  private val authorizationState: StateFlow<BackupAuthorizationState>,
   private val backupIdFactory: () -> String,
 ) : ViewModel() {
   @Inject
@@ -74,6 +74,7 @@ internal constructor(
   private var manualJob: Job? = null
 
   init {
+    viewModelScope.launch { connectionCoordinator.refresh() }
     viewModelScope.launch {
       combine(settingsRepository.settings, authorizationState, attemptRepository.attempts) {
           settings,
@@ -109,6 +110,24 @@ internal constructor(
     if (manualJob?.isActive == true) return
     manualJob =
       viewModelScope.launch {
+        mutableUiState.update { it.copy(manualAttemptStatus = null, error = null) }
+        if (authorizationState.value !is BackupAuthorizationState.Authorized) {
+          when (connectionCoordinator.authorize()) {
+            BackupAuthorizationResult.Authorized -> Unit
+            BackupAuthorizationResult.Cancelled -> {
+              mutableUiState.update {
+                it.copy(manualAttemptStatus = BackupAttemptStatus.AUTHORIZATION_REQUIRED)
+              }
+              return@launch
+            }
+            is BackupAuthorizationResult.Unavailable -> {
+              mutableUiState.update {
+                it.copy(error = BackupSettingsError.AUTHORIZATION_UNAVAILABLE)
+              }
+              return@launch
+            }
+          }
+        }
         val status = manualRunner.run(backupIdFactory())
         mutableUiState.update { it.copy(manualAttemptStatus = status) }
       }

@@ -49,29 +49,44 @@ constructor(
       return ChangeTriggeredBackupOutcome.SUCCESS
     }
     val startedAt = attempts.getAttempt(attemptId)?.startedAt ?: clock.instant()
-    if (authorization.state.value !is BackupAuthorizationState.Authorized) {
-      recordFailure(
-        attemptId,
-        startedAt,
-        BackupAttemptStatus.AUTHORIZATION_REQUIRED,
-        BackupFailureCategory.AUTHORIZATION_REQUIRED,
-      )
-      return ChangeTriggeredBackupOutcome.FAILURE
+    when (authorization.refresh()) {
+      is BackupAuthorizationState.Authorized -> Unit
+      BackupAuthorizationState.Authorizing,
+      is BackupAuthorizationState.Unavailable -> {
+        recordFailure(
+          attemptId,
+          startedAt,
+          BackupAttemptStatus.RETRYING,
+          BackupFailureCategory.RETRYABLE,
+          completed = false,
+        )
+        return ChangeTriggeredBackupOutcome.RETRY
+      }
+      BackupAuthorizationState.AuthorizationRequired,
+      BackupAuthorizationState.Disconnected -> {
+        recordFailure(
+          attemptId,
+          startedAt,
+          BackupAttemptStatus.AUTHORIZATION_REQUIRED,
+          BackupFailureCategory.AUTHORIZATION_REQUIRED,
+        )
+        return ChangeTriggeredBackupOutcome.FAILURE
+      }
     }
-    attempts.upsert(
-      BackupAttempt(
-        id = attemptId,
-        trigger = BackupTrigger.DATA_CHANGE,
-        startedAt = startedAt,
-        status = BackupAttemptStatus.RUNNING,
-      )
-    )
     return try {
       val result =
         ProviderNeutralBackupExecutionGate.mutex.withLock {
           if (target <= revisions.state.first().completed) {
             return ChangeTriggeredBackupOutcome.SUCCESS
           }
+          attempts.upsert(
+            BackupAttempt(
+              id = attemptId,
+              trigger = BackupTrigger.DATA_CHANGE,
+              startedAt = startedAt,
+              status = BackupAttemptStatus.RUNNING,
+            )
+          )
           createBackupAction.execute(attemptId, BackupTrigger.DATA_CHANGE).also { created ->
             if (created is BackupCreationResult.Success) completion.completed(target)
           }

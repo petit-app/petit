@@ -6,7 +6,7 @@ Spec: [spec.md](./spec.md)
 
 This plan is **In Progress**. Archive download, validation, transactional Room
 restore, durable recovery, preferences, reminders, and assets are implemented
-behind provider-neutral contracts.
+behind provider-neutral contracts and the Google Drive adapter.
 
 ## Dependencies
 
@@ -38,8 +38,8 @@ behind provider-neutral contracts.
 
 - Steps 1-6 are implemented and verified with hostile archives, Room, DataStore,
   filesystem, cancellation, and recovery tests.
-- Step 7 has provider-neutral ViewModel and accessible Compose coverage.
-- Step 8 and real Google authorization/download remain pending.
+- Step 7 includes foreground reauthorization, progress, and accessible Compose coverage.
+- The Drive download adapter is implemented; step 8 remains pending for real-account and second-device validation.
 
 ## Planned verification
 
@@ -47,6 +47,7 @@ behind provider-neutral contracts.
 - Room transaction, asset staging, orphan cleanup, and process-death recovery tests.
 - MERGE/REPLACE regression suites.
 - Instrumented new-device restore journey.
+- [Physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md).
 - `./gradlew spotlessCheck`
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest` when available.

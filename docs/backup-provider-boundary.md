@@ -13,18 +13,30 @@ Petit backup behavior is split into a provider-independent archive/application l
 
 The deterministic provider is located only in `app/src/test`. It exercises success, pagination, authorization loss, quota, interruption, retryable and permanent failures, lost upload responses, and idempotent retries. It cannot be injected into a production component.
 
-## Production behavior without a provider
+## Google Drive adapter
 
-This build binds authorization and backup creation to explicit unavailable implementations. Settings explains that Google Drive backup is not configured, and the backup action is disabled. No local fake can report a production cloud upload as successful.
+The debug application binds these contracts to Google Identity Services and a
+direct Google Drive API v3 adapter. Foreground authorization uses
+`AuthorizationClient`, requests only `drive.appdata`, and keeps access tokens
+in memory for the duration of requests. The storage adapter restricts listing
+and creation to `appDataFolder`, recognizes Petit files through `appProperties`,
+uses resumable uploads, and resolves exact remote IDs for download and deletion.
 
-## Real Google adapter entry point
+The adapter translates Google and HTTP failures into stable domain errors, so
+Google SDK and REST types do not enter use cases, ViewModels, workers, or
+Compose UI. Retry idempotency is based on the stable Petit backup operation ID;
+a completed remote object is reused after a lost response.
 
-A later implementation should:
+## Operational validation boundary
 
-1. implement `BackupAuthorizationGateway` with foreground Google authorization for only `drive.appdata`;
-2. implement `BackupStorageGateway` with `appDataFolder` resumable upload and exact-ID operations;
-3. bind those adapters and construct `CreateManualBackupUseCase` from the existing `BackupArchivePreparer`;
-4. retain WorkRequest and ViewModel backup IDs across retries;
-5. run the real-account and physical-device runbooks before checking any Google-specific task.
+Automated tests do not prove that an Android OAuth client, test-user allowlist,
+consent screen, device certificate, or real Drive account is configured. Follow
+[Google Drive physical-device validation](./test-runbooks/google-drive-physical-device-validation.md)
+before marking provider-specific tasks complete. A resumable session URI is not
+persisted across process death; a retry safely queries the operation ID and
+starts a new session when no completed file exists.
 
-The adapter must not introduce Google SDK types into domain use cases, ViewModels, workers, or Compose UI.
+Disconnect revokes local authorization and cancels automatic work without
+deleting remote backups. Google documents that application access revocation
+can revoke all scopes granted to the application, although Petit requests only
+`drive.appdata`.

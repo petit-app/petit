@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,14 +15,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.woliveiras.petit.data.backup.google.PlayServicesGoogleIdentityAuthorizationClient
 import com.woliveiras.petit.data.lan.LanSyncCoordinator
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.model.AppTheme
+import com.woliveiras.petit.presentation.feature.backup.ActivityGoogleAuthorizationResolutionBridge
 import com.woliveiras.petit.presentation.navigation.PetitBottomNavBar
 import com.woliveiras.petit.presentation.navigation.PetitNavGraph
 import com.woliveiras.petit.presentation.navigation.Screen
@@ -37,6 +43,15 @@ class MainActivity : ComponentActivity() {
   @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
   @Inject lateinit var localeApplicator: LocaleApplicator
   @Inject lateinit var lanSyncCoordinator: LanSyncCoordinator
+  @Inject
+  lateinit var googleAuthorizationResolutionBridge: ActivityGoogleAuthorizationResolutionBridge
+  @Inject
+  lateinit var googleIdentityAuthorizationClient: PlayServicesGoogleIdentityAuthorizationClient
+
+  private val googleAuthorizationLauncher =
+    registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+      googleAuthorizationResolutionBridge.complete(result.resultCode, result.data)
+    }
 
   override fun onStart() {
     super.onStart()
@@ -52,10 +67,40 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     lifecycleScope.launch {
+      repeatOnLifecycle(Lifecycle.State.RESUMED) {
+        googleAuthorizationResolutionBridge.requests.collect { pendingIntent ->
+          try {
+            googleAuthorizationLauncher.launch(
+              IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+            )
+            googleAuthorizationResolutionBridge.markLaunched(pendingIntent)
+          } catch (_: Exception) {
+            googleAuthorizationResolutionBridge.cancelPending()
+          }
+        }
+      }
+    }
+    lifecycleScope.launch {
       val initialPreferences = userPreferencesRepository.userPreferences.first()
       localeApplicator.applyLanguageAtStartup(this@MainActivity, initialPreferences.language)
       showContent()
     }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    googleIdentityAuthorizationClient.attachForegroundActivity(this)
+    googleAuthorizationResolutionBridge.onHostResumed()
+  }
+
+  override fun onPause() {
+    googleIdentityAuthorizationClient.detachForegroundActivity(this)
+    super.onPause()
+  }
+
+  override fun onDestroy() {
+    if (isFinishing) googleAuthorizationResolutionBridge.cancelPending()
+    super.onDestroy()
   }
 
   private fun showContent() {

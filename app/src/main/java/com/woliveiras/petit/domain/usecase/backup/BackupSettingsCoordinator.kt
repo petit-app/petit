@@ -4,6 +4,7 @@ import com.woliveiras.petit.data.repository.BackupSettings
 import com.woliveiras.petit.data.repository.BackupSettingsRepository
 import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
 import com.woliveiras.petit.domain.backup.BackupAuthorizationResult
+import com.woliveiras.petit.domain.backup.BackupAuthorizationState
 import com.woliveiras.petit.domain.backup.BackupNetworkRequirement
 import com.woliveiras.petit.worker.BackupScheduler
 import java.util.concurrent.CancellationException
@@ -78,12 +79,22 @@ class BackupConnectionCoordinator
 constructor(
   private val authorizationGateway: BackupAuthorizationGateway,
   private val settingsCoordinator: BackupSettingsCoordinator,
-) {
-  suspend fun authorize(): BackupAuthorizationResult = authorizationGateway.authorize()
+) : BackupConnectionController {
+  override suspend fun refresh(): BackupAuthorizationState = authorizationGateway.refresh()
+
+  override suspend fun authorize(): BackupAuthorizationResult = authorizationGateway.authorize()
 
   /** Revokes authorization and periodic work without invoking any remote deletion operation. */
-  suspend fun disconnect() {
+  override suspend fun disconnect() {
     settingsCoordinator.setAutomaticBackupEnabled(false)
     authorizationGateway.disconnect()
   }
+}
+
+interface BackupConnectionController {
+  suspend fun refresh(): BackupAuthorizationState
+
+  suspend fun authorize(): BackupAuthorizationResult
+
+  suspend fun disconnect()
 }

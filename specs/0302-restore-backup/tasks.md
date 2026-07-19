@@ -2,7 +2,7 @@
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Spec status: **In Progress**. Provider-independent implementation is underway.
+> Spec status: **In Progress**. Android implementation is complete; physical restore validation remains open.
 
 ## Tasks
 
@@ -31,4 +31,4 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - blocked-by: previous tasks
   - desired behavior: a backup created on device A restores complete portable data on device B.
   - acceptance criteria: photos, tasks, reminder scheduling, preferences, counts, and exclusions are verified without cloning device credentials.
-  - verification: physical-device runbook created during implementation
+  - verification: [physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md)

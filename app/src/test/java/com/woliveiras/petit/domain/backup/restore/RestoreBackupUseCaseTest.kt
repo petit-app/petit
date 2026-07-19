@@ -103,6 +103,42 @@ class RestoreBackupUseCaseTest {
   }
 
   @Test
+  fun unrecognizedRemoteMetadataIsRejectedBeforeLocalMutation() = runTest {
+    database.petDao().insertPet(PetEntity(id = "local", name = "Local"))
+    val archive = createArchive("unrecognized", petId = "remote")
+    val gateway =
+      FileStorageGateway(
+        archive,
+        metadata(archive).copy(contractId = "unrecognized.backup.contract"),
+      )
+    val downloader =
+      DownloadAndValidateBackupUseCase(
+        gateway,
+        BackupArchiveCodec(),
+        temporaryFolder.newFolder("unrecognized-staging"),
+      )
+    val useCase =
+      RestoreBackupUseCase(
+        downloader,
+        exportImport,
+        installer,
+        userPreferences,
+        reminders,
+        scheduler,
+        journal,
+      )
+
+    val failure = runCatching {
+      useCase.execute(RestoreBackupRequest("remote-1", RestoreMode.REPLACE))
+    }
+
+    assertThat(failure.isFailure).isTrue()
+    assertThat(database.petDao().getAllIncludingDeleted().map { it.id }).containsExactly("local")
+    assertThat(installer.committed).isFalse()
+    assertThat(journal.state).isNull()
+  }
+
+  @Test
   fun downloadCancellationCleansPartialBytesAndProgressRemainsMonotonic() = runTest {
     val archive = createArchive("cancel-download")
     val staging = temporaryFolder.newFolder("cancel-staging")

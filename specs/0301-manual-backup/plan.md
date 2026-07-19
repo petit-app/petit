@@ -33,10 +33,13 @@ Spec 0201 and Petit Cloud authentication are explicitly not dependencies.
 1. [x] Characterize the current JSON export/import and enumerate every restorable field and asset.
 2. [x] Define the versioned manifest, safe ZIP paths, checksums, and resource limits.
 3. [x] Build a transactionally consistent snapshot and portable asset staging area.
-4. [ ] Add Google Drive authorization without Firebase or Petit authentication. The replaceable contract is implemented; the real adapter is not.
-5. [ ] Implement appDataFolder resumable upload with deterministic backup IDs. Idempotency is verified with a test-only provider; the real adapter is not.
-6. [~] Deliver Settings UI, cancellation, progress, retry, and accessible error states. Provider-neutral states are implemented; real authorization remains open.
-7. [ ] Validate the real Google Cloud project and physical-device flow.
+4. [x] Add Google Drive authorization without Firebase or Petit authentication. The adapter requests only `drive.appdata` and never persists tokens.
+5. [x] Implement appDataFolder resumable upload with deterministic backup IDs and lost-response idempotency.
+6. [x] Deliver Settings UI, cancellation, progress, retry, and accessible error states.
+7. [ ] Validate the real Google Cloud project and physical-device flow. The app
+   launches the official GIS resolution, but Google Play Services `26.26.34`
+   currently crashes before consent; manual OAuth client and test-user
+   configuration must be confirmed before the next run.
 
 ## Error and cleanup rules
 
@@ -54,6 +57,7 @@ Spec 0201 and Petit Cloud authentication are explicitly not dependencies.
 - Room and filesystem integration tests for snapshot consistency and cleanup.
 - Instrumented authorization and UI tests.
 - Manual execution of the linked Cloud Console runbook.
+- [Physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md).
 - `./gradlew spotlessCheck`
 - `./gradlew test`
 - `./gradlew connectedDebugAndroidTest` when a compatible device is available.

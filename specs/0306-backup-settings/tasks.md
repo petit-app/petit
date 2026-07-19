@@ -2,7 +2,7 @@
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Spec status: **In Progress**. Provider-independent implementation is underway.
+> Spec status: **In Progress**. Android implementation is complete; physical authorization validation remains open.
 
 ## Tasks
 
@@ -23,6 +23,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: Settings starts a manual backup, displays non-clinical history, and applies the success-notification preference.
   - acceptance criteria: success, retry, failure, and authorization-required states are localized and accessible.
   - verification: `./gradlew test` and `./gradlew connectedDebugAndroidTest`
+  - regression evidence: when disconnected, **Back up now** authorizes first, continues exactly once after success, and does not upload after cancellation or provider unavailability.
 
 - [x] **Preview and browse backup history incrementally** (test-type: both)
   - blocked-by: previous task
@@ -36,3 +37,4 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: confirmation revokes Drive access and cancels work while preserving local and remote backups.
   - acceptance criteria: reconnect works without a Petit account and restores the remote list.
   - verification: `./gradlew test` and physical-device provider validation
+  - automated evidence: disconnect disables automatic backup before revoking local authorization and invokes no remote deletion operation.

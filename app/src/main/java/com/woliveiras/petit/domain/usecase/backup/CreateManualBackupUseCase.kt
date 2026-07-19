@@ -33,8 +33,39 @@ class CreateManualBackupUseCase(
     onProgress: (BackupProgress) -> Unit,
   ): BackupCreationResult {
     require(backupId.isNotBlank()) { "Backup ID cannot be blank" }
-    if (authorizationGateway.state.value !is BackupAuthorizationState.Authorized) {
-      return BackupCreationResult.AuthorizationRequired
+    val authorization =
+      try {
+        authorizationGateway.refresh()
+      } catch (cancellation: CancellationException) {
+        throw cancellation
+      } catch (_: BackupProviderException.AuthorizationRequired) {
+        return BackupCreationResult.AuthorizationRequired
+      } catch (_: BackupProviderException.QuotaExceeded) {
+        return BackupCreationResult.QuotaExceeded
+      } catch (error: BackupProviderException.Retryable) {
+        return BackupCreationResult.RetryableFailure(
+          error.message ?: "Retryable backup provider failure"
+        )
+      } catch (error: BackupProviderException.Interrupted) {
+        return BackupCreationResult.RetryableFailure(
+          error.message ?: "Backup authorization refresh was interrupted"
+        )
+      } catch (error: BackupProviderException.Permanent) {
+        return BackupCreationResult.PermanentFailure(
+          error.message ?: "Permanent backup provider failure"
+        )
+      } catch (_: Exception) {
+        return BackupCreationResult.PermanentFailure(GENERIC_FAILURE_MESSAGE)
+      }
+    when (authorization) {
+      is BackupAuthorizationState.Authorized -> Unit
+      BackupAuthorizationState.Authorizing,
+      is BackupAuthorizationState.Unavailable ->
+        return BackupCreationResult.RetryableFailure(
+          "Backup authorization is temporarily unavailable"
+        )
+      BackupAuthorizationState.AuthorizationRequired,
+      BackupAuthorizationState.Disconnected -> return BackupCreationResult.AuthorizationRequired
     }
 
     var prepared: PreparedBackupArchive? = null
@@ -56,7 +87,8 @@ class CreateManualBackupUseCase(
       if (
         lastTransferred != expectedSize ||
           result.metadata.backupId != backupId ||
-          result.metadata.archiveSizeBytes != expectedSize
+          result.remoteId != result.metadata.remoteId ||
+          !result.metadata.isRecognized
       ) {
         BackupCreationResult.PermanentFailure(GENERIC_FAILURE_MESSAGE)
       } else {

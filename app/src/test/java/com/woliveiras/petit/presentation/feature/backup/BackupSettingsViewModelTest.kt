@@ -104,6 +104,61 @@ class BackupSettingsViewModelTest {
     }
 
   @Test
+  fun disconnectedManualBackupAuthorizesBeforeUploadingExactlyOnce() =
+    runTest(dispatcher) {
+      val fixture = fixture(authorizationState = BackupAuthorizationState.Disconnected)
+
+      fixture.viewModel.backUpNow()
+      fixture.viewModel.backUpNow()
+      advanceUntilIdle()
+
+      assertThat(fixture.authorization.authorizeCalls).isEqualTo(1)
+      assertThat(fixture.action.calls).containsExactly("manual-1" to BackupTrigger.MANUAL)
+      assertThat(fixture.viewModel.uiState.value.manualAttemptStatus)
+        .isEqualTo(BackupAttemptStatus.SUCCEEDED)
+    }
+
+  @Test
+  fun disconnectedManualBackupCancellationDoesNotUploadAndRequestsAuthorization() =
+    runTest(dispatcher) {
+      val fixture =
+        fixture(
+          authorizationState = BackupAuthorizationState.Disconnected,
+          authorizationResult = BackupAuthorizationResult.Cancelled,
+        )
+
+      fixture.viewModel.backUpNow()
+      advanceUntilIdle()
+
+      assertThat(fixture.authorization.authorizeCalls).isEqualTo(1)
+      assertThat(fixture.action.calls).isEmpty()
+      assertThat(fixture.history.current).isEmpty()
+      assertThat(fixture.viewModel.uiState.value.manualAttemptStatus)
+        .isEqualTo(BackupAttemptStatus.AUTHORIZATION_REQUIRED)
+      assertThat(fixture.viewModel.uiState.value.error).isNull()
+    }
+
+  @Test
+  fun disconnectedManualBackupUnavailableDoesNotUploadAndSurfacesStableError() =
+    runTest(dispatcher) {
+      val fixture =
+        fixture(
+          authorizationState = BackupAuthorizationState.Disconnected,
+          authorizationResult = BackupAuthorizationResult.Unavailable("Play Services unavailable"),
+        )
+
+      fixture.viewModel.backUpNow()
+      advanceUntilIdle()
+
+      assertThat(fixture.authorization.authorizeCalls).isEqualTo(1)
+      assertThat(fixture.action.calls).isEmpty()
+      assertThat(fixture.history.current).isEmpty()
+      assertThat(fixture.viewModel.uiState.value.manualAttemptStatus).isNull()
+      assertThat(fixture.viewModel.uiState.value.error)
+        .isEqualTo(BackupSettingsError.AUTHORIZATION_UNAVAILABLE)
+    }
+
+  @Test
   fun disconnectCancelsAutomaticWorkAndPreservesTheProviderDeletionBoundary() =
     runTest(dispatcher) {
       val fixture = fixture()
@@ -120,11 +175,14 @@ class BackupSettingsViewModelTest {
       assertThat(fixture.authorization.state.value).isEqualTo(BackupAuthorizationState.Disconnected)
     }
 
-  private fun fixture(): Fixture {
+  private fun fixture(
+    authorizationState: BackupAuthorizationState = BackupAuthorizationState.Authorized(),
+    authorizationResult: BackupAuthorizationResult = BackupAuthorizationResult.Authorized,
+  ): Fixture {
     val settings = FakeBackupSettingsRepository()
     val scheduler = RecordingBackupScheduler()
     val settingsCoordinator = BackupSettingsCoordinator(settings, scheduler)
-    val authorization = FakeAuthorizationGateway()
+    val authorization = FakeAuthorizationGateway(authorizationState, authorizationResult)
     val connection = BackupConnectionCoordinator(authorization, settingsCoordinator)
     val history = RecordingAttemptRepository()
     val action = FakeCreateBackupAction()
@@ -156,14 +214,22 @@ class BackupSettingsViewModelTest {
     val action: FakeCreateBackupAction,
   )
 
-  private class FakeAuthorizationGateway : BackupAuthorizationGateway {
-    val mutableState =
-      MutableStateFlow<BackupAuthorizationState>(BackupAuthorizationState.Authorized())
+  private class FakeAuthorizationGateway(
+    initialState: BackupAuthorizationState,
+    private val authorizationResult: BackupAuthorizationResult,
+  ) : BackupAuthorizationGateway {
+    val mutableState = MutableStateFlow(initialState)
     override val state: StateFlow<BackupAuthorizationState> = mutableState
     var disconnectCalls = 0
+    var authorizeCalls = 0
 
-    override suspend fun authorize(): BackupAuthorizationResult =
-      BackupAuthorizationResult.Authorized
+    override suspend fun authorize(): BackupAuthorizationResult {
+      authorizeCalls += 1
+      if (authorizationResult is BackupAuthorizationResult.Authorized) {
+        mutableState.value = BackupAuthorizationState.Authorized()
+      }
+      return authorizationResult
+    }
 
     override suspend fun disconnect() {
       disconnectCalls += 1

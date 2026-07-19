@@ -70,7 +70,24 @@ internal constructor(
   init {
     viewModelScope.launch {
       authorizationGateway.state.collect { authorization ->
-        mutableUiState.update { it.copy(authorization = authorization) }
+        mutableUiState.update { state ->
+          val transitioned = authorization != state.authorization
+          val operation =
+            if (!transitioned) {
+              state.operation
+            } else {
+              when (authorization) {
+                BackupAuthorizationState.Authorizing -> ManualBackupOperation.Authorizing
+                BackupAuthorizationState.Disconnected,
+                BackupAuthorizationState.AuthorizationRequired ->
+                  ManualBackupOperation.AuthorizationRequired
+                is BackupAuthorizationState.Unavailable ->
+                  ManualBackupOperation.Unavailable(authorization.reason)
+                is BackupAuthorizationState.Authorized -> state.operation
+              }
+            }
+          state.copy(authorization = authorization, operation = operation)
+        }
       }
     }
   }

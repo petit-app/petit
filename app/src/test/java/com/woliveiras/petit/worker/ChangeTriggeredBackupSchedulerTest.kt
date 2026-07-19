@@ -2,6 +2,7 @@ package com.woliveiras.petit.worker
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.BackoffPolicy
 import androidx.work.Configuration
 import androidx.work.CoroutineWorker
 import androidx.work.NetworkType
@@ -60,6 +61,7 @@ class ChangeTriggeredBackupSchedulerTest {
     assertThat(latest.constraints.requiresStorageNotLow()).isTrue()
     assertThat(latest.backoffDelayDuration)
       .isEqualTo(WorkManagerChangeTriggeredBackupScheduler.BACKOFF_SECONDS * 1_000L)
+    assertThat(latest.backoffPolicy).isEqualTo(BackoffPolicy.EXPONENTIAL)
   }
 
   @Test

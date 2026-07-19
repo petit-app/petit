@@ -4,8 +4,8 @@ Spec: [spec.md](./spec.md)
 
 ## Status
 
-This plan is **In Progress**. Steps 1–6 are implemented and covered without a
-real provider; physical process-death and authorization validation in step 7 remains open.
+This plan is **In Progress**. Steps 1–6 are implemented and covered through the
+shared Drive adapter; physical process-death and authorization validation in step 7 remains open.
 
 ## Dependencies
 
@@ -39,5 +39,6 @@ real provider; physical process-death and authorization validation in step 7 rem
 - Concurrent-write and no-self-trigger regression tests.
 - Manual/periodic/triggered coalescing tests.
 - Physical-device durability validation.
+- [Physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md).
 - `./gradlew spotlessCheck`
 - `./gradlew test`

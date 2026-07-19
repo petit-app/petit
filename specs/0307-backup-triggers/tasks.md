@@ -2,7 +2,7 @@
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Spec status: **In Progress**. Provider-independent implementation is underway.
+> Spec status: **In Progress**. Android implementation is complete; physical trigger validation remains open.
 
 ## Tasks
 
@@ -28,4 +28,4 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - blocked-by: previous tasks
   - desired behavior: rapid edits, process death, network loss, retry, and authorization revocation follow the documented WorkManager behavior.
   - acceptance criteria: physical evidence confirms durability without exact timing promises or Petit gates.
-  - verification: physical-device trigger runbook created during implementation
+  - verification: [physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md)

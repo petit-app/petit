@@ -4,8 +4,8 @@ Spec: [spec.md](./spec.md)
 
 ## Status
 
-This plan is **In Progress**. Steps 1–6 are implemented behind provider-neutral
-contracts; real `appDataFolder` verification in step 7 remains open.
+This plan is **In Progress**. Steps 1–6 are implemented through provider-neutral
+contracts and the Drive adapter; real `appDataFolder` verification in step 7 remains open.
 
 ## Dependencies
 
@@ -36,5 +36,6 @@ contracts; real `appDataFolder` verification in step 7 remains open.
 - ViewModel tests for loading, partial failure, and retry.
 - Instrumented list/details/selection tests.
 - Physical-device provider validation.
+- [Physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md).
 - `./gradlew spotlessCheck`
 - `./gradlew test`

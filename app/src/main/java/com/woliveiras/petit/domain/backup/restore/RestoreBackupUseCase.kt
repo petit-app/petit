@@ -125,6 +125,7 @@ class DownloadAndValidateBackupUseCase(
             onProgress(progress)
           }
         }
+      require(download.metadata.isRecognized) { "Remote file is not a recognized Petit backup" }
       require(download.bytesDownloaded == archive.length()) { "Downloaded size is inconsistent" }
       require(download.metadata.archiveSizeBytes == archive.length()) {
         "Downloaded archive size does not match remote metadata"

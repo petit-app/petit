@@ -1,7 +1,5 @@
 package com.woliveiras.petit.di
 
-import com.woliveiras.petit.data.backup.ProviderUnavailableBackupAuthorizationGateway
-import com.woliveiras.petit.data.backup.ProviderUnavailableBackupStorageGateway
 import com.woliveiras.petit.data.backup.revision.RoomRevisionStateStore
 import com.woliveiras.petit.data.repository.BackupAttemptRepository
 import com.woliveiras.petit.data.repository.BackupAttemptRepositoryImpl
@@ -23,8 +21,6 @@ import com.woliveiras.petit.data.repository.VaccinationEntryRepository
 import com.woliveiras.petit.data.repository.VaccinationEntryRepositoryImpl
 import com.woliveiras.petit.data.repository.WeightEntryRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
-import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
-import com.woliveiras.petit.domain.backup.BackupStorageGateway
 import com.woliveiras.petit.domain.backup.revision.RestorableRevisionRepository
 import com.woliveiras.petit.domain.backup.revision.RestorableRevisionStore
 import com.woliveiras.petit.domain.backup.revision.TransactionalRestorableRevisionRepository
@@ -34,8 +30,6 @@ import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryUseCase
 import com.woliveiras.petit.domain.usecase.backup.BackupRevisionCompletion
 import com.woliveiras.petit.domain.usecase.backup.BackupTriggerCoordinator
-import com.woliveiras.petit.domain.usecase.backup.CreateBackupAction
-import com.woliveiras.petit.domain.usecase.backup.ProviderUnavailableCreateBackupAction
 import com.woliveiras.petit.worker.AutoTaskService
 import com.woliveiras.petit.worker.AutoTaskServiceImpl
 import com.woliveiras.petit.worker.BackupScheduler
@@ -73,18 +67,6 @@ abstract class RepositoryModule {
 
   @Binds
   @Singleton
-  abstract fun bindBackupAuthorizationGateway(
-    providerUnavailableBackupAuthorizationGateway: ProviderUnavailableBackupAuthorizationGateway
-  ): BackupAuthorizationGateway
-
-  @Binds
-  @Singleton
-  abstract fun bindBackupStorageGateway(
-    providerUnavailableBackupStorageGateway: ProviderUnavailableBackupStorageGateway
-  ): BackupStorageGateway
-
-  @Binds
-  @Singleton
   abstract fun bindBackupAttemptRepository(
     backupAttemptRepositoryImpl: BackupAttemptRepositoryImpl
   ): BackupAttemptRepository
@@ -100,13 +82,6 @@ abstract class RepositoryModule {
   abstract fun bindBackupScheduler(
     workManagerBackupScheduler: WorkManagerBackupScheduler
   ): BackupScheduler
-
-  /** This session intentionally has no production cloud provider adapter. */
-  @Binds
-  @Singleton
-  abstract fun bindCreateBackupAction(
-    providerUnavailableCreateBackupAction: ProviderUnavailableCreateBackupAction
-  ): CreateBackupAction
 
   @Binds
   @Singleton

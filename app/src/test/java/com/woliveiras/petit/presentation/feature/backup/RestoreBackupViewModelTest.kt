@@ -1,6 +1,8 @@
 package com.woliveiras.petit.presentation.feature.backup
 
 import com.google.common.truth.Truth.assertThat
+import com.woliveiras.petit.domain.backup.BackupAuthorizationResult
+import com.woliveiras.petit.domain.backup.BackupAuthorizationState
 import com.woliveiras.petit.domain.backup.BackupContentCounts
 import com.woliveiras.petit.domain.backup.BackupMetadata
 import com.woliveiras.petit.domain.backup.BackupProgress
@@ -11,6 +13,7 @@ import com.woliveiras.petit.domain.backup.restore.RestoreBackupRequest
 import com.woliveiras.petit.domain.backup.restore.RestoreBackupResult
 import com.woliveiras.petit.domain.backup.restore.RestoreMode
 import com.woliveiras.petit.domain.model.MergeResult
+import com.woliveiras.petit.domain.usecase.backup.BackupConnectionController
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -75,6 +78,60 @@ class RestoreBackupViewModelTest {
         .isEqualTo(RestoreOperation.AuthorizationRequired)
     }
 
+  @Test
+  fun repeatedRestoreRequestWhileLaunchIsPendingExecutesOnlyOnce() =
+    runTest(dispatcher) {
+      val action = RecordingRestoreAction()
+      val viewModel = RestoreBackupViewModel("remote-1", action)
+
+      viewModel.requestRestore()
+      viewModel.requestRestore()
+      advanceUntilIdle()
+
+      assertThat(action.requests).hasSize(1)
+    }
+
+  @Test
+  fun disconnectedRestoreRequestsForegroundAuthorizationBeforeDownloading() =
+    runTest(dispatcher) {
+      val action = RecordingRestoreAction()
+      val connection =
+        RecordingConnectionController(
+          refreshedState = BackupAuthorizationState.AuthorizationRequired,
+          authorizationResult = BackupAuthorizationResult.Authorized,
+        )
+      val viewModel = RestoreBackupViewModel("remote-1", action, connection)
+
+      viewModel.requestRestore()
+      advanceUntilIdle()
+
+      assertThat(connection.refreshCalls).isEqualTo(1)
+      assertThat(connection.authorizeCalls).isEqualTo(1)
+      assertThat(action.requests).hasSize(1)
+      assertThat(viewModel.uiState.value.operation)
+        .isInstanceOf(RestoreOperation.Success::class.java)
+    }
+
+  @Test
+  fun cancelledForegroundAuthorizationDoesNotDownloadOrMutateLocalData() =
+    runTest(dispatcher) {
+      val action = RecordingRestoreAction()
+      val connection =
+        RecordingConnectionController(
+          refreshedState = BackupAuthorizationState.AuthorizationRequired,
+          authorizationResult = BackupAuthorizationResult.Cancelled,
+        )
+      val viewModel = RestoreBackupViewModel("remote-1", action, connection)
+
+      viewModel.requestRestore()
+      advanceUntilIdle()
+
+      assertThat(connection.authorizeCalls).isEqualTo(1)
+      assertThat(action.requests).isEmpty()
+      assertThat(viewModel.uiState.value.operation)
+        .isEqualTo(RestoreOperation.AuthorizationRequired)
+    }
+
   private class RecordingRestoreAction(private val failure: Exception? = null) :
     RestoreBackupAction {
     val requests = mutableListOf<RestoreBackupRequest>()
@@ -104,5 +161,25 @@ class RestoreBackupViewModelTest {
         MergeResult(),
       )
     }
+  }
+
+  private class RecordingConnectionController(
+    private val refreshedState: BackupAuthorizationState,
+    private val authorizationResult: BackupAuthorizationResult,
+  ) : BackupConnectionController {
+    var refreshCalls = 0
+    var authorizeCalls = 0
+
+    override suspend fun refresh(): BackupAuthorizationState {
+      refreshCalls += 1
+      return refreshedState
+    }
+
+    override suspend fun authorize(): BackupAuthorizationResult {
+      authorizeCalls += 1
+      return authorizationResult
+    }
+
+    override suspend fun disconnect() = Unit
   }
 }

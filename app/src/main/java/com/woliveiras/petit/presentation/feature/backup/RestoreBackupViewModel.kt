@@ -3,12 +3,16 @@ package com.woliveiras.petit.presentation.feature.backup
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.woliveiras.petit.domain.backup.BackupAuthorizationResult
+import com.woliveiras.petit.domain.backup.BackupAuthorizationState
 import com.woliveiras.petit.domain.backup.BackupProgress
 import com.woliveiras.petit.domain.backup.BackupProviderException
 import com.woliveiras.petit.domain.backup.restore.RestoreBackupAction
 import com.woliveiras.petit.domain.backup.restore.RestoreBackupRequest
 import com.woliveiras.petit.domain.backup.restore.RestoreBackupResult
 import com.woliveiras.petit.domain.backup.restore.RestoreMode
+import com.woliveiras.petit.domain.usecase.backup.BackupConnectionController
+import com.woliveiras.petit.domain.usecase.backup.BackupConnectionCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
@@ -42,13 +46,26 @@ sealed interface RestoreOperation {
 
 @HiltViewModel
 class RestoreBackupViewModel
-internal constructor(private val remoteId: String, private val restoreBackup: RestoreBackupAction) :
-  ViewModel() {
+internal constructor(
+  private val remoteId: String,
+  private val restoreBackup: RestoreBackupAction,
+  private val connectionController: BackupConnectionController,
+) : ViewModel() {
   @Inject
   constructor(
     savedStateHandle: SavedStateHandle,
     restoreBackup: RestoreBackupAction,
-  ) : this(requireNotNull(savedStateHandle.get<String>(REMOTE_ID_ARGUMENT)), restoreBackup)
+    connectionCoordinator: BackupConnectionCoordinator,
+  ) : this(
+    requireNotNull(savedStateHandle.get<String>(REMOTE_ID_ARGUMENT)),
+    restoreBackup,
+    connectionCoordinator as BackupConnectionController,
+  )
+
+  internal constructor(
+    remoteId: String,
+    restoreBackup: RestoreBackupAction,
+  ) : this(remoteId, restoreBackup, AlwaysAuthorizedBackupConnectionController)
 
   private val mutableUiState = MutableStateFlow(RestoreBackupUiState())
   val uiState: StateFlow<RestoreBackupUiState> = mutableUiState.asStateFlow()
@@ -90,9 +107,13 @@ internal constructor(private val remoteId: String, private val restoreBackup: Re
   private fun executeRestore() {
     if (mutableUiState.value.operation is RestoreOperation.Restoring) return
     val state = mutableUiState.value
+    mutableUiState.update { it.copy(operation = RestoreOperation.Restoring(null)) }
     viewModelScope.launch {
-      mutableUiState.update { it.copy(operation = RestoreOperation.Restoring(null)) }
       try {
+        if (!ensureAuthorized()) {
+          mutableUiState.update { it.copy(operation = RestoreOperation.AuthorizationRequired) }
+          return@launch
+        }
         var lastBytes = -1L
         val result =
           restoreBackup.execute(
@@ -122,7 +143,20 @@ internal constructor(private val remoteId: String, private val restoreBackup: Re
     }
   }
 
+  private suspend fun ensureAuthorized(): Boolean {
+    if (connectionController.refresh() is BackupAuthorizationState.Authorized) return true
+    return connectionController.authorize() is BackupAuthorizationResult.Authorized
+  }
+
   companion object {
     const val REMOTE_ID_ARGUMENT = "remoteId"
   }
+}
+
+private data object AlwaysAuthorizedBackupConnectionController : BackupConnectionController {
+  override suspend fun refresh(): BackupAuthorizationState = BackupAuthorizationState.Authorized()
+
+  override suspend fun authorize(): BackupAuthorizationResult = BackupAuthorizationResult.Authorized
+
+  override suspend fun disconnect() = Unit
 }

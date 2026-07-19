@@ -3,6 +3,8 @@ package com.woliveiras.petit.domain.usecase.backup
 import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.backup.testing.ByteArrayBackupContent
 import com.woliveiras.petit.data.backup.testing.DeterministicBackupStorageGateway
+import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
+import com.woliveiras.petit.domain.backup.BackupAuthorizationResult
 import com.woliveiras.petit.domain.backup.BackupAuthorizationState
 import com.woliveiras.petit.domain.backup.BackupContent
 import com.woliveiras.petit.domain.backup.BackupContentCounts
@@ -11,6 +13,8 @@ import com.woliveiras.petit.domain.backup.BackupProviderException
 import com.woliveiras.petit.domain.backup.BackupTrigger
 import java.time.Instant
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -28,6 +32,35 @@ class CreateManualBackupUseCaseTest {
 
     assertThat(result).isEqualTo(BackupCreationResult.AuthorizationRequired)
     assertThat(preparer.prepareCalls).isEqualTo(0)
+  }
+
+  @Test
+  fun silentRefreshDetectsExternalRevocationBeforeCreatingLocalArchive() = runTest {
+    val storage = DeterministicBackupStorageGateway()
+    val authorization = RevokedOnRefreshAuthorizationGateway()
+    val preparer = RecordingArchivePreparer()
+    val action = CreateManualBackupUseCase(authorization, storage, preparer)
+
+    val result = action.execute("backup-1", BackupTrigger.MANUAL)
+
+    assertThat(result).isEqualTo(BackupCreationResult.AuthorizationRequired)
+    assertThat(authorization.refreshCalls).isEqualTo(1)
+    assertThat(preparer.prepareCalls).isEqualTo(0)
+    assertThat(storage.completedBackups()).isEmpty()
+  }
+
+  @Test
+  fun silentRefreshUnavailabilityIsRetryableWithoutCreatingLocalArchive() = runTest {
+    val storage = DeterministicBackupStorageGateway()
+    val authorization = FixedRefreshAuthorizationGateway(BackupAuthorizationState.Unavailable())
+    val preparer = RecordingArchivePreparer()
+    val action = CreateManualBackupUseCase(authorization, storage, preparer)
+
+    val result = action.execute("backup-1", BackupTrigger.AUTOMATIC)
+
+    assertThat(result).isInstanceOf(BackupCreationResult.RetryableFailure::class.java)
+    assertThat(preparer.prepareCalls).isEqualTo(0)
+    assertThat(storage.completedBackups()).isEmpty()
   }
 
   @Test
@@ -97,6 +130,26 @@ class CreateManualBackupUseCaseTest {
   }
 
   @Test
+  fun retryAfterLostResponseAcceptsTheCompletedBackupForTheStableId() = runTest {
+    val gateway = DeterministicBackupStorageGateway()
+    gateway.failNextUploadAfterCommit(BackupProviderException.Retryable("response lost"))
+    val preparer =
+      RecordingArchivePreparer(
+        bytesByAttempt =
+          ArrayDeque(listOf("first".encodeToByteArray(), "changed".encodeToByteArray()))
+      )
+    val action = CreateManualBackupUseCase(gateway, gateway, preparer)
+
+    val first = action.execute("stable-id", BackupTrigger.MANUAL)
+    val retry = action.execute("stable-id", BackupTrigger.MANUAL)
+
+    assertThat(first).isInstanceOf(BackupCreationResult.RetryableFailure::class.java)
+    assertThat(retry).isInstanceOf(BackupCreationResult.Success::class.java)
+    assertThat((retry as BackupCreationResult.Success).metadata.archiveSizeBytes).isEqualTo(5)
+    assertThat(gateway.completedBackups().map { it.backupId }).containsExactly("stable-id")
+  }
+
+  @Test
   fun cancellationPropagatesAfterClosingPreparedArchive() = runTest {
     val gateway = DeterministicBackupStorageGateway()
     val preparer = RecordingArchivePreparer(cancelOnRead = true)
@@ -160,6 +213,7 @@ class CreateManualBackupUseCaseTest {
   private class RecordingArchivePreparer(
     private val cancelOnRead: Boolean = false,
     private val prepareFailure: Exception? = null,
+    private val bytesByAttempt: ArrayDeque<ByteArray> = ArrayDeque(),
   ) : BackupArchivePreparer {
     var prepareCalls = 0
     var lastPrepared: Prepared? = null
@@ -167,13 +221,51 @@ class CreateManualBackupUseCaseTest {
     override suspend fun prepare(backupId: String, trigger: BackupTrigger): PreparedBackupArchive {
       prepareCalls += 1
       prepareFailure?.let { throw it }
-      return Prepared(backupId, trigger, cancelOnRead).also { lastPrepared = it }
+      val bytes = bytesByAttempt.removeFirstOrNull() ?: "archive".encodeToByteArray()
+      return Prepared(backupId, trigger, cancelOnRead, bytes).also { lastPrepared = it }
     }
   }
 
-  private class Prepared(backupId: String, trigger: BackupTrigger, cancelOnRead: Boolean = false) :
-    PreparedBackupArchive {
-    private val bytes = "archive".encodeToByteArray()
+  private class RevokedOnRefreshAuthorizationGateway : BackupAuthorizationGateway {
+    private val mutableState =
+      MutableStateFlow<BackupAuthorizationState>(BackupAuthorizationState.Authorized())
+    override val state: StateFlow<BackupAuthorizationState> = mutableState
+    var refreshCalls = 0
+
+    override suspend fun refresh(): BackupAuthorizationState {
+      refreshCalls += 1
+      return BackupAuthorizationState.AuthorizationRequired.also { mutableState.value = it }
+    }
+
+    override suspend fun authorize(): BackupAuthorizationResult =
+      BackupAuthorizationResult.Authorized
+
+    override suspend fun disconnect() {
+      mutableState.value = BackupAuthorizationState.Disconnected
+    }
+  }
+
+  private class FixedRefreshAuthorizationGateway(initialState: BackupAuthorizationState) :
+    BackupAuthorizationGateway {
+    private val mutableState = MutableStateFlow(initialState)
+    override val state: StateFlow<BackupAuthorizationState> = mutableState
+
+    override suspend fun refresh(): BackupAuthorizationState = mutableState.value
+
+    override suspend fun authorize(): BackupAuthorizationResult =
+      BackupAuthorizationResult.Unavailable()
+
+    override suspend fun disconnect() {
+      mutableState.value = BackupAuthorizationState.Disconnected
+    }
+  }
+
+  private class Prepared(
+    backupId: String,
+    trigger: BackupTrigger,
+    cancelOnRead: Boolean = false,
+    private val bytes: ByteArray,
+  ) : PreparedBackupArchive {
     var closed = false
       private set
 

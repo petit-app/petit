@@ -2,6 +2,7 @@ package com.woliveiras.petit.worker
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.BackoffPolicy
 import androidx.work.Configuration
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
@@ -34,6 +35,12 @@ class BackupSchedulerTest {
   @Test
   fun scheduleUpdatesOneDailyInexactRequestWithApprovedConstraintsAndBackoff() {
     scheduler.schedulePeriodic(BackupNetworkRequirement.UNMETERED)
+    val originalId =
+      workManager
+        .getWorkInfosForUniqueWork(WorkManagerBackupScheduler.PERIODIC_WORK_NAME)
+        .get()
+        .single()
+        .id
     WorkManagerBackupScheduler(workManager).schedulePeriodic(BackupNetworkRequirement.CONNECTED)
 
     val active =
@@ -45,6 +52,7 @@ class BackupSchedulerTest {
       WorkManagerBackupScheduler.periodicRequest(BackupNetworkRequirement.CONNECTED)
 
     assertThat(active).hasSize(1)
+    assertThat(active.single().id).isEqualTo(originalId)
     assertThat(active.single().tags).contains(WorkManagerBackupScheduler.PERIODIC_WORK_TAG)
     assertThat(connectedRequest.workSpec.intervalDuration)
       .isEqualTo(WorkManagerBackupScheduler.REPEAT_INTERVAL_HOURS * 60L * 60L * 1000L)
@@ -54,6 +62,7 @@ class BackupSchedulerTest {
     assertThat(connectedRequest.workSpec.constraints.requiresStorageNotLow()).isTrue()
     assertThat(connectedRequest.workSpec.backoffDelayDuration)
       .isEqualTo(WorkManagerBackupScheduler.BACKOFF_SECONDS * 1000L)
+    assertThat(connectedRequest.workSpec.backoffPolicy).isEqualTo(BackoffPolicy.EXPONENTIAL)
   }
 
   @Test

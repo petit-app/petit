@@ -2,7 +2,7 @@
 
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
-> Spec status: **In Progress**. Provider-independent implementation is underway.
+> Spec status: **In Progress**. Android implementation is complete; real-provider validation remains open.
 
 ## Tasks
 
@@ -29,3 +29,4 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - desired behavior: revoking Drive access hides remote data locally but leaves every backup intact.
   - acceptance criteria: reconnecting the same account restores the list and never requires Petit authentication.
   - verification: `./gradlew test` and physical-device provider validation
+  - remaining evidence: execute disconnect, reconnect, exact deletion, and listing against the configured test account.

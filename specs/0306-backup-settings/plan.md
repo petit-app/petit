@@ -4,8 +4,10 @@ Spec: [spec.md](./spec.md)
 
 ## Status
 
-This plan is **In Progress**. Provider-neutral implementation and automated
-verification are complete; real authorization and disconnect verification remain open.
+This plan is **In Progress**. Android implementation and automated verification
+are complete; real authorization and disconnect verification remain open. The
+disconnected manual action now authorizes before backup, while the provider UI
+is blocked by a Google Play Services crash before consent.
 
 ## Dependencies
 
@@ -34,5 +36,6 @@ verification are complete; real authorization and disconnect verification remain
 - Compose UI and accessibility tests for the three-item preview, dedicated
   history screen, five-item pages, loading state, and end of history.
 - Physical authorization/disconnect verification.
+- [Physical-device validation runbook](../../docs/test-runbooks/google-drive-physical-device-validation.md).
 - `./gradlew spotlessCheck`
 - `./gradlew test`

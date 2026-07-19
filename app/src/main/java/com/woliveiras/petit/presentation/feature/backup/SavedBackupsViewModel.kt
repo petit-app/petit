@@ -7,6 +7,8 @@ import com.woliveiras.petit.domain.backup.BackupAuthorizationResult
 import com.woliveiras.petit.domain.backup.BackupAuthorizationState
 import com.woliveiras.petit.domain.backup.BackupMetadata
 import com.woliveiras.petit.domain.backup.BackupProviderException
+import com.woliveiras.petit.domain.usecase.backup.BackupConnectionController
+import com.woliveiras.petit.domain.usecase.backup.BackupConnectionCoordinator
 import com.woliveiras.petit.domain.usecase.backup.BackupDeletionResult
 import com.woliveiras.petit.domain.usecase.backup.ManageBackupsUseCase
 import com.woliveiras.petit.domain.usecase.backup.SavedBackupCollection
@@ -64,11 +66,27 @@ sealed interface BackupDeletionConfirmation {
 
 @HiltViewModel
 class SavedBackupsViewModel
-@Inject
-constructor(
+internal constructor(
   private val authorizationGateway: BackupAuthorizationGateway,
   private val manageBackups: ManageBackupsUseCase,
+  private val connectionController: BackupConnectionController,
 ) : ViewModel() {
+  @Inject
+  constructor(
+    authorizationGateway: BackupAuthorizationGateway,
+    manageBackups: ManageBackupsUseCase,
+    connectionCoordinator: BackupConnectionCoordinator,
+  ) : this(authorizationGateway, manageBackups, connectionCoordinator as BackupConnectionController)
+
+  internal constructor(
+    authorizationGateway: BackupAuthorizationGateway,
+    manageBackups: ManageBackupsUseCase,
+  ) : this(
+    authorizationGateway,
+    manageBackups,
+    DirectBackupConnectionController(authorizationGateway),
+  )
+
   private val mutableUiState =
     MutableStateFlow(SavedBackupsUiState(authorization = authorizationGateway.state.value))
   val uiState: StateFlow<SavedBackupsUiState> = mutableUiState.asStateFlow()
@@ -121,7 +139,7 @@ constructor(
 
   fun authorizeAndRefresh() {
     viewModelScope.launch {
-      when (val result = authorizationGateway.authorize()) {
+      when (val result = connectionController.authorize()) {
         BackupAuthorizationResult.Authorized -> refresh()
         BackupAuthorizationResult.Cancelled ->
           mutableUiState.update { it.copy(content = SavedBackupsContent.AuthorizationRequired) }
@@ -134,7 +152,7 @@ constructor(
   }
 
   fun disconnect() {
-    viewModelScope.launch { authorizationGateway.disconnect() }
+    viewModelScope.launch { connectionController.disconnect() }
   }
 
   fun toggleSelection(remoteId: String) {
@@ -276,14 +294,33 @@ constructor(
   }
 
   private fun showError(error: Throwable) {
+    if (error is BackupProviderException.AuthorizationRequired) {
+      mutableUiState.update {
+        it.copy(
+          content = SavedBackupsContent.AuthorizationRequired,
+          selectedRemoteIds = emptySet(),
+          details = null,
+          deletionConfirmation = null,
+        )
+      }
+      return
+    }
     val category =
       when (error) {
-        is BackupProviderException.AuthorizationRequired ->
-          SavedBackupsErrorCategory.AUTHORIZATION_REQUIRED
         is BackupProviderException.QuotaExceeded -> SavedBackupsErrorCategory.QUOTA_EXCEEDED
         is BackupProviderException.Retryable -> SavedBackupsErrorCategory.RETRYABLE
         else -> SavedBackupsErrorCategory.PERMANENT
       }
     mutableUiState.update { it.copy(content = SavedBackupsContent.Error(category)) }
   }
+}
+
+private class DirectBackupConnectionController(
+  private val authorizationGateway: BackupAuthorizationGateway
+) : BackupConnectionController {
+  override suspend fun refresh(): BackupAuthorizationState = authorizationGateway.refresh()
+
+  override suspend fun authorize(): BackupAuthorizationResult = authorizationGateway.authorize()
+
+  override suspend fun disconnect() = authorizationGateway.disconnect()
 }

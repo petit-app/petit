@@ -1,5 +1,6 @@
 package com.woliveiras.petit.worker
 
+import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.ListenableWorker
@@ -26,32 +27,50 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class AutomaticBackupWorkerIntegrationTest {
   private val context = ApplicationProvider.getApplicationContext<Context>()
   private val now = Instant.parse("2026-07-18T08:00:00Z")
   private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
+  @Before
+  fun clearOperationState() {
+    context
+      .getSharedPreferences(PeriodicBackupOperationIdStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
+      .edit()
+      .clear()
+      .commit()
+  }
+
   @Test
-  fun workerUsesRealUploadFlowAndStableWorkIdWithoutDuplicateBackup() = runTest {
+  fun workerReusesAnOperationForRetryAndRotatesItForTheNextPeriodicExecution() = runTest {
     val workId = UUID.fromString("5df6cd9d-bfc0-458d-b8b6-2949fffcdf63")
     val gateway = DeterministicBackupStorageGateway(uploadChunkSize = 2)
     val history = RecordingAttemptRepository()
     val runner = runner(gateway, history)
+    val operationIds = ArrayDeque(listOf("period-1", "period-2"))
+    val store = PeriodicBackupOperationIdStore(context) { operationIds.removeFirst() }
 
-    val first = buildWorker(workId, runner).doWork()
-    val duplicateRetry = buildWorker(workId, runner).doWork()
+    val first = buildWorker(workId, runAttemptCount = 0, runner, store).doWork()
+    val duplicateRetry = buildWorker(workId, runAttemptCount = 1, runner, store).doWork()
+    val nextPeriod = buildWorker(workId, runAttemptCount = 0, runner, store).doWork()
 
     assertThat(first).isInstanceOf(ListenableWorker.Result.Success::class.java)
     assertThat(duplicateRetry).isInstanceOf(ListenableWorker.Result.Success::class.java)
-    assertThat(gateway.completedBackups()).hasSize(1)
-    assertThat(gateway.completedBackups().single().backupId).isEqualTo(workId.toString())
-    assertThat(history.current.single().id).isEqualTo(workId.toString())
-    assertThat(history.current.single().status).isEqualTo(BackupAttemptStatus.SUCCEEDED)
+    assertThat(nextPeriod).isInstanceOf(ListenableWorker.Result.Success::class.java)
+    assertThat(gateway.completedBackups().map { it.backupId })
+      .containsExactly("period-1", "period-2")
+      .inOrder()
+    assertThat(history.current.map { it.id }).containsExactly("period-1", "period-2")
+    assertThat(history.current.map { it.status }.distinct())
+      .containsExactly(BackupAttemptStatus.SUCCEEDED)
   }
 
   @Test
@@ -78,7 +97,14 @@ class AutomaticBackupWorkerIntegrationTest {
       )
     val runner = AutomaticBackupRunner(action, history, clock)
 
-    val result = buildWorker(UUID.randomUUID(), runner).doWork()
+    val result =
+      buildWorker(
+          UUID.randomUUID(),
+          runAttemptCount = 0,
+          runner,
+          PeriodicBackupOperationIdStore(context) { "authorization-attempt" },
+        )
+        .doWork()
 
     assertThat(result).isInstanceOf(ListenableWorker.Result.Failure::class.java)
     assertThat(prepareCalls).isEqualTo(0)
@@ -129,16 +155,23 @@ class AutomaticBackupWorkerIntegrationTest {
     }
   }
 
-  private fun buildWorker(id: UUID, runner: AutomaticBackupRunner): AutomaticBackupWorker =
+  private fun buildWorker(
+    id: UUID,
+    runAttemptCount: Int,
+    runner: AutomaticBackupRunner,
+    operationIds: PeriodicBackupOperationIdStore,
+  ): AutomaticBackupWorker =
     TestListenableWorkerBuilder.from(context, AutomaticBackupWorker::class.java)
       .setId(id)
+      .setRunAttemptCount(runAttemptCount)
       .setWorkerFactory(
         object : WorkerFactory() {
           override fun createWorker(
             appContext: Context,
             workerClassName: String,
             workerParameters: WorkerParameters,
-          ): ListenableWorker = AutomaticBackupWorker(appContext, workerParameters, runner)
+          ): ListenableWorker =
+            AutomaticBackupWorker(appContext, workerParameters, runner, operationIds)
         }
       )
       .build()

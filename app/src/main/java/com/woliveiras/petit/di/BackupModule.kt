@@ -6,10 +6,19 @@ import com.woliveiras.petit.BuildConfig
 import com.woliveiras.petit.data.backup.archive.AndroidBackupPetAssetSource
 import com.woliveiras.petit.data.backup.archive.BackupPetAssetSource
 import com.woliveiras.petit.data.backup.archive.PortableBackupArchivePreparer
+import com.woliveiras.petit.data.backup.google.GoogleAuthorizationResolutionBridge
+import com.woliveiras.petit.data.backup.google.GoogleDriveAccessTokenProvider
+import com.woliveiras.petit.data.backup.google.GoogleDriveAuthorizationGateway
+import com.woliveiras.petit.data.backup.google.GoogleDriveBackupStorageGateway
+import com.woliveiras.petit.data.backup.google.GoogleDriveConnectionMarker
+import com.woliveiras.petit.data.backup.google.GoogleIdentityAuthorizationClient
+import com.woliveiras.petit.data.backup.google.PlayServicesGoogleIdentityAuthorizationClient
+import com.woliveiras.petit.data.backup.google.SharedPreferencesGoogleDriveConnectionMarker
 import com.woliveiras.petit.data.backup.restore.AndroidRestoreAssetInstaller
 import com.woliveiras.petit.data.backup.restore.FileRestoreRecoveryJournal
 import com.woliveiras.petit.data.repository.ReminderPreferencesRepository
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
+import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
 import com.woliveiras.petit.domain.backup.BackupStorageGateway
 import com.woliveiras.petit.domain.backup.archive.BackupArchiveCodec
 import com.woliveiras.petit.domain.backup.restore.DownloadAndValidateBackupUseCase
@@ -20,7 +29,10 @@ import com.woliveiras.petit.domain.backup.restore.RestoreRecoveryJournal
 import com.woliveiras.petit.domain.backup.restore.RestoreReminderScheduler
 import com.woliveiras.petit.domain.usecase.ExportImportUseCase
 import com.woliveiras.petit.domain.usecase.backup.BackupArchivePreparer
+import com.woliveiras.petit.domain.usecase.backup.CreateBackupAction
+import com.woliveiras.petit.domain.usecase.backup.CreateManualBackupUseCase
 import com.woliveiras.petit.domain.usecase.backup.ManageBackupsUseCase
+import com.woliveiras.petit.presentation.feature.backup.ActivityGoogleAuthorizationResolutionBridge
 import com.woliveiras.petit.worker.ChangeTriggeredBackupScheduler
 import com.woliveiras.petit.worker.ChangeTriggeredBackupWorker
 import com.woliveiras.petit.worker.RestoreReminderSchedulerImpl
@@ -37,6 +49,67 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object BackupModule {
+  @Provides
+  @Singleton
+  fun provideGoogleIdentityAuthorizationClient(
+    @ApplicationContext context: Context
+  ): PlayServicesGoogleIdentityAuthorizationClient =
+    PlayServicesGoogleIdentityAuthorizationClient(context)
+
+  @Provides
+  @Singleton
+  fun provideGoogleIdentityAuthorizationClientInterface(
+    client: PlayServicesGoogleIdentityAuthorizationClient
+  ): GoogleIdentityAuthorizationClient = client
+
+  @Provides
+  @Singleton
+  fun provideGoogleDriveConnectionMarker(
+    @ApplicationContext context: Context
+  ): GoogleDriveConnectionMarker = SharedPreferencesGoogleDriveConnectionMarker(context)
+
+  @Provides
+  @Singleton
+  fun provideGoogleAuthorizationResolutionBridge(
+    bridge: ActivityGoogleAuthorizationResolutionBridge
+  ): GoogleAuthorizationResolutionBridge = bridge
+
+  @Provides
+  @Singleton
+  fun provideGoogleDriveAuthorizationGateway(
+    client: GoogleIdentityAuthorizationClient,
+    resolutionBridge: GoogleAuthorizationResolutionBridge,
+    marker: GoogleDriveConnectionMarker,
+  ): GoogleDriveAuthorizationGateway =
+    GoogleDriveAuthorizationGateway(client, resolutionBridge, marker)
+
+  @Provides
+  @Singleton
+  fun provideBackupAuthorizationGateway(
+    gateway: GoogleDriveAuthorizationGateway
+  ): BackupAuthorizationGateway = gateway
+
+  @Provides
+  @Singleton
+  fun provideGoogleDriveAccessTokenProvider(
+    gateway: GoogleDriveAuthorizationGateway
+  ): GoogleDriveAccessTokenProvider = gateway
+
+  @Provides
+  @Singleton
+  fun provideBackupStorageGateway(
+    tokenProvider: GoogleDriveAccessTokenProvider
+  ): BackupStorageGateway = GoogleDriveBackupStorageGateway(tokenProvider)
+
+  @Provides
+  @Singleton
+  fun provideCreateBackupAction(
+    authorizationGateway: BackupAuthorizationGateway,
+    storageGateway: BackupStorageGateway,
+    archivePreparer: BackupArchivePreparer,
+  ): CreateBackupAction =
+    CreateManualBackupUseCase(authorizationGateway, storageGateway, archivePreparer)
+
   @Provides
   @Singleton
   fun provideChangeTriggeredBackupScheduler(
