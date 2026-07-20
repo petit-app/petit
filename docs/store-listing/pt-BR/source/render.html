@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Petit Google Play assets</title>
+    <style>
+      :root {
+        --cream: #fff9f3;
+        --plum: #4a0d52;
+        --purple: #7b4bb3;
+        --lavender: #f1e8f7;
+        --teal: #5d8579;
+        --gold: #f3c969;
+        --ink: #2c2330;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        background: #222;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .asset {
+        position: relative;
+        display: none;
+        overflow: hidden;
+        color: var(--ink);
+        background: var(--cream);
+        isolation: isolate;
+      }
+
+      .asset.active {
+        display: block;
+      }
+
+      .background {
+        position: absolute;
+        inset: 0;
+        z-index: -3;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.54;
+      }
+
+      .wash {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background: linear-gradient(180deg, rgba(255, 249, 243, 0.22), rgba(255, 249, 243, 0.82) 46%, rgba(255, 249, 243, 0.3));
+      }
+
+      .brand {
+        position: absolute;
+        top: 62px;
+        left: 74px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: var(--plum);
+        font-size: 34px;
+        font-weight: 850;
+        letter-spacing: -1px;
+      }
+
+      .brand img {
+        width: 66px;
+        height: 66px;
+      }
+
+      .copy {
+        position: absolute;
+        top: 178px;
+        left: 74px;
+        width: 920px;
+      }
+
+      h1,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        color: var(--plum);
+        font-size: 72px;
+        line-height: 0.98;
+        letter-spacing: -4px;
+      }
+
+      .copy p {
+        max-width: 850px;
+        margin-top: 30px;
+        color: #554b56;
+        font-size: 31px;
+        font-weight: 540;
+        line-height: 1.27;
+      }
+
+      .phone {
+        width: 1080px;
+        height: 1920px;
+      }
+
+      .screenshot-card {
+        position: absolute;
+        top: 560px;
+        left: 74px;
+        width: 932px;
+        height: 1460px;
+        overflow: hidden;
+        border: 10px solid rgba(74, 13, 82, 0.09);
+        border-radius: 68px 68px 0 0;
+        background: #fff;
+        box-shadow: 0 42px 95px rgba(74, 13, 82, 0.2);
+      }
+
+      .screenshot-card img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .phone.compact .copy {
+        width: 760px;
+      }
+
+      .phone.compact h1 {
+        font-size: 68px;
+      }
+
+      .mascot-corner {
+        position: absolute;
+        top: 112px;
+        right: 40px;
+        width: 260px;
+        height: 330px;
+        object-fit: contain;
+      }
+
+      .symbol {
+        position: absolute;
+        top: 225px;
+        right: 76px;
+        display: grid;
+        width: 210px;
+        height: 210px;
+        place-items: center;
+        border: 8px solid rgba(74, 13, 82, 0.12);
+        border-radius: 58px;
+        color: var(--plum);
+        background: rgba(255, 249, 243, 0.9);
+        box-shadow: 0 24px 60px rgba(74, 13, 82, 0.12);
+        font-size: 86px;
+        font-weight: 900;
+      }
+
+      .shield {
+        width: 92px;
+        height: 110px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 8;
+      }
+
+      .feature {
+        width: 1024px;
+        height: 500px;
+      }
+
+      .feature .background {
+        opacity: 0.72;
+      }
+
+      .feature .wash {
+        background: linear-gradient(90deg, rgba(255, 249, 243, 0.94) 5%, rgba(255, 249, 243, 0.78) 55%, rgba(255, 249, 243, 0.08));
+      }
+
+      .feature-copy {
+        position: absolute;
+        top: 128px;
+        left: 124px;
+        width: 600px;
+      }
+
+      .feature-copy h1 {
+        font-size: 62px;
+        line-height: 0.98;
+        letter-spacing: -3px;
+      }
+
+      .feature-copy p {
+        margin-top: 24px;
+        color: var(--teal);
+        font-size: 26px;
+        font-weight: 760;
+      }
+
+      .feature-mascot {
+        position: absolute;
+        top: 45px;
+        right: 66px;
+        width: 330px;
+        height: 420px;
+        object-fit: contain;
+        filter: drop-shadow(0 24px 24px rgba(74, 13, 82, 0.16));
+      }
+    </style>
+  </head>
+  <body>
+    <section class="asset feature" data-asset="feature-graphic">
+      <img class="background" src="brand-background.png" alt="">
+      <div class="wash"></div>
+      <div class="feature-copy">
+        <h1>Cuide com liberdade.</h1>
+        <p>Offline, privado e sem assinatura.</p>
+      </div>
+      <img class="feature-mascot" src="petit-mascot.svg" alt="">
+    </section>
+
+    <section class="asset phone" data-asset="phone-01-all-pets">
+      <img class="background" src="brand-background.png" alt="">
+      <div class="wash"></div>
+      <div class="brand"><img src="petit-logo.svg" alt="">Petit</div>
+      <div class="copy">
+        <h1>Todos os seus pets em um só lugar</h1>
+        <p>Saúde, rotinas e lembretes sempre à mão.</p>
+      </div>
+      <div class="screenshot-card"><img src="app-home.png" alt=""></div>
+    </section>
+
+    <section class="asset phone" data-asset="phone-02-offline">
+      <img class="background" src="brand-background.png" alt="">
+      <div class="wash"></div>
+      <div class="brand"><img src="petit-logo.svg" alt="">Petit</div>
+      <div class="copy">
+        <h1>Funciona 100% offline</h1>
+        <p>Cuide dos seus pets mesmo quando a internet não estiver por perto.</p>
+      </div>
+      <div class="screenshot-card"><img src="app-weight.png" alt=""></div>
+    </section>
+
+    <section class="asset phone" data-asset="phone-03-automatic-backup">
+      <img class="background" src="brand-background.png" alt="">
+      <div class="wash"></div>
+      <div class="brand"><img src="petit-logo.svg" alt="">Petit</div>
+      <div class="copy">
+        <h1>Backup automático</h1>
+        <p>Proteja seus dados sem pagar assinatura mensal.</p>
+      </div>
+      <div class="screenshot-card"><img src="app-backup.png" alt=""></div>
+    </section>
+
+    <section class="asset phone" data-asset="phone-04-local-sharing">
+      <img class="background" src="brand-background.png" alt="">
+      <div class="wash"></div>
+      <div class="brand"><img src="petit-logo.svg" alt="">Petit</div>
+      <div class="copy">
+        <h1>Compartilhe sem nuvem</h1>
+        <p>Troque dados pela rede local com quem cuida junto com você.</p>
+      </div>
+      <div class="screenshot-card"><img src="app-pair.png" alt=""></div>
+    </section>
+
+    <section class="asset phone compact" data-asset="phone-05-open-source">
+      <img class="background" src="brand-background.png" alt="">
+      <div class="wash"></div>
+      <div class="brand"><img src="petit-logo.svg" alt="">Petit</div>
+      <div class="copy">
+        <h1>Open source de verdade</h1>
+        <p>Código aberto, transparente e sem assinatura.</p>
+      </div>
+      <div class="symbol" aria-hidden="true">&lt;/&gt;</div>
+      <div class="screenshot-card"><img src="app-pets.png" alt=""></div>
+    </section>
+
+    <section class="asset phone compact" data-asset="phone-06-privacy">
+      <img class="background" src="brand-background.png" alt="">
+      <div class="wash"></div>
+      <div class="brand"><img src="petit-logo.svg" alt="">Petit</div>
+      <div class="copy">
+        <h1>Privacidade em primeiro lugar</h1>
+        <p>Seus dados ficam sob seu controle, com segurança.</p>
+      </div>
+      <div class="symbol" aria-hidden="true">
+        <svg class="shield" viewBox="0 0 100 120">
+          <path d="M50 8 88 23v31c0 28-16 48-38 58C28 102 12 82 12 54V23L50 8Z" />
+          <path d="m31 58 13 13 27-30" />
+        </svg>
+      </div>
+      <div class="screenshot-card"><img src="app-settings.png" alt=""></div>
+    </section>
+
+    <script>
+      const selectedAsset = new URLSearchParams(window.location.search).get("asset") || "feature-graphic";
+      const asset = document.querySelector(`[data-asset="${selectedAsset}"]`);
+      if (!asset) throw new Error(`Unknown asset: ${selectedAsset}`);
+      asset.classList.add("active");
+    </script>
+  </body>
+</html>
