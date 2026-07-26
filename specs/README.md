@@ -17,6 +17,7 @@ based on capability families, while delivery state is tracked through status.
 | 0200–0299 | identity-access | Identity, account, and authorization                                 |
 | 0300–0399 | backup-recovery | Cloud backup, restore, and recovery                                  |
 | 0400–0499 | cloud-sync      | Remote synchronization and cloud collaboration                       |
+| 0500–0599 | release-engineering | Build, signing, store metadata, and distribution automation       |
 
 ## Status
 
@@ -90,3 +91,9 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 | [0403](0403-cloud-conflict-resolution/spec.md) | Cloud conflict resolution | On Hold | 0401       |
 | [0404](0404-offline-cloud-sync/spec.md)        | Offline-First Sync        | On Hold | 0401       |
 | [0405](0405-cloud-family-sharing/spec.md)      | Cloud family sharing      | On Hold | 0201, 0401 |
+
+### release-engineering
+
+| Spec                                                 | Title                            | Status | Depends on |
+| ---------------------------------------------------- | -------------------------------- | ------ | ---------- |
+| [0501](0501-android-alpha-release-automation/spec.md) | Android alpha release automation | In Progress | —          |
