@@ -112,7 +112,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     `bundle exec fastlane android validate_play_credentials` and
     `bundle exec fastlane android validate_alpha`.
 
-- [ ] **Deploy and observe a real alpha release** (test-type: integration)
+- [~] **Deploy and observe a real alpha release** (test-type: integration)
   - blocked-by: successful API validation; separate publication authorization;
     configured tester access
   - summary: run one protected deployment and confirm availability for an
@@ -127,3 +127,10 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     a local build.
   - verification: separately authorized alpha deployment record and tester
     installation observation.
+  - current evidence: GitHub Actions run
+    `https://github.com/petit-app/petit/actions/runs/30208085376` authenticated
+    through Workload Identity Federation, built and verified the signed
+    versionCode 2 / versionName 1.0.1 AAB, uploaded the R8 mapping, pt-BR
+    metadata, images, screenshots, and changelog, and completed the Supply
+    upload to track `alpha` with release status `completed`. Play Console shows
+    release 1.0.1 as `In review`; tester availability remains pending.
