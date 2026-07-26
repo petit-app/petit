@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -143,48 +144,64 @@ private fun PetitAppContent(navController: NavHostController, startDestination: 
   val currentRoute = navBackStackEntry?.destination?.route
   val showBottomBar = currentRoute != Screen.Onboarding.route
 
-  Scaffold(
+  PetitRootScaffold(
+    showBottomBar = showBottomBar,
     bottomBar = {
-      if (showBottomBar) {
-        PetitBottomNavBar(
-          currentRoute = currentRoute,
-          onHomeClick = {
-            navController.navigate(Screen.Home.route) {
-              popUpTo(Screen.Home.route) { inclusive = true }
-            }
-          },
-          onPetsClick = {
-            navController.navigate(Screen.PetList.route) {
+      PetitBottomNavBar(
+        currentRoute = currentRoute,
+        onHomeClick = {
+          navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Home.route) { inclusive = true }
+          }
+        },
+        onPetsClick = {
+          navController.navigate(Screen.PetList.route) {
+            popUpTo(Screen.Home.route) { inclusive = false }
+          }
+        },
+        onAddClick = {
+          if (currentRoute?.startsWith("select-pet/") == true) {
+            navController.navigate(Screen.PetForm.createRoute()) {
               popUpTo(Screen.Home.route) { inclusive = false }
             }
-          },
-          onAddClick = {
-            if (currentRoute?.startsWith("select-pet/") == true) {
-              navController.navigate(Screen.PetForm.createRoute()) {
-                popUpTo(Screen.Home.route) { inclusive = false }
-              }
-            } else {
-              navController.navigate(Screen.QuickAdd.route)
-            }
-          },
-          onTasksClick = {
-            navController.navigate(Screen.Tasks.route) {
-              popUpTo(Screen.Home.route) { inclusive = false }
-            }
-          },
-          onProfileClick = {
-            navController.navigate(Screen.Settings.route) {
-              popUpTo(Screen.Home.route) { inclusive = false }
-            }
-          },
-        )
-      }
-    }
-  ) { innerPadding ->
+          } else {
+            navController.navigate(Screen.QuickAdd.route)
+          }
+        },
+        onTasksClick = {
+          navController.navigate(Screen.Tasks.route) {
+            popUpTo(Screen.Home.route) { inclusive = false }
+          }
+        },
+        onProfileClick = {
+          navController.navigate(Screen.Settings.route) {
+            popUpTo(Screen.Home.route) { inclusive = false }
+          }
+        },
+      )
+    },
+  ) { contentModifier ->
     PetitNavGraph(
       navController = navController,
-      modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
+      modifier = contentModifier,
       startDestination = startDestination,
     )
+  }
+}
+
+@Composable
+internal fun PetitRootScaffold(
+  showBottomBar: Boolean,
+  bottomBar: @Composable () -> Unit,
+  content: @Composable (Modifier) -> Unit,
+) {
+  Scaffold(bottomBar = { if (showBottomBar) bottomBar() }) { innerPadding ->
+    val contentModifier =
+      if (showBottomBar) {
+        Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+      } else {
+        Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
+      }
+    content(contentModifier)
   }
 }

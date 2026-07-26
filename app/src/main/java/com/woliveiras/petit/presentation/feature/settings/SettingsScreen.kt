@@ -69,6 +69,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.woliveiras.petit.BuildConfig
 import com.woliveiras.petit.R
 import com.woliveiras.petit.data.lan.LanSyncState
 import com.woliveiras.petit.domain.model.AppLanguage
@@ -341,7 +342,7 @@ fun SettingsScreen(
           colors =
             ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
           headlineContent = { Text(stringResource(R.string.settings_version)) },
-          supportingContent = { Text("1.0.0") },
+          supportingContent = { Text(BuildConfig.VERSION_NAME) },
         )
       }
     }

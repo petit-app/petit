@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -73,7 +74,8 @@ fun PetitBottomNavBar(
     shadowElevation = 0.dp,
   ) {
     Row(
-      modifier = Modifier.fillMaxWidth().height(84.dp).padding(horizontal = 8.dp),
+      modifier =
+        Modifier.fillMaxWidth().navigationBarsPadding().height(84.dp).padding(horizontal = 8.dp),
       horizontalArrangement = Arrangement.Center,
       verticalAlignment = Alignment.CenterVertically,
     ) {
