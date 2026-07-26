@@ -30,6 +30,9 @@ sealed class Screen(val route: String) {
       if (petId != null) "pets/form?petId=$petId" else "pets/form"
   }
 
+  /** Focused breed selection for the active pet form. */
+  data object BreedSelection : Screen("pets/form/breed")
+
   /** Pet selection screen for actions (weight, vaccination, etc). */
   data object PetSelection : Screen("select-pet/{action}") {
     const val ACTION_WEIGHT = "weight"

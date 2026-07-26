@@ -9,9 +9,9 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.media.PendingCameraPhoto
 import com.woliveiras.petit.data.media.PetPhotoStore
 import com.woliveiras.petit.data.repository.PetRepository
-import com.woliveiras.petit.domain.model.BreedCatalogItem
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetType
+import com.woliveiras.petit.domain.model.Sex
 import java.io.File
 import java.time.Clock
 import java.time.Instant
@@ -106,7 +106,7 @@ class PetFormViewModelTest {
 
         val saved = repository.saved.single()
         assertThat(saved.name).isEqualTo("Mimi")
-        assertThat(saved.breed).isEqualTo("New breed")
+        assertThat(saved.breed).isEqualTo("  New breed  ")
         assertThat(saved.createdAt).isEqualTo(clock.millis())
         assertThat(saved.updatedAt).isEqualTo(clock.millis())
         assertThat(awaitItem()).isEqualTo(PetFormEvent.PetSaved(saved.id))
@@ -119,8 +119,8 @@ class PetFormViewModelTest {
       val viewModel = viewModel()
       viewModel.updateName("Mimi")
       viewModel.updatePetType(PetType.CAT)
-      viewModel.selectBreed(
-        BreedCatalogItem(id = "VBO:0100221", displayName = "Siamês", canonicalName = "Siamese")
+      viewModel.applyBreedSelection(
+        BreedSelectionValue(breedId = "VBO:0100221", displayName = "Siamês", breed = "Siamese")
       )
 
       viewModel.savePet()
@@ -138,7 +138,7 @@ class PetFormViewModelTest {
     runTest(dispatcher) {
       val createViewModel = viewModel()
       createViewModel.updatePetType(PetType.CAT)
-      createViewModel.selectBreed(BreedCatalogItem("VBO:0100221", "Siamês", "Siamese"))
+      createViewModel.applyBreedSelection(BreedSelectionValue("VBO:0100221", "Siamese", "Siamês"))
       createViewModel.updatePetType(PetType.DOG)
       assertThat(createViewModel.uiState.value.breedId).isNull()
       assertThat(createViewModel.uiState.value.breed).isEmpty()
@@ -153,21 +153,53 @@ class PetFormViewModelTest {
     }
 
   @Test
-  fun breedSelectorStateRestoresFromSavedStateHandle() =
+  fun confirmedBreedSelectionRestoresFromSavedStateHandle() =
     runTest(dispatcher) {
       val savedState = SavedStateHandle()
       val original = PetFormViewModel(savedState, context, repository, photos, clock, dispatcher)
       original.updatePetType(PetType.CAT)
-      original.selectBreed(BreedCatalogItem("VBO:0100221", "Siamês", "Siamese"))
-      original.updateBreedSearch("sia")
+      original.updateName("Mimi draft")
+      original.updateBirthDate(LocalDate.of(2020, 6, 12))
+      original.updateSex(Sex.FEMALE)
+      original.applyBreedSelection(BreedSelectionValue("VBO:0100221", "Siamese", "Siamês"))
+      original.updateColor("Orange draft")
+      original.updateMicrochipNumber("CHIP123")
+      original.updatePassportNumber("PASS456")
+      original.updateNotes("Draft notes")
+      original.updatePhotoUri("content://draft-photo")
 
       val restored = PetFormViewModel(savedState, context, repository, photos, clock, dispatcher)
       advanceUntilIdle()
 
       assertThat(restored.uiState.value.petType).isEqualTo(PetType.CAT)
+      assertThat(restored.uiState.value.name).isEqualTo("Mimi draft")
+      assertThat(restored.uiState.value.birthDate).isEqualTo(LocalDate.of(2020, 6, 12))
+      assertThat(restored.uiState.value.sex).isEqualTo(Sex.FEMALE)
       assertThat(restored.uiState.value.breedId).isEqualTo("VBO:0100221")
       assertThat(restored.uiState.value.breed).isEqualTo("Siamese")
-      assertThat(restored.uiState.value.breedQuery).isEqualTo("sia")
+      assertThat(restored.uiState.value.color).isEqualTo("Orange draft")
+      assertThat(restored.uiState.value.microchipNumber).isEqualTo("CHIP123")
+      assertThat(restored.uiState.value.passportNumber).isEqualTo("PASS456")
+      assertThat(restored.uiState.value.notes).isEqualTo("Draft notes")
+      assertThat(restored.uiState.value.photoUri).isEqualTo("content://draft-photo")
+    }
+
+  @Test
+  fun editDraftWinsOverRepositoryValuesAfterProcessRestoration() =
+    runTest(dispatcher) {
+      repository.pet = pet(breed = "Siamese")
+      val savedState = SavedStateHandle(mapOf("petId" to repository.pet?.id))
+      val original = PetFormViewModel(savedState, context, repository, photos, clock, dispatcher)
+      advanceUntilIdle()
+      original.updateName("Unsaved edit")
+      original.updateNotes("Unsaved notes")
+
+      val restored = PetFormViewModel(savedState, context, repository, photos, clock, dispatcher)
+      advanceUntilIdle()
+
+      assertThat(restored.uiState.value.isEditMode).isTrue()
+      assertThat(restored.uiState.value.name).isEqualTo("Unsaved edit")
+      assertThat(restored.uiState.value.notes).isEqualTo("Unsaved notes")
     }
 
   @Test
@@ -228,7 +260,7 @@ class PetFormViewModelTest {
     }
 
   @Test
-  fun changedLegacyBreedKeepsExistingTrimNormalization() =
+  fun changedManualBreedRemainsByteExact() =
     runTest(dispatcher) {
       repository.pet = pet(breed = " original ")
       val viewModel = viewModel(repository.pet?.id)
@@ -238,7 +270,7 @@ class PetFormViewModelTest {
       viewModel.savePet()
       advanceUntilIdle()
 
-      assertThat(repository.saved.single().breed).isEqualTo("changed_Breed-ç")
+      assertThat(repository.saved.single().breed).isEqualTo(" changed_Breed-ç ")
     }
 
   @Test

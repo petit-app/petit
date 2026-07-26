@@ -68,39 +68,23 @@ class PetFormComposeTest {
   }
 
   @Test
-  fun catBreedSelectorSearchesCatalogAndExposesNonBreedChoices() {
+  fun catBreedFieldOpensDedicatedSelectionScreen() {
     val resources = InstrumentationRegistry.getInstrumentation().targetContext
-
-    val viewModel = showFormFor(PetType.CAT)
+    var navigationRequested = false
+    showFormFor(PetType.CAT) { navigationRequested = true }
     openBreedMenu(resources)
 
-    composeRule.onNodeWithText(resources.getString(R.string.breed_mixed)).assertIsDisplayed()
-    composeRule.onNodeWithText(resources.getString(R.string.breed_unknown)).assertIsDisplayed()
-    composeRule
-      .onNodeWithText(resources.getString(R.string.breed_catalog_search_label))
-      .performTextReplacement("Siamês")
-    assertResultCount(viewModel, 2)
-    composeRule
-      .onNodeWithText(resources.getString(R.string.breed_catalog_manual))
-      .assertIsDisplayed()
+    composeRule.runOnIdle { assertThat(navigationRequested).isTrue() }
   }
 
   @Test
-  fun dogBreedSelectorSearchesCatalogAndExposesNonBreedChoices() {
+  fun dogBreedFieldOpensDedicatedSelectionScreen() {
     val resources = InstrumentationRegistry.getInstrumentation().targetContext
-
-    val viewModel = showFormFor(PetType.DOG)
+    var navigationRequested = false
+    showFormFor(PetType.DOG) { navigationRequested = true }
     openBreedMenu(resources)
 
-    composeRule.onNodeWithText(resources.getString(R.string.breed_mixed)).assertIsDisplayed()
-    composeRule.onNodeWithText(resources.getString(R.string.breed_unknown)).assertIsDisplayed()
-    composeRule
-      .onNodeWithText(resources.getString(R.string.breed_catalog_search_label))
-      .performTextReplacement("German Shepherd Dog")
-    assertResultCount(viewModel, 1)
-    composeRule
-      .onNodeWithText(resources.getString(R.string.breed_catalog_manual))
-      .assertIsDisplayed()
+    composeRule.runOnIdle { assertThat(navigationRequested).isTrue() }
   }
 
   @Test
@@ -171,13 +155,22 @@ class PetFormComposeTest {
       .assertIsDisplayed()
   }
 
-  private fun showFormFor(petType: PetType): PetFormViewModel {
+  private fun showFormFor(
+    petType: PetType,
+    onNavigateToBreedSelection: () -> Unit,
+  ): PetFormViewModel {
     val viewModel = formViewModel()
     viewModel.updatePetType(petType)
 
     composeRule.setContent {
       PetitTheme {
-        PetFormScreen(petId = null, onNavigateBack = {}, onPetSaved = {}, viewModel = viewModel)
+        PetFormScreen(
+          petId = null,
+          onNavigateBack = {},
+          onPetSaved = {},
+          onNavigateToBreedSelection = onNavigateToBreedSelection,
+          viewModel = viewModel,
+        )
       }
     }
     return viewModel
@@ -200,15 +193,6 @@ class PetFormComposeTest {
   private fun assertManualOnlyBreedMenu(context: Context, presetLabels: List<String>) {
     assertBreedMenuItem(context.getString(R.string.option_other))
     presetLabels.forEach { label -> composeRule.onAllNodesWithText(label).assertCountEquals(0) }
-  }
-
-  private fun assertResultCount(viewModel: PetFormViewModel, count: Int) {
-    composeRule.waitUntil(timeoutMillis = 5_000) {
-      !viewModel.uiState.value.isBreedCatalogLoading &&
-        !viewModel.uiState.value.isBreedSearchLoading &&
-        viewModel.uiState.value.breedQuery.isNotEmpty()
-    }
-    assertThat(viewModel.uiState.value.breedResults).hasSize(count)
   }
 
   private fun assertBreedMenuItem(label: String) {

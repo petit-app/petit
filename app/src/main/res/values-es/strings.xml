@@ -81,11 +81,9 @@
   <string name="breed_catalog_title">Elige una raza</string>
   <string name="breed_catalog_search_label">Buscar razas</string>
   <string name="breed_catalog_empty">No hay razas coincidentes. Puedes introducir la raza manualmente.</string>
+  <string name="breed_catalog_loading">Cargando razas</string>
   <string name="breed_catalog_result_count">%1$d resultados</string>
   <string name="breed_catalog_manual">Introducir raza manualmente</string>
-  <string name="breed_catalog_clear">Borrar raza</string>
-  <string name="breed_catalog_expanded">Expandido</string>
-  <string name="breed_catalog_collapsed">Contraído</string>
   <string name="breed_unknown">Raza desconocida</string>
   <string name="pet_form_color">Color</string>
   <string name="pet_form_color_placeholder">Ej.: Naranja, Negro, Atigrado</string>

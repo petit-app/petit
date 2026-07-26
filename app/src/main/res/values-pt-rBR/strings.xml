@@ -87,11 +87,9 @@
   <string name="breed_catalog_title">Escolha uma raça</string>
   <string name="breed_catalog_search_label">Buscar raças</string>
   <string name="breed_catalog_empty">Nenhuma raça encontrada. Você ainda pode informar a raça manualmente.</string>
+  <string name="breed_catalog_loading">Carregando raças</string>
   <string name="breed_catalog_result_count">%1$d resultados</string>
   <string name="breed_catalog_manual">Informar raça manualmente</string>
-  <string name="breed_catalog_clear">Limpar raça</string>
-  <string name="breed_catalog_expanded">Expandido</string>
-  <string name="breed_catalog_collapsed">Recolhido</string>
   <string name="breed_unknown">Raça desconhecida</string>
   <string name="pet_form_color">Cor</string>
   <string name="pet_form_color_placeholder">Ex: Laranja, Preto, Rajado</string>

@@ -43,7 +43,7 @@ revision on 2026-07-26.
    review, and validate failure fallback.
 8. [~] Run focused, nearest-suite, formatting, lint, build/install, physical
    accessibility, and separately scoped two-device checks.
-9. [ ] Replace the dialog with a dedicated breed-selection navigation
+9. [x] Replace the dialog with a dedicated breed-selection navigation
    destination. Keep the pet form on the back stack, return confirmed choices
    through navigation state, and discard unconfirmed drafts on back.
 

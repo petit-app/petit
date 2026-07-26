@@ -12,12 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,11 +57,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -116,6 +111,7 @@ fun PetFormScreen(
   petId: String?,
   onNavigateBack: () -> Unit,
   onPetSaved: (String) -> Unit,
+  onNavigateToBreedSelection: () -> Unit = {},
   viewModel: PetFormViewModel = hiltViewModel(),
 ) {
   val context = LocalContext.current
@@ -127,7 +123,6 @@ fun PetFormScreen(
   var showBreedDropdown by remember { mutableStateOf(false) }
   var showColorDropdown by remember { mutableStateOf(false) }
   var showPhotoSourceDialog by remember { mutableStateOf(false) }
-  var showBreedCatalogDialog by rememberSaveable { mutableStateOf(false) }
 
   // Track if user explicitly selected "Other"
   var isBreedOther by rememberSaveable { mutableStateOf(false) }
@@ -189,39 +184,6 @@ fun PetFormScreen(
         TextButton(onClick = { showPhotoSourceDialog = false }) {
           Text(stringResource(R.string.action_cancel))
         }
-      },
-    )
-  }
-
-  if (showBreedCatalogDialog) {
-    BreedCatalogDialog(
-      uiState = uiState,
-      onDismiss = { showBreedCatalogDialog = false },
-      onQueryChange = viewModel::updateBreedSearch,
-      onBreedSelected = {
-        viewModel.selectBreed(it)
-        isBreedOther = false
-        showBreedCatalogDialog = false
-      },
-      onMixedSelected = {
-        viewModel.selectMixedBreed()
-        isBreedOther = false
-        showBreedCatalogDialog = false
-      },
-      onUnknownSelected = {
-        viewModel.selectUnknownBreed()
-        isBreedOther = false
-        showBreedCatalogDialog = false
-      },
-      onManualSelected = {
-        viewModel.clearBreed()
-        isBreedOther = true
-        showBreedCatalogDialog = false
-      },
-      onClear = {
-        viewModel.clearBreed()
-        isBreedOther = false
-        showBreedCatalogDialog = false
       },
     )
   }
@@ -471,21 +433,13 @@ fun PetFormScreen(
                   uiState.breedDisplayName
                     ?: uiState.breed.takeIf { it.isNotBlank() }
                     ?: noBreedSelected
-                val expandedState =
-                  stringResource(
-                    if (showBreedCatalogDialog) {
-                      R.string.breed_catalog_expanded
-                    } else {
-                      R.string.breed_catalog_collapsed
-                    }
-                  )
                 ExposedDropdownMenuBox(
                   expanded = false,
-                  onExpandedChange = { showBreedCatalogDialog = true },
+                  onExpandedChange = { onNavigateToBreedSelection() },
                   modifier =
                     Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
                       contentDescription = breedLabel
-                      stateDescription = "$selectedBreed, $expandedState"
+                      stateDescription = selectedBreed
                       role = Role.Button
                     },
                 ) {
@@ -495,9 +449,7 @@ fun PetFormScreen(
                     modifier =
                       Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     readOnly = true,
-                    trailingIcon = {
-                      ExposedDropdownMenuDefaults.TrailingIcon(expanded = showBreedCatalogDialog)
-                    },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = false) },
                     shape = RoundedCornerShape(12.dp),
                     colors =
                       OutlinedTextFieldDefaults.colors(
@@ -734,66 +686,6 @@ fun PetFormScreen(
       }
     }
   }
-}
-
-@Composable
-private fun BreedCatalogDialog(
-  uiState: PetFormUiState,
-  onDismiss: () -> Unit,
-  onQueryChange: (String) -> Unit,
-  onBreedSelected: (com.woliveiras.petit.domain.model.BreedCatalogItem) -> Unit,
-  onMixedSelected: () -> Unit,
-  onUnknownSelected: () -> Unit,
-  onManualSelected: () -> Unit,
-  onClear: () -> Unit,
-) {
-  AlertDialog(
-    onDismissRequest = onDismiss,
-    title = { Text(stringResource(R.string.breed_catalog_title)) },
-    text = {
-      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-          value = uiState.breedQuery,
-          onValueChange = onQueryChange,
-          modifier = Modifier.fillMaxWidth(),
-          label = { Text(stringResource(R.string.breed_catalog_search_label)) },
-          singleLine = true,
-        )
-        TextButton(onClick = onMixedSelected) { Text(stringResource(R.string.breed_mixed)) }
-        TextButton(onClick = onUnknownSelected) { Text(stringResource(R.string.breed_unknown)) }
-        if (uiState.isBreedCatalogLoading || uiState.isBreedSearchLoading) {
-          CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else if (uiState.breedResults.isEmpty()) {
-          Text(
-            text = stringResource(R.string.breed_catalog_empty),
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-          )
-        } else {
-          Text(
-            stringResource(R.string.breed_catalog_result_count, uiState.breedResults.size),
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            style = MaterialTheme.typography.labelMedium,
-          )
-          LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 280.dp)) {
-            items(uiState.breedResults, key = { it.id }) { breed ->
-              TextButton(onClick = { onBreedSelected(breed) }, modifier = Modifier.fillMaxWidth()) {
-                Text(breed.displayName, modifier = Modifier.fillMaxWidth())
-              }
-            }
-          }
-        }
-        TextButton(onClick = onManualSelected) {
-          Text(stringResource(R.string.breed_catalog_manual))
-        }
-      }
-    },
-    confirmButton = {
-      TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-    },
-    dismissButton = {
-      TextButton(onClick = onClear) { Text(stringResource(R.string.breed_catalog_clear)) }
-    },
-  )
 }
 
 @Composable

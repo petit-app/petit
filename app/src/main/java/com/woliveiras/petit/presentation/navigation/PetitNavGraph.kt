@@ -1,7 +1,11 @@
 package com.woliveiras.petit.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,11 +22,16 @@ import com.woliveiras.petit.presentation.feature.familygroup.PairingScreen
 import com.woliveiras.petit.presentation.feature.familygroup.TransferScreen
 import com.woliveiras.petit.presentation.feature.home.HomeScreen
 import com.woliveiras.petit.presentation.feature.onboarding.OnboardingScreen
+import com.woliveiras.petit.presentation.feature.pets.BreedSelectionRoute
+import com.woliveiras.petit.presentation.feature.pets.BreedSelectionValue
 import com.woliveiras.petit.presentation.feature.pets.PetDeleteConfirmationScreen
 import com.woliveiras.petit.presentation.feature.pets.PetDetailScreen
 import com.woliveiras.petit.presentation.feature.pets.PetFormScreen
+import com.woliveiras.petit.presentation.feature.pets.PetFormViewModel
 import com.woliveiras.petit.presentation.feature.pets.PetListScreen
 import com.woliveiras.petit.presentation.feature.pets.PetSelectionScreen
+import com.woliveiras.petit.presentation.feature.pets.toBreedSelectionValue
+import com.woliveiras.petit.presentation.feature.pets.toNavigationResult
 import com.woliveiras.petit.presentation.feature.quickadd.QuickAddScreen
 import com.woliveiras.petit.presentation.feature.settings.SettingsScreen
 import com.woliveiras.petit.presentation.feature.tasks.CompletedTasksScreen
@@ -34,6 +43,8 @@ import com.woliveiras.petit.presentation.feature.vaccination.VaccinationFormScre
 import com.woliveiras.petit.presentation.feature.vaccination.VaccinationRecordsScreen
 import com.woliveiras.petit.presentation.feature.weight.WeightEntryScreen
 import com.woliveiras.petit.presentation.feature.weight.WeightFormScreen
+
+private const val BREED_SELECTION_RESULT = "breedSelectionResult"
 
 /** Main navigation graph for the app. */
 @Composable
@@ -168,14 +179,51 @@ fun PetitNavGraph(
         ),
     ) { backStackEntry ->
       val petId = backStackEntry.arguments?.getString("petId")
+      val petFormViewModel: PetFormViewModel = hiltViewModel(backStackEntry)
+      val breedSelectionResult by
+        backStackEntry.savedStateHandle
+          .getStateFlow<android.os.Bundle?>(BREED_SELECTION_RESULT, null)
+          .collectAsStateWithLifecycle()
+      LaunchedEffect(breedSelectionResult) {
+        breedSelectionResult?.let { result ->
+          petFormViewModel.applyBreedSelection(result.toBreedSelectionValue())
+          backStackEntry.savedStateHandle.remove<android.os.Bundle>(BREED_SELECTION_RESULT)
+        }
+      }
       PetFormScreen(
         petId = petId,
         onNavigateBack = { navController.popBackStack() },
+        onNavigateToBreedSelection = {
+          navController.navigate(Screen.BreedSelection.route) { launchSingleTop = true }
+        },
         onPetSaved = { savedPetId ->
           navController.popBackStack()
           if (petId == null) {
             navController.navigate(Screen.PetDetail.createRoute(savedPetId))
           }
+        },
+        viewModel = petFormViewModel,
+      )
+    }
+
+    // Dedicated breed selection for the active pet form
+    composable(Screen.BreedSelection.route) {
+      val petFormEntry = navController.previousBackStackEntry ?: return@composable
+      if (petFormEntry.destination.route != Screen.PetForm.route) return@composable
+      val petFormViewModel: PetFormViewModel = hiltViewModel(petFormEntry)
+      val petFormState by petFormViewModel.uiState.collectAsStateWithLifecycle()
+      BreedSelectionRoute(
+        species = petFormState.petType,
+        initialSelection =
+          BreedSelectionValue(
+            breedId = petFormState.breedId,
+            breed = petFormState.breed,
+            displayName = petFormState.breedDisplayName,
+          ),
+        onNavigateBack = { navController.popBackStack() },
+        onConfirmed = { selection ->
+          petFormEntry.savedStateHandle[BREED_SELECTION_RESULT] = selection.toNavigationResult()
+          navController.popBackStack()
         },
       )
     }

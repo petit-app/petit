@@ -87,11 +87,9 @@
     <string name="breed_catalog_title">Choose a breed</string>
     <string name="breed_catalog_search_label">Search breeds</string>
     <string name="breed_catalog_empty">No matching breeds. You can still enter the breed manually.</string>
+    <string name="breed_catalog_loading">Loading breeds</string>
     <string name="breed_catalog_result_count">%1$d results</string>
     <string name="breed_catalog_manual">Enter breed manually</string>
-    <string name="breed_catalog_clear">Clear breed</string>
-    <string name="breed_catalog_expanded">Expanded</string>
-    <string name="breed_catalog_collapsed">Collapsed</string>
     <string name="breed_unknown">Unknown breed</string>
     <string name="pet_form_color">Color</string>
     <string name="pet_form_color_placeholder">E.g.: Orange, Black, Tabby</string>

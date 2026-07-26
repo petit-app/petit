@@ -66,7 +66,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     English and pt-BR.
   - verification: focused JVM and instrumented pet-form suites.
 
-- [~] **Move breed selection to a dedicated confirmation screen** (test-type: both)
+- [x] **Move breed selection to a dedicated confirmation screen** (test-type: both)
   - blocked-by: none
   - desired behavior: cat and dog breed selection uses a focused full-screen
     destination, keeps choices as drafts, and returns only an explicitly
@@ -79,6 +79,10 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     Compose navigation tests in English and pt-BR.
   - verification: focused JVM tests, API 34 emulator journey, Android-test
     compilation, and physical TalkBack review reported separately.
+  - evidence: draft/confirmation, exact manual value, future-ID, navigation
+    result, full-form process restoration, and validation-limit JVM tests pass;
+    10 focused Compose tests pass on the API 34 emulator. Physical TalkBack
+    review remains part of release-level verification.
 
 - [x] **Expose catalog provenance and license** (test-type: both)
   - blocked-by: reviewed offline breed snapshot
@@ -106,5 +110,6 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     separately reported two-device checks.
   - evidence: generator reproduction, JVM tests, formatting, Android-test
     compilation, Room migration, and focused Compose tests ran on the API 34
-    emulator. `lintDebug` remains blocked by pre-existing repository debt;
-    physical TalkBack and two-device validation remain open.
+    emulator, including the dedicated selection screen. `lintDebug` remains
+    blocked by 103 pre-existing errors; physical TalkBack and two-device
+    validation remain open.
