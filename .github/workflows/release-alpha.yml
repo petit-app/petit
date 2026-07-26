@@ -1,0 +1,180 @@
+name: Release Android Alpha
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: petit-google-play-alpha
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-ref:
+    name: Validate release ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require main or a version tag
+        shell: bash
+        run: |
+          case "$GITHUB_REF" in
+            refs/heads/main|refs/tags/v*)
+              ;;
+            *)
+              printf 'Release rejected: use main or a v* tag.\n' >&2
+              exit 1
+              ;;
+          esac
+
+  release-alpha:
+    name: Publish alpha through Fastlane
+    needs: validate-ref
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: alpha
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      FASTLANE_SKIP_UPDATE_CHECK: "true"
+      FASTLANE_HIDE_CHANGELOG: "true"
+    steps:
+      - name: Check out approved source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Validate protected release configuration
+        id: release-config
+        shell: bash
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 != '' }}
+          HAS_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD != '' }}
+          HAS_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS != '' }}
+          HAS_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD != '' }}
+          OIDC_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          OIDC_SERVICE_ACCOUNT: ${{ vars.GCP_PLAY_PUBLISHER_SERVICE_ACCOUNT }}
+          HAS_JSON_FALLBACK: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        run: |
+          declare -A required_secrets=(
+            [HAS_KEYSTORE]=ANDROID_UPLOAD_KEYSTORE_BASE64
+            [HAS_STORE_PASSWORD]=ANDROID_UPLOAD_STORE_PASSWORD
+            [HAS_KEY_ALIAS]=ANDROID_UPLOAD_KEY_ALIAS
+            [HAS_KEY_PASSWORD]=ANDROID_UPLOAD_KEY_PASSWORD
+          )
+          for required in "${!required_secrets[@]}"
+          do
+            if [[ "${!required}" != "true" ]]; then
+              printf 'Missing required alpha environment secret: %s\n' \
+                "${required_secrets[$required]}" >&2
+              exit 1
+            fi
+          done
+
+          has_oidc="false"
+          if [[ -n "$OIDC_PROVIDER" && -n "$OIDC_SERVICE_ACCOUNT" ]]; then
+            has_oidc="true"
+          elif [[ -n "$OIDC_PROVIDER" || -n "$OIDC_SERVICE_ACCOUNT" ]]; then
+            printf 'Both GCP Workload Identity variables are required.\n' >&2
+            exit 1
+          fi
+
+          if [[ "$has_oidc" == "true" && "$HAS_JSON_FALLBACK" == "true" ]]; then
+            printf 'Configure OIDC or the JSON fallback, not both.\n' >&2
+            exit 1
+          fi
+          if [[ "$has_oidc" != "true" && "$HAS_JSON_FALLBACK" != "true" ]]; then
+            printf 'No Google Play authentication mode is configured.\n' >&2
+            exit 1
+          fi
+
+          if [[ "$has_oidc" == "true" ]]; then
+            printf 'auth_mode=oidc\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'auth_mode=json\n' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+        with:
+          cache-disabled: true
+
+      - name: Set up Ruby and locked gems
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        with:
+          bundler-cache: true
+
+      - name: Authenticate with Google through Workload Identity
+        id: auth-oidc
+        if: steps.release-config.outputs.auth_mode == 'oidc'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAY_PUBLISHER_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+
+      - name: Authenticate with temporary JSON fallback
+        id: auth-json
+        if: steps.release-config.outputs.auth_mode == 'json'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          create_credentials_file: true
+
+      - name: Reconstruct temporary upload signing
+        shell: bash
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          release_tmp="${RUNNER_TEMP}/petit-release"
+          keystore_path="${release_tmp}/upload-key.jks"
+          mkdir -p "$release_tmp"
+          chmod 700 "$release_tmp"
+          printf '%s' "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          chmod 600 "$keystore_path"
+          printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$keystore_path" \
+            "$UPLOAD_STORE_PASSWORD" \
+            "$UPLOAD_KEY_ALIAS" \
+            "$UPLOAD_KEY_PASSWORD" \
+            > keystore.properties
+          chmod 600 keystore.properties
+
+      - name: Deploy the shared alpha lane
+        shell: bash
+        env:
+          GOOGLE_PLAY_JSON_KEY: ${{ steps.auth-oidc.outputs.credentials_file_path || steps.auth-json.outputs.credentials_file_path }}
+        run: bundle exec fastlane android deploy_alpha
+
+      - name: Record source provenance
+        if: success()
+        shell: bash
+        run: |
+          {
+            printf "### Android alpha release\n\n"
+            printf -- "- Commit: \`%s\`\n" "$GITHUB_SHA"
+            printf -- "- Ref: \`%s\`\n" "$GITHUB_REF"
+            printf -- "- Track: \`alpha\`\n"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove temporary release credentials
+        if: always()
+        shell: bash
+        env:
+          GOOGLE_CREDENTIAL_FILE: ${{ steps.auth-oidc.outputs.credentials_file_path || steps.auth-json.outputs.credentials_file_path }}
+        run: |
+          rm -f keystore.properties
+          rm -f "${RUNNER_TEMP}/petit-release/upload-key.jks"
+          rmdir "${RUNNER_TEMP}/petit-release" 2>/dev/null || true
+          if [[ -n "$GOOGLE_CREDENTIAL_FILE" ]]; then
+            rm -f "$GOOGLE_CREDENTIAL_FILE"
+          fi
+          find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name 'gha-creds-*.json' -delete
