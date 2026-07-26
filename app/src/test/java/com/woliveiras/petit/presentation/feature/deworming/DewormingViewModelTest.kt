@@ -9,6 +9,7 @@ import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.domain.model.DewormingEntry
 import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.Pet
+import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.worker.AutoTaskService
 import java.time.Clock
 import java.time.Instant
@@ -66,49 +67,54 @@ class DewormingViewModelTest {
   fun formStartsAtControlledToday() {
     assertThat(viewModel.uiState.value.today).isEqualTo(LocalDate.of(2026, 7, 17))
     assertThat(viewModel.uiState.value.form.applicationDate).isEqualTo(LocalDate.of(2026, 7, 17))
+    assertThat(viewModel.uiState.value.form.nextDueDate).isNull()
   }
 
   @Test
-  fun updateApplicationDateKeepsSelectedIntervalOffset() =
+  fun onlyExplicitNextDueDateUpdatesCanDefineOrClearTheDate() {
+    val applicationDate = LocalDate.of(2026, 7, 1)
+    val manualNextDueDate = LocalDate.of(2026, 8, 15)
+
+    viewModel.updateDewormingType(DewormingType.EXTERNAL)
+    viewModel.updateApplicationDate(applicationDate)
+    viewModel.updateMedication("Veterinarian supplied medication")
+    assertThat(viewModel.uiState.value.form.nextDueDate).isNull()
+
+    viewModel.updateNextDueDate(manualNextDueDate)
+    viewModel.updateDewormingType(DewormingType.BOTH)
+    viewModel.updateApplicationDate(applicationDate.plusDays(1))
+    viewModel.updateMedication("Updated veterinarian supplied medication")
+    assertThat(viewModel.uiState.value.form.nextDueDate).isEqualTo(manualNextDueDate)
+
+    viewModel.updateNextDueDate(null)
+    assertThat(viewModel.uiState.value.form.nextDueDate).isNull()
+  }
+
+  @Test
+  fun everySpeciesAndTreatmentCategoryUsesManualOnlyCatalogOptionsWithoutAnInterval() =
+    runTest(dispatcher) {
+      PetType.entries.forEach { petType ->
+        val speciesViewModel = newViewModel(petType)
+        advanceUntilIdle()
+        DewormingType.entries.forEach { type ->
+          speciesViewModel.updateDewormingType(type)
+          val options = speciesViewModel.uiState.value.antiparasiticOptions
+          assertThat(options.manualEntryLabelKey).isEqualTo("deworming_field_medication_custom")
+          assertThat(options.suggestedIntervalMonths).isNull()
+        }
+      }
+    }
+
+  @Test
+  fun legacyMedicationRemainsWhenTheCaregiverChangesTreatmentType() =
     runTest(dispatcher) {
       val initialApplicationDate = LocalDate.of(2026, 7, 1)
       val newApplicationDate = LocalDate.of(2026, 7, 10)
 
-      viewModel.updateApplicationDate(initialApplicationDate)
-      viewModel.updateNextDueDate(initialApplicationDate.plusMonths(2))
-      viewModel.updateApplicationDate(newApplicationDate)
+      viewModel.updateMedication("Legacy brand")
+      viewModel.updateDewormingType(DewormingType.BOTH)
 
-      assertThat(viewModel.uiState.value.form.nextDueDate)
-        .isEqualTo(newApplicationDate.plusMonths(2))
-    }
-
-  @Test
-  fun selectCustomIntervalClearsStaleNextDueDate() =
-    runTest(dispatcher) {
-      val applicationDate = LocalDate.of(2026, 7, 1)
-
-      viewModel.updateApplicationDate(applicationDate)
-      viewModel.updateMonthlyInterval(2)
-      viewModel.selectCustomInterval()
-
-      assertThat(viewModel.uiState.value.form.customIntervalValue).isEmpty()
-      assertThat(viewModel.uiState.value.form.nextDueDate).isNull()
-    }
-
-  @Test
-  fun updateApplicationDateRecalculatesCustomInterval() =
-    runTest(dispatcher) {
-      val initialApplicationDate = LocalDate.of(2026, 7, 1)
-      val newApplicationDate = LocalDate.of(2026, 7, 10)
-
-      viewModel.updateApplicationDate(initialApplicationDate)
-      viewModel.selectCustomInterval()
-      viewModel.updateCustomIntervalUnit(DewormingIntervalUnit.DAILY)
-      viewModel.updateCustomIntervalValue("15")
-      viewModel.updateApplicationDate(newApplicationDate)
-
-      assertThat(viewModel.uiState.value.form.nextDueDate)
-        .isEqualTo(newApplicationDate.plusDays(15))
+      assertThat(viewModel.uiState.value.form.medication).isEqualTo("Legacy brand")
     }
 
   @Test
@@ -169,6 +175,52 @@ class DewormingViewModelTest {
     }
 
   @Test
+  fun unchangedLegacyMedicationSurvivesOpenAndSaveByteExact() =
+    runTest(dispatcher) {
+      val rawMedication = " Marca X® "
+      val original =
+        entry(
+          id = "entry-legacy-medication",
+          createdAt = 10L,
+          updatedAt = 20L,
+          medication = rawMedication,
+        )
+      repository.entries.value = listOf(original)
+      advanceUntilIdle()
+      viewModel.loadEntryForEdit(original.id)
+      advanceUntilIdle()
+
+      viewModel.saveDeworming()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().medication).isEqualTo(rawMedication)
+    }
+
+  @Test
+  fun editingPreservesLegacyNextDueDateWithoutIntervalRecalculation() =
+    runTest(dispatcher) {
+      val legacyNextDueDate = LocalDate.of(2026, 8, 15)
+      val original =
+        entry(
+          id = "entry-legacy-date",
+          createdAt = 10L,
+          updatedAt = 20L,
+          nextDueDate = legacyNextDueDate,
+        )
+      repository.entries.value = listOf(original)
+      advanceUntilIdle()
+      viewModel.loadEntryForEdit(original.id)
+      advanceUntilIdle()
+
+      viewModel.updateDewormingType(DewormingType.BOTH)
+      viewModel.updateMedication("Updated medication")
+      viewModel.saveDeworming()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().nextDueDate).isEqualTo(legacyNextDueDate)
+    }
+
+  @Test
   fun deleteCurrentEntrySoftDeletesAndCancelsAutomaticTask() =
     runTest(dispatcher) {
       val original = entry(id = "entry-1", createdAt = 10L, updatedAt = 20L)
@@ -184,21 +236,46 @@ class DewormingViewModelTest {
       assertThat(autoTaskService.deleted).containsExactly(original.id)
     }
 
-  private fun entry(id: String, createdAt: Long, updatedAt: Long) =
+  private fun entry(
+    id: String,
+    createdAt: Long,
+    updatedAt: Long,
+    nextDueDate: LocalDate? = null,
+    medication: String = "Milbemax",
+  ) =
     DewormingEntry(
       id = id,
       petId = "pet-1",
       type = DewormingType.INTERNAL,
-      medication = "Milbemax",
+      medication = medication,
       applicationDate = LocalDate.of(2026, 7, 1),
+      nextDueDate = nextDueDate,
       createdAt = createdAt,
       updatedAt = updatedAt,
     )
 
-  private class FakePetRepository : PetRepository {
+  private fun newViewModel(petType: PetType) =
+    DewormingViewModel(
+      savedStateHandle = SavedStateHandle(mapOf("petId" to "pet-1")),
+      context = context,
+      petRepository = FakePetRepository(petType),
+      dewormingRepository = repository,
+      autoTaskService = autoTaskService,
+      clock = clock,
+    )
+
+  private class FakePetRepository(private val petType: PetType = PetType.CAT) : PetRepository {
     override fun getAllPets(): Flow<List<Pet>> = MutableStateFlow(emptyList())
 
-    override suspend fun getPetById(id: String): Pet? = null
+    override suspend fun getPetById(id: String): Pet? =
+      Pet(
+        id = id,
+        name = "Mimi",
+        petType = petType,
+        sex = com.woliveiras.petit.domain.model.Sex.UNKNOWN,
+        createdAt = 1L,
+        updatedAt = 1L,
+      )
 
     override fun getPetByIdFlow(id: String): Flow<Pet?> = MutableStateFlow(null)
 

@@ -29,6 +29,7 @@ import com.woliveiras.petit.domain.pairing.PairingMessage
 import com.woliveiras.petit.domain.pairing.PairingProtocol
 import com.woliveiras.petit.domain.pairing.PairingRejectionReason
 import com.woliveiras.petit.domain.transfer.MonotonicTransferProgress
+import com.woliveiras.petit.domain.transfer.NearbyTransferPayloadCodec
 import com.woliveiras.petit.domain.transfer.TransferAuthorization
 import com.woliveiras.petit.domain.transfer.TransferPayloadMode
 import com.woliveiras.petit.domain.transfer.TransferPayloadPolicy
@@ -43,7 +44,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONObject
 
 /** Nearby transport with an explicit, short-lived authorization handshake. */
 @Singleton
@@ -362,7 +362,7 @@ constructor(
   override suspend fun sendData(endpointId: String, bundle: ExportBundle) {
     require(endpointId == connectedEndpointIdRef.get()) { "Endpoint is not authorized" }
     require(endpointId == authorizedEndpointIdRef.get()) { "Endpoint is not authorized" }
-    val bytes = bundle.toJson().toString().toByteArray(Charsets.UTF_8)
+    val bytes = NearbyTransferPayloadCodec.encode(bundle)
     val mode = TransferPayloadPolicy.select(bytes.size.toLong())
     _transferState.value = TransferState.Sending(0, bytes.size.toLong())
     val payload =
@@ -512,7 +512,7 @@ constructor(
           String(bytes, Charsets.UTF_8)
         } ?: receivedPayloadData.toString()
       require(data.isNotEmpty())
-      val bundle = ExportBundle.fromJson(JSONObject(data))
+      val bundle = NearbyTransferPayloadCodec.decode(data)
       val errors = ExportBundle.validate(bundle)
       _transferState.value =
         if (errors.isEmpty()) TransferState.Complete(bundle)

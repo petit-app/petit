@@ -97,6 +97,7 @@ class PetFormViewModelTest {
       val viewModel = viewModel()
       viewModel.updateName("  Mimi  ")
       viewModel.updatePetType(PetType.CAT)
+      viewModel.updateBreed("  New breed  ")
 
       viewModel.events.test {
         viewModel.savePet()
@@ -104,10 +105,82 @@ class PetFormViewModelTest {
 
         val saved = repository.saved.single()
         assertThat(saved.name).isEqualTo("Mimi")
+        assertThat(saved.breed).isEqualTo("New breed")
         assertThat(saved.createdAt).isEqualTo(clock.millis())
         assertThat(saved.updatedAt).isEqualTo(clock.millis())
         assertThat(awaitItem()).isEqualTo(PetFormEvent.PetSaved(saved.id))
       }
+    }
+
+  @Test
+  fun changingSpeciesPreservesKnownLegacyAndCustomBreedValuesForEverySupportedSpecies() =
+    runTest(dispatcher) {
+      val viewModel = viewModel()
+
+      listOf("PERSIAN", "Legacy breed", "Raça personalizada").forEach { breed ->
+        PetType.entries.forEach { petType ->
+          viewModel.updateBreed(breed)
+          viewModel.updatePetType(petType)
+
+          assertThat(viewModel.uiState.value.petType).isEqualTo(petType)
+          assertThat(viewModel.uiState.value.breed).isEqualTo(breed)
+        }
+      }
+    }
+
+  @Test
+  fun breedIsClearedOnlyWhenTheCaregiverExplicitlyClearsIt() =
+    runTest(dispatcher) {
+      val viewModel = viewModel()
+      viewModel.updateBreed("PERSIAN")
+
+      viewModel.updatePetType(PetType.RABBIT)
+      assertThat(viewModel.uiState.value.breed).isEqualTo("PERSIAN")
+
+      viewModel.updateBreed("")
+      assertThat(viewModel.uiState.value.breed).isEmpty()
+    }
+
+  @Test
+  fun savePreservesTheStableBreedKeyInsteadOfReplacingItWithDisplayText() =
+    runTest(dispatcher) {
+      val viewModel = viewModel()
+      viewModel.updateName("Mimi")
+      viewModel.updatePetType(PetType.CAT)
+      viewModel.updateBreed("PERSIAN")
+
+      viewModel.savePet()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().breed).isEqualTo("PERSIAN")
+    }
+
+  @Test
+  fun unchangedLegacyBreedSurvivesOpenAndSaveByteExact() =
+    runTest(dispatcher) {
+      val rawBreed = " legacy_Breed-ç "
+      repository.pet = pet(breed = rawBreed)
+      val viewModel = viewModel(repository.pet?.id)
+      advanceUntilIdle()
+
+      viewModel.savePet()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().breed).isEqualTo(rawBreed)
+    }
+
+  @Test
+  fun changedLegacyBreedKeepsExistingTrimNormalization() =
+    runTest(dispatcher) {
+      repository.pet = pet(breed = " original ")
+      val viewModel = viewModel(repository.pet?.id)
+      advanceUntilIdle()
+
+      viewModel.updateBreed(" changed_Breed-ç ")
+      viewModel.savePet()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().breed).isEqualTo("changed_Breed-ç")
     }
 
   @Test
@@ -204,11 +277,13 @@ class PetFormViewModelTest {
     createdAt: Long = 1,
     updatedAt: Long = 1,
     photoUri: String? = null,
+    breed: String? = null,
   ) =
     Pet(
       id = "pet-1",
       name = name,
       petType = PetType.CAT,
+      breed = breed,
       photoUri = photoUri,
       createdAt = createdAt,
       updatedAt = updatedAt,

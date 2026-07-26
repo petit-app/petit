@@ -51,6 +51,57 @@ class ExportBundleTest {
   }
 
   @Test
+  fun careCompatibilityValuesRoundTripWithoutLocalizationOrCatalogRewrite() {
+    val pets =
+      PetType.entries.mapIndexed { index, petType ->
+        Pet(
+          id = "pet-$index",
+          name = "Pet $index",
+          petType = petType,
+          sex = Sex.UNKNOWN,
+          breed = listOf("PERSIAN", "Custom rescue breed", "legacy_Breed-ç")[index % 3],
+          createdAt = 1L,
+          updatedAt = 1L,
+        )
+      }
+    val vaccination =
+      VaccinationEntry(
+        id = "vacc-1",
+        petId = pets.first().id,
+        vaccineType = VaccineType.OTHER,
+        customVaccineTypeName = "Legacy veterinary vaccine",
+        applicationDate = java.time.LocalDate.of(2026, 7, 1),
+        createdAt = 1L,
+        updatedAt = 1L,
+      )
+    val deworming =
+      DewormingEntry(
+        id = "dew-1",
+        petId = pets.last().id,
+        type = DewormingType.BOTH,
+        medication = "Legacy active ingredient",
+        applicationDate = java.time.LocalDate.of(2026, 7, 1),
+        createdAt = 1L,
+        updatedAt = 1L,
+      )
+
+    val restored =
+      ExportBundle.fromJson(
+        emptyBundle()
+          .copy(
+            pets = pets,
+            vaccinationEntries = listOf(vaccination),
+            dewormingEntries = listOf(deworming),
+          )
+          .toJson()
+      )
+
+    assertThat(restored.pets).isEqualTo(pets)
+    assertThat(restored.vaccinationEntries).containsExactly(vaccination)
+    assertThat(restored.dewormingEntries).containsExactly(deworming)
+  }
+
+  @Test
   fun membershipChangesRoundTripAndContributeToTheTransferredEntityCount() {
     val change =
       MembershipChange(

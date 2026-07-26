@@ -55,9 +55,9 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /** Screen for adding or editing a vaccination entry. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -139,11 +139,10 @@ fun VaccinationFormScreen(
 
   // Next Due Date Picker Dialog
   if (showNextDueDatePicker) {
-    val initialDate = form.nextDueDate ?: form.applicationDate.plusYears(1)
     val datePickerState =
       rememberDatePickerState(
         initialSelectedDateMillis =
-          initialDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+          form.nextDueDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
       )
 
     DatePickerDialog(
@@ -208,7 +207,7 @@ fun VaccinationFormScreen(
       )
     },
   ) { padding ->
-    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val displayFormatter = rememberAppDisplayFormatter()
 
     Column(
       modifier =
@@ -265,6 +264,12 @@ fun VaccinationFormScreen(
         onValueChange = viewModel::updateCustomName,
       )
 
+      Text(
+        text = stringResource(R.string.care_presets_veterinary_advisory),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+
       // Application Date
       FormField(
         label = stringResource(R.string.vaccination_field_application_date).replace(" *", "")
@@ -275,7 +280,7 @@ fun VaccinationFormScreen(
           shape = RoundedCornerShape(12.dp),
         ) {
           Text(
-            text = form.applicationDate.format(dateFormatter),
+            text = displayFormatter.shortDate(form.applicationDate),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth().padding(16.dp),
           )
@@ -304,7 +309,7 @@ fun VaccinationFormScreen(
           ) {
             Text(
               text =
-                form.nextDueDate?.format(dateFormatter)
+                form.nextDueDate?.let(displayFormatter::shortDate)
                   ?: stringResource(R.string.vaccination_field_next_due_date_placeholder),
               style = MaterialTheme.typography.bodyLarge,
               color =

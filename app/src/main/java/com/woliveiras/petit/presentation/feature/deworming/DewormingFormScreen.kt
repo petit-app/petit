@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -47,10 +46,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,62 +55,9 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-
-// Common option
-private const val OTHER_OPTION = "OTHER"
-
-private val monthlyIntervalOptions = listOf(1, 2, 3, 4, 5, 6)
-private val intervalUnitOptions =
-  listOf(DewormingIntervalUnit.DAILY, DewormingIntervalUnit.WEEKLY, DewormingIntervalUnit.MONTHLY)
-
-// Common internal deworming medications (for intestinal parasites)
-private val internalDewormingMedications =
-  listOf(
-    "MILBEMAX",
-    "DRONTAL",
-    "PANACUR",
-    "PROFENDER",
-    "ADVOCATE",
-    "BROADLINE",
-    "STRONGHOLD_PLUS",
-    "CAZITEL",
-    "DRONCIT",
-    OTHER_OPTION,
-  )
-
-// Common external deworming medications (for fleas, ticks, mites)
-private val externalDewormingMedications =
-  listOf(
-    "FRONTLINE",
-    "ADVANTAGE",
-    "REVOLUTION",
-    "SERESTO",
-    "BRAVECTO",
-    "NEXGARD",
-    "ADVOCATE",
-    "BROADLINE",
-    "STRONGHOLD",
-    "FIPRONIL",
-    OTHER_OPTION,
-  )
-
-// Combined deworming medications (for both internal and external)
-private val bothDewormingMedications =
-  listOf(
-    "ADVOCATE",
-    "BROADLINE",
-    "STRONGHOLD_PLUS",
-    "MILBEMAX",
-    "DRONTAL",
-    "PROFENDER",
-    "FRONTLINE",
-    "REVOLUTION",
-    "BRAVECTO",
-    OTHER_OPTION,
-  )
 
 /** Screen for adding or editing a deworming entry. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -129,11 +73,7 @@ fun DewormingFormScreen(
   var showApplicationDatePicker by remember { mutableStateOf(false) }
   var showNextDueDatePicker by remember { mutableStateOf(false) }
   var dewormingTypeExpanded by remember { mutableStateOf(false) }
-  var medicationDropdownExpanded by remember { mutableStateOf(false) }
-  var isMedicationOther by remember { mutableStateOf(false) }
 
-  var showMonthlyIntervalPicker by remember { mutableStateOf(false) }
-  var customIntervalUnitExpanded by remember { mutableStateOf(false) }
   // Track if the user has explicitly selected a deworming type
   var hasSelectedType by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
@@ -201,11 +141,10 @@ fun DewormingFormScreen(
 
   // Next Due Date Picker Dialog
   if (showNextDueDatePicker) {
-    val initialDate = form.nextDueDate ?: form.applicationDate.plusMonths(3)
     val datePickerState =
       rememberDatePickerState(
         initialSelectedDateMillis =
-          initialDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+          form.nextDueDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
       )
 
     DatePickerDialog(
@@ -270,7 +209,7 @@ fun DewormingFormScreen(
       )
     },
   ) { padding ->
-    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val displayFormatter = rememberAppDisplayFormatter()
 
     Column(
       modifier =
@@ -312,9 +251,6 @@ fun DewormingFormScreen(
                 onClick = {
                   viewModel.updateDewormingType(type)
                   hasSelectedType = true
-                  // Reset medication when type changes
-                  isMedicationOther = false
-                  viewModel.updateMedication("")
                   dewormingTypeExpanded = false
                 },
               )
@@ -323,102 +259,20 @@ fun DewormingFormScreen(
         }
       }
 
+      Text(
+        text = stringResource(R.string.care_presets_veterinary_advisory),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+
       // Medication
       FormField(label = stringResource(R.string.deworming_field_medication).replace(" *", "")) {
-        // Get the right medication list based on deworming type
-        val medicationList =
-          when (form.dewormingType) {
-            DewormingType.INTERNAL -> internalDewormingMedications
-            DewormingType.EXTERNAL -> externalDewormingMedications
-            DewormingType.BOTH -> bothDewormingMedications
-          }
-        val localizedMedications = medicationList.associateWith { getMedicationName(it) }
-        val otherLabel = stringResource(R.string.option_other)
-        val selectMedicationLabel = stringResource(R.string.deworming_field_medication_select)
-        val selectTypeFirstLabel =
-          stringResource(R.string.deworming_field_medication_select_type_first)
-
-        // Determine if current medication is a known option or custom
-        val isKnownMedication =
-          form.medication.isNotEmpty() &&
-            localizedMedications.values.any { it.equals(form.medication, ignoreCase = true) }
-        val showCustomMedicationInput =
-          hasSelectedType &&
-            (isMedicationOther || (form.medication.isNotEmpty() && !isKnownMedication))
-
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          ExposedDropdownMenuBox(
-            expanded = medicationDropdownExpanded && hasSelectedType,
-            onExpandedChange = { if (hasSelectedType) medicationDropdownExpanded = it },
-          ) {
-            val displayText =
-              when {
-                !hasSelectedType -> selectTypeFirstLabel
-                form.medication.isEmpty() -> selectMedicationLabel
-                showCustomMedicationInput -> otherLabel
-                else -> form.medication
-              }
-            OutlinedTextField(
-              value = displayText,
-              onValueChange = {},
-              readOnly = true,
-              enabled = hasSelectedType,
-              placeholder = {
-                Text(if (hasSelectedType) selectMedicationLabel else selectTypeFirstLabel)
-              },
-              trailingIcon = {
-                if (hasSelectedType) {
-                  ExposedDropdownMenuDefaults.TrailingIcon(expanded = medicationDropdownExpanded)
-                }
-              },
-              modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
-              isError = form.medicationError != null && hasSelectedType,
-              shape = RoundedCornerShape(12.dp),
-              colors =
-                OutlinedTextFieldDefaults.colors(
-                  unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                  disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                  disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                ),
-            )
-            ExposedDropdownMenu(
-              expanded = medicationDropdownExpanded && hasSelectedType,
-              onDismissRequest = { medicationDropdownExpanded = false },
-            ) {
-              localizedMedications.forEach { (key, displayName) ->
-                DropdownMenuItem(
-                  text = { Text(displayName) },
-                  onClick = {
-                    if (key == OTHER_OPTION) {
-                      isMedicationOther = true
-                      viewModel.updateMedication("")
-                    } else {
-                      isMedicationOther = false
-                      viewModel.updateMedication(displayName)
-                    }
-                    medicationDropdownExpanded = false
-                  },
-                )
-              }
-            }
-          }
-
-          // Custom medication input when "Other" is selected
-          if (showCustomMedicationInput) {
-            OutlinedTextField(
-              value = form.medication,
-              onValueChange = viewModel::updateMedication,
-              placeholder = { Text(stringResource(R.string.deworming_field_medication_custom)) },
-              modifier = Modifier.fillMaxWidth(),
-              singleLine = true,
-              isError = form.medicationError != null,
-              shape = RoundedCornerShape(12.dp),
-              colors =
-                OutlinedTextFieldDefaults.colors(
-                  unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                ),
-            )
-          }
+          DewormingMedicationField(
+            medication = form.medication,
+            error = form.medicationError,
+            onValueChange = viewModel::updateMedication,
+          )
 
           // Show error message if any
           if (form.medicationError != null) {
@@ -442,7 +296,7 @@ fun DewormingFormScreen(
           shape = RoundedCornerShape(12.dp),
         ) {
           Text(
-            text = form.applicationDate.format(dateFormatter),
+            text = displayFormatter.shortDate(form.applicationDate),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth().padding(16.dp),
           )
@@ -454,117 +308,6 @@ fun DewormingFormScreen(
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(start = 4.dp, top = 4.dp),
           )
-        }
-      }
-
-      FormField(label = stringResource(R.string.deworming_field_monthly_interval)) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          ExposedDropdownMenuBox(
-            expanded = showMonthlyIntervalPicker,
-            onExpandedChange = { showMonthlyIntervalPicker = it },
-          ) {
-            val intervalLabel =
-              when {
-                form.isIntervalCustom -> stringResource(R.string.interval_custom)
-                else ->
-                  pluralStringResource(
-                    R.plurals.interval_months,
-                    form.selectedMonthlyInterval,
-                    form.selectedMonthlyInterval,
-                  )
-              }
-            OutlinedTextField(
-              value = intervalLabel,
-              onValueChange = {},
-              readOnly = true,
-              trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = showMonthlyIntervalPicker)
-              },
-              modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
-              shape = RoundedCornerShape(12.dp),
-              colors =
-                OutlinedTextFieldDefaults.colors(
-                  unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                ),
-            )
-            ExposedDropdownMenu(
-              expanded = showMonthlyIntervalPicker,
-              onDismissRequest = { showMonthlyIntervalPicker = false },
-            ) {
-              monthlyIntervalOptions.forEach { months ->
-                DropdownMenuItem(
-                  text = { Text(pluralStringResource(R.plurals.interval_months, months, months)) },
-                  onClick = {
-                    showMonthlyIntervalPicker = false
-                    viewModel.updateMonthlyInterval(months)
-                  },
-                )
-              }
-              DropdownMenuItem(
-                text = { Text(stringResource(R.string.interval_custom)) },
-                onClick = {
-                  showMonthlyIntervalPicker = false
-                  viewModel.selectCustomInterval()
-                },
-              )
-            }
-          }
-
-          if (form.isIntervalCustom) {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(8.dp),
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              OutlinedTextField(
-                value = form.customIntervalValue,
-                onValueChange = viewModel::updateCustomIntervalValue,
-                placeholder = { Text(stringResource(R.string.interval_custom_value_hint)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors =
-                  OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                  ),
-              )
-              ExposedDropdownMenuBox(
-                expanded = customIntervalUnitExpanded,
-                onExpandedChange = { customIntervalUnitExpanded = it },
-                modifier = Modifier.weight(1f),
-              ) {
-                OutlinedTextField(
-                  value = getIntervalUnitLabel(form.customIntervalUnit),
-                  onValueChange = {},
-                  readOnly = true,
-                  trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = customIntervalUnitExpanded)
-                  },
-                  modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                  shape = RoundedCornerShape(12.dp),
-                  colors =
-                    OutlinedTextFieldDefaults.colors(
-                      unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    ),
-                )
-                ExposedDropdownMenu(
-                  expanded = customIntervalUnitExpanded,
-                  onDismissRequest = { customIntervalUnitExpanded = false },
-                ) {
-                  intervalUnitOptions.forEach { unit ->
-                    DropdownMenuItem(
-                      text = { Text(getIntervalUnitLabel(unit)) },
-                      onClick = {
-                        customIntervalUnitExpanded = false
-                        viewModel.updateCustomIntervalUnit(unit)
-                      },
-                    )
-                  }
-                }
-              }
-            }
-          }
         }
       }
 
@@ -582,7 +325,7 @@ fun DewormingFormScreen(
           ) {
             Text(
               text =
-                form.nextDueDate?.format(dateFormatter)
+                form.nextDueDate?.let(displayFormatter::shortDate)
                   ?: stringResource(R.string.deworming_field_next_due_date_placeholder),
               style = MaterialTheme.typography.bodyLarge,
               color =
@@ -659,38 +402,22 @@ private fun FormField(label: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun getIntervalUnitLabel(unit: DewormingIntervalUnit): String =
-  when (unit) {
-    DewormingIntervalUnit.DAILY -> stringResource(R.string.interval_unit_daily)
-    DewormingIntervalUnit.WEEKLY -> stringResource(R.string.interval_unit_weekly)
-    DewormingIntervalUnit.MONTHLY -> stringResource(R.string.interval_unit_monthly)
-  }
-
-@Composable
-private fun getMedicationName(key: String): String {
-  return when (key) {
-    // Internal medications
-    "MILBEMAX" -> stringResource(R.string.medication_milbemax)
-    "DRONTAL" -> stringResource(R.string.medication_drontal)
-    "PANACUR" -> stringResource(R.string.medication_panacur)
-    "PROFENDER" -> stringResource(R.string.medication_profender)
-    "CAZITEL" -> stringResource(R.string.medication_cazitel)
-    "DRONCIT" -> stringResource(R.string.medication_droncit)
-    // External medications
-    "FRONTLINE" -> stringResource(R.string.medication_frontline)
-    "ADVANTAGE" -> stringResource(R.string.medication_advantage)
-    "REVOLUTION" -> stringResource(R.string.medication_revolution)
-    "SERESTO" -> stringResource(R.string.medication_seresto)
-    "BRAVECTO" -> stringResource(R.string.medication_bravecto)
-    "NEXGARD" -> stringResource(R.string.medication_nexgard)
-    "STRONGHOLD" -> stringResource(R.string.medication_stronghold)
-    "FIPRONIL" -> stringResource(R.string.medication_fipronil)
-    // Shared medications (both internal and external)
-    "ADVOCATE" -> stringResource(R.string.medication_advocate)
-    "BROADLINE" -> stringResource(R.string.medication_broadline)
-    "STRONGHOLD_PLUS" -> stringResource(R.string.medication_stronghold_plus)
-    // Other option
-    OTHER_OPTION -> stringResource(R.string.option_other)
-    else -> key
-  }
+internal fun DewormingMedicationField(
+  medication: String,
+  error: String?,
+  onValueChange: (String) -> Unit,
+) {
+  OutlinedTextField(
+    value = medication,
+    onValueChange = onValueChange,
+    placeholder = { Text(stringResource(R.string.deworming_field_medication_custom)) },
+    modifier = Modifier.fillMaxWidth(),
+    singleLine = true,
+    isError = error != null,
+    shape = RoundedCornerShape(12.dp),
+    colors =
+      OutlinedTextFieldDefaults.colors(
+        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+      ),
+  )
 }

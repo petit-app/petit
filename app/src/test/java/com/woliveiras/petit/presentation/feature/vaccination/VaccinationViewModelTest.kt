@@ -17,6 +17,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -51,7 +52,7 @@ class VaccinationViewModelTest {
       VaccinationViewModel(
         savedStateHandle = SavedStateHandle(mapOf("petId" to "pet-1")),
         context = context,
-        petRepository = FakePetRepository(),
+        petRepository = FakePetRepository(PetType.CAT),
         vaccinationRepository = repository,
         autoTaskService = NoOpAutoTaskService(),
         clock = clock,
@@ -78,16 +79,12 @@ class VaccinationViewModelTest {
     }
 
   @Test
-  fun invalidSpeciesTypeCannotBeSaved() =
+  fun incompatibleNewSelectionIsRejectedBeforeItChangesTheForm() =
     runTest(dispatcher) {
       advanceUntilIdle()
       viewModel.updateVaccineType(VaccineType.DHPP)
 
-      viewModel.saveVaccination()
-      advanceUntilIdle()
-
-      assertThat(repository.saved).isEmpty()
-      assertThat(viewModel.uiState.value.form.vaccineTypeError).isNotNull()
+      assertThat(viewModel.uiState.value.form.vaccineType).isNotEqualTo(VaccineType.DHPP)
     }
 
   @Test
@@ -124,6 +121,110 @@ class VaccinationViewModelTest {
     }
 
   @Test
+  fun selectionAndApplicationDateNeverInferOrReplaceTheNextDueDate() =
+    runTest(dispatcher) {
+      advanceUntilIdle()
+      val manuallyChosenDate = LocalDate.of(2026, 8, 1)
+      viewModel.updateNextDueDate(manuallyChosenDate)
+
+      viewModel.updateVaccineType(VaccineType.RABIES)
+      viewModel.updateApplicationDate(LocalDate.of(2026, 7, 2))
+
+      assertThat(viewModel.uiState.value.form.nextDueDate).isEqualTo(manuallyChosenDate)
+    }
+
+  @Test
+  fun catalogExclusivelyDrivesChoicesAndResetUsesAValidSpeciesDefault() =
+    runTest(dispatcher) {
+      val rabbitViewModel = viewModel(PetType.RABBIT)
+      advanceUntilIdle()
+
+      assertThat(rabbitViewModel.uiState.value.availableVaccineTypes)
+        .containsExactly(VaccineType.RHDV, VaccineType.MYXOMATOSIS, VaccineType.OTHER)
+        .inOrder()
+      assertThat(rabbitViewModel.uiState.value.form.vaccineType)
+        .isIn(rabbitViewModel.uiState.value.availableVaccineTypes)
+
+      rabbitViewModel.resetForm()
+
+      assertThat(rabbitViewModel.uiState.value.form.vaccineType).isEqualTo(VaccineType.RHDV)
+    }
+
+  @Test
+  fun saveResetsToTheSameSpeciesAwareDefaultAsResetForm() =
+    runTest(dispatcher) {
+      advanceUntilIdle()
+      viewModel.updateVaccineType(VaccineType.V3)
+
+      viewModel.saveVaccination()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().vaccineType).isEqualTo(VaccineType.V3)
+      assertThat(viewModel.uiState.value.form.vaccineType).isEqualTo(VaccineType.RABIES)
+      assertThat(viewModel.uiState.value.form.customName).isEmpty()
+    }
+
+  @Test
+  fun historicalIncompatibleEntryStaysEditableAndCannotBeReplacedWithAnotherIncompatibleType() =
+    runTest(dispatcher) {
+      val rabbitViewModel = viewModel(PetType.RABBIT)
+      val original =
+        entry(id = "entry-1", createdAt = 10L, updatedAt = 20L, type = VaccineType.DHPP)
+      repository.entries.value = listOf(original)
+      advanceUntilIdle()
+      rabbitViewModel.loadEntryForEdit(original.id)
+      advanceUntilIdle()
+
+      assertThat(rabbitViewModel.uiState.value.form.vaccineType).isEqualTo(VaccineType.DHPP)
+      assertThat(rabbitViewModel.uiState.value.availableVaccineTypes).contains(VaccineType.DHPP)
+
+      rabbitViewModel.updateVaccineType(VaccineType.RABIES)
+      assertThat(rabbitViewModel.uiState.value.form.vaccineType).isEqualTo(VaccineType.DHPP)
+
+      rabbitViewModel.updateVaccineType(VaccineType.RHDV)
+      assertThat(rabbitViewModel.uiState.value.availableVaccineTypes)
+        .doesNotContain(VaccineType.DHPP)
+      rabbitViewModel.updateVaccineType(VaccineType.DHPP)
+      assertThat(rabbitViewModel.uiState.value.form.vaccineType).isEqualTo(VaccineType.RHDV)
+
+      rabbitViewModel.loadEntryForEdit(original.id)
+      advanceUntilIdle()
+
+      rabbitViewModel.saveVaccination()
+      advanceUntilIdle()
+      assertThat(repository.saved.single().vaccineType).isEqualTo(VaccineType.DHPP)
+    }
+
+  @Test
+  fun delayedPetInfoCannotOverwriteAnAlreadyLoadedHistoricalIncompatibleType() =
+    runTest(dispatcher) {
+      val petInfoGate = CompletableDeferred<Unit>()
+      val delayedPetRepository = DelayedPetRepository(PetType.RABBIT, petInfoGate)
+      val delayedViewModel =
+        VaccinationViewModel(
+          savedStateHandle = SavedStateHandle(mapOf("petId" to "pet-1")),
+          context = context,
+          petRepository = delayedPetRepository,
+          vaccinationRepository = repository,
+          autoTaskService = NoOpAutoTaskService(),
+          clock = clock,
+        )
+      val original =
+        entry(id = "entry-delayed", createdAt = 10L, updatedAt = 20L, type = VaccineType.DHPP)
+      repository.entries.value = listOf(original)
+
+      delayedViewModel.loadEntryForEdit(original.id)
+      advanceUntilIdle()
+      assertThat(delayedViewModel.uiState.value.form.vaccineType).isEqualTo(VaccineType.DHPP)
+
+      petInfoGate.complete(Unit)
+      advanceUntilIdle()
+
+      assertThat(delayedViewModel.uiState.value.petType).isEqualTo(PetType.RABBIT)
+      assertThat(delayedViewModel.uiState.value.form.vaccineType).isEqualTo(VaccineType.DHPP)
+    }
+
+  @Test
   fun editingPreservesCreatedAtAndUpdatesUpdatedAtFromClock() =
     runTest(dispatcher) {
       val original = entry(id = "entry-1", createdAt = 10L, updatedAt = 20L)
@@ -140,23 +241,86 @@ class VaccinationViewModelTest {
       assertThat(repository.saved.single().updatedAt).isEqualTo(clock.millis())
     }
 
-  private fun entry(id: String, createdAt: Long, updatedAt: Long) =
+  @Test
+  fun unchangedCustomVaccineNameSurvivesOpenAndSaveByteExact() =
+    runTest(dispatcher) {
+      val rawCustomName = " Vacina X® "
+      val original =
+        entry(
+          id = "entry-custom",
+          createdAt = 10L,
+          updatedAt = 20L,
+          type = VaccineType.OTHER,
+          customName = rawCustomName,
+        )
+      repository.entries.value = listOf(original)
+      advanceUntilIdle()
+      viewModel.loadEntryForEdit(original.id)
+      advanceUntilIdle()
+
+      viewModel.saveVaccination()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().customVaccineTypeName).isEqualTo(rawCustomName)
+    }
+
+  @Test
+  fun changedCustomVaccineNameKeepsExistingTrimNormalization() =
+    runTest(dispatcher) {
+      val original =
+        entry(
+          id = "entry-custom-changed",
+          createdAt = 10L,
+          updatedAt = 20L,
+          type = VaccineType.OTHER,
+          customName = " Original ",
+        )
+      repository.entries.value = listOf(original)
+      advanceUntilIdle()
+      viewModel.loadEntryForEdit(original.id)
+      advanceUntilIdle()
+
+      viewModel.updateCustomName(" Changed X® ")
+      viewModel.saveVaccination()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().customVaccineTypeName).isEqualTo("Changed X®")
+    }
+
+  private fun entry(
+    id: String,
+    createdAt: Long,
+    updatedAt: Long,
+    type: VaccineType = VaccineType.V3,
+    customName: String? = null,
+  ) =
     VaccinationEntry(
       id = id,
       petId = "pet-1",
-      vaccineType = VaccineType.V3,
+      vaccineType = type,
+      customVaccineTypeName = customName,
       applicationDate = LocalDate.of(2026, 7, 1),
       createdAt = createdAt,
       updatedAt = updatedAt,
       syncStatus = SyncStatus.LOCAL_ONLY,
     )
 
-  private class FakePetRepository : PetRepository {
+  private fun viewModel(petType: PetType = PetType.CAT) =
+    VaccinationViewModel(
+      savedStateHandle = SavedStateHandle(mapOf("petId" to "pet-1")),
+      context = context,
+      petRepository = FakePetRepository(petType),
+      vaccinationRepository = repository,
+      autoTaskService = NoOpAutoTaskService(),
+      clock = clock,
+    )
+
+  private class FakePetRepository(petType: PetType) : PetRepository {
     private val pet =
       Pet(
         id = "pet-1",
         name = "Mimi",
-        petType = PetType.CAT,
+        petType = petType,
         sex = Sex.UNKNOWN,
         createdAt = 1L,
         updatedAt = 1L,
@@ -165,6 +329,36 @@ class VaccinationViewModelTest {
     override fun getAllPets(): Flow<List<Pet>> = MutableStateFlow(listOf(pet))
 
     override suspend fun getPetById(id: String): Pet? = pet.takeIf { it.id == id }
+
+    override fun getPetByIdFlow(id: String): Flow<Pet?> = MutableStateFlow(pet)
+
+    override fun getPetCount(): Flow<Int> = MutableStateFlow(1)
+
+    override suspend fun savePet(pet: Pet) = Unit
+
+    override suspend fun deletePet(id: String) = Unit
+  }
+
+  private class DelayedPetRepository(
+    petType: PetType,
+    private val gate: CompletableDeferred<Unit>,
+  ) : PetRepository {
+    private val pet =
+      Pet(
+        id = "pet-1",
+        name = "Mimi",
+        petType = petType,
+        sex = Sex.UNKNOWN,
+        createdAt = 1L,
+        updatedAt = 1L,
+      )
+
+    override fun getAllPets(): Flow<List<Pet>> = MutableStateFlow(listOf(pet))
+
+    override suspend fun getPetById(id: String): Pet? {
+      gate.await()
+      return pet.takeIf { it.id == id }
+    }
 
     override fun getPetByIdFlow(id: String): Flow<Pet?> = MutableStateFlow(pet)
 

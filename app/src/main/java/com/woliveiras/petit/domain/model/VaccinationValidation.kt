@@ -6,6 +6,10 @@ import java.time.LocalDate
 data class VaccinationDraft(
   val petType: PetType,
   val vaccineType: VaccineType,
+  /**
+   * The type originally saved on an edited record, retained only to preserve incompatible history.
+   */
+  val historicalVaccineType: VaccineType? = null,
   val customName: String = "",
   val applicationDate: LocalDate,
   val nextDueDate: LocalDate? = null,
@@ -28,7 +32,10 @@ enum class VaccinationValidationError {
 }
 
 fun VaccinationDraft.validate(clock: Clock): List<VaccinationValidationError> = buildList {
-  if (vaccineType.applicablePetTypes.isNotEmpty() && petType !in vaccineType.applicablePetTypes) {
+  val isHistoricalUnchangedType = vaccineType == historicalVaccineType
+  val isCatalogType =
+    SpeciesCareCatalog.vaccinePresets(petType).any { it.vaccineType == vaccineType }
+  if (!isCatalogType && !isHistoricalUnchangedType) {
     add(VaccinationValidationError.VACCINE_TYPE_NOT_APPLICABLE)
   }
   if (vaccineType == VaccineType.OTHER) {

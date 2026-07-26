@@ -11,14 +11,17 @@ import com.woliveiras.petit.domain.model.DewormingDraft
 import com.woliveiras.petit.domain.model.DewormingEntry
 import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.DewormingValidationError
+import com.woliveiras.petit.domain.model.PetType
+import com.woliveiras.petit.domain.model.SpeciesCareCatalog
 import com.woliveiras.petit.domain.model.SyncStatus
 import com.woliveiras.petit.domain.model.validate
+import com.woliveiras.petit.presentation.util.rethrowIfCancellation
+import com.woliveiras.petit.presentation.util.uiFailureText
 import com.woliveiras.petit.worker.AutoTaskService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,6 +37,7 @@ import kotlinx.coroutines.launch
 data class DewormingUiState(
   val petId: String = "",
   val petName: String = "",
+  val petType: PetType = PetType.OTHER,
   val today: LocalDate = LocalDate.now(),
   val isLoading: Boolean = true,
   val latestDewormings: List<DewormingEntry> = emptyList(),
@@ -43,6 +47,9 @@ data class DewormingUiState(
   /** Dewormings grouped by type, showing only the latest of each. */
   val dewormingsByType: Map<DewormingType, DewormingEntry>
     get() = latestDewormings.associateBy { it.type }
+
+  val antiparasiticOptions
+    get() = SpeciesCareCatalog.antiparasiticOptions(petType, form.dewormingType)
 }
 
 /** Form-specific state for deworming entry creation/editing. */
@@ -54,22 +61,12 @@ data class DewormingFormState(
   val medication: String = "",
   val applicationDate: LocalDate = LocalDate.now(),
   val nextDueDate: LocalDate? = null,
-  val selectedMonthlyInterval: Int = DewormingType.INTERNAL.defaultIntervalMonths,
-  val isIntervalCustom: Boolean = false,
-  val customIntervalValue: String = "",
-  val customIntervalUnit: DewormingIntervalUnit = DewormingIntervalUnit.MONTHLY,
   val note: String = "",
   val isSaving: Boolean = false,
   val medicationError: String? = null,
   val applicationDateError: String? = null,
   val noteError: String? = null,
 )
-
-enum class DewormingIntervalUnit {
-  DAILY,
-  WEEKLY,
-  MONTHLY,
-}
 
 /** Events emitted by deworming ViewModel. */
 sealed class DewormingEvent {
@@ -106,6 +103,7 @@ constructor(
 
   private val _events = MutableSharedFlow<DewormingEvent>()
   val events: SharedFlow<DewormingEvent> = _events.asSharedFlow()
+  private var entryLoadedForEdit: DewormingEntry? = null
 
   init {
     loadPetInfo()
@@ -115,7 +113,7 @@ constructor(
   private fun loadPetInfo() {
     viewModelScope.launch {
       petRepository.getPetById(petId)?.let { pet ->
-        _uiState.update { it.copy(petName = pet.name) }
+        _uiState.update { it.copy(petName = pet.name, petType = pet.petType) }
       }
     }
   }
@@ -136,20 +134,7 @@ constructor(
   // ===== Form methods =====
 
   fun updateDewormingType(type: DewormingType) {
-    _uiState.update { state ->
-      val form = state.form
-      // Auto-suggest next dose date based on deworming interval
-      val updatedForm =
-        if (!form.isIntervalCustom) {
-          form.copy(dewormingType = type, selectedMonthlyInterval = type.defaultIntervalMonths)
-        } else {
-          form.copy(dewormingType = type)
-        }
-      val suggestedNextDue =
-        if (!form.isEditMode || form.nextDueDate != null) updatedForm.calculateIntervalDueDate()
-        else null
-      state.copy(form = updatedForm.copy(nextDueDate = suggestedNextDue))
-    }
+    _uiState.update { state -> state.copy(form = state.form.copy(dewormingType = type)) }
   }
 
   fun updateMedication(medication: String) {
@@ -160,53 +145,12 @@ constructor(
 
   fun updateApplicationDate(date: LocalDate) {
     _uiState.update { state ->
-      val form = state.form
-      val updatedForm = form.copy(applicationDate = date, applicationDateError = null)
-      state.copy(form = updatedForm.copy(nextDueDate = updatedForm.calculateIntervalDueDate()))
+      state.copy(form = state.form.copy(applicationDate = date, applicationDateError = null))
     }
   }
 
   fun updateNextDueDate(date: LocalDate?) {
-    _uiState.update { state ->
-      state.copy(form = state.form.copy(nextDueDate = date).withIntervalFromDueDate())
-    }
-  }
-
-  fun updateMonthlyInterval(months: Int) {
-    _uiState.update { state ->
-      val form =
-        state.form.copy(
-          selectedMonthlyInterval = months,
-          isIntervalCustom = false,
-          customIntervalValue = "",
-          customIntervalUnit = DewormingIntervalUnit.MONTHLY,
-        )
-      state.copy(form = form.copy(nextDueDate = form.calculateIntervalDueDate()))
-    }
-  }
-
-  fun selectCustomInterval() {
-    _uiState.update { state ->
-      state.copy(
-        form =
-          state.form.copy(isIntervalCustom = true, customIntervalValue = "", nextDueDate = null)
-      )
-    }
-  }
-
-  fun updateCustomIntervalValue(value: String) {
-    _uiState.update { state ->
-      val digits = value.filter { it.isDigit() }
-      val form = state.form.copy(customIntervalValue = digits, isIntervalCustom = true)
-      state.copy(form = form.copy(nextDueDate = form.calculateIntervalDueDate()))
-    }
-  }
-
-  fun updateCustomIntervalUnit(unit: DewormingIntervalUnit) {
-    _uiState.update { state ->
-      val form = state.form.copy(customIntervalUnit = unit, isIntervalCustom = true)
-      state.copy(form = form.copy(nextDueDate = form.calculateIntervalDueDate()))
-    }
+    _uiState.update { state -> state.copy(form = state.form.copy(nextDueDate = date)) }
   }
 
   fun updateNote(value: String) {
@@ -218,21 +162,20 @@ constructor(
     viewModelScope.launch {
       val entry = dewormingRepository.getDewormingEntryById(entryId)
       if (entry != null) {
+        entryLoadedForEdit = entry
         _uiState.update {
           it.copy(
             form =
-              it.form
-                .copy(
-                  isEditMode = true,
-                  editingEntryId = entry.id,
-                  editingCreatedAt = entry.createdAt,
-                  dewormingType = entry.type,
-                  medication = entry.medication ?: "",
-                  applicationDate = entry.applicationDate,
-                  nextDueDate = entry.nextDueDate,
-                  note = entry.note ?: "",
-                )
-                .withIntervalFromDueDate()
+              it.form.copy(
+                isEditMode = true,
+                editingEntryId = entry.id,
+                editingCreatedAt = entry.createdAt,
+                dewormingType = entry.type,
+                medication = entry.medication ?: "",
+                applicationDate = entry.applicationDate,
+                nextDueDate = entry.nextDueDate,
+                note = entry.note ?: "",
+              )
           )
         }
       }
@@ -240,6 +183,7 @@ constructor(
   }
 
   fun resetForm() {
+    entryLoadedForEdit = null
     _uiState.update { it.copy(form = DewormingFormState(applicationDate = LocalDate.now(clock))) }
   }
 
@@ -271,7 +215,7 @@ constructor(
             id = form.editingEntryId ?: UUID.randomUUID().toString(),
             petId = petId,
             type = form.dewormingType,
-            medication = form.medication.trim(),
+            medication = medicationForSave(form),
             applicationDate = form.applicationDate,
             nextDueDate = form.nextDueDate,
             note = form.note.trim().ifBlank { null },
@@ -285,7 +229,8 @@ constructor(
         // Create/update automatic task if nextDueDate is set
         try {
           autoTaskService.handleDewormingSaved(entry)
-        } catch (_: Exception) {
+        } catch (failure: Exception) {
+          failure.rethrowIfCancellation()
           // DB saved but auto-task failed — non-critical
         }
 
@@ -295,12 +240,19 @@ constructor(
 
         _events.emit(DewormingEvent.DewormingSaved(petId))
       } catch (e: Exception) {
-        _events.emit(
-          DewormingEvent.Error(e.message ?: context.getString(R.string.deworming_error_save))
-        )
+        _events.emit(DewormingEvent.Error(e.uiFailureText(context, R.string.deworming_error_save)))
       } finally {
         _uiState.update { it.copy(form = it.form.copy(isSaving = false)) }
       }
+    }
+  }
+
+  private fun medicationForSave(form: DewormingFormState): String {
+    val original = entryLoadedForEdit
+    return if (form.isEditMode && form.medication == original?.medication.orEmpty()) {
+      original?.medication.orEmpty()
+    } else {
+      form.medication.trim()
     }
   }
 
@@ -341,7 +293,7 @@ constructor(
         autoTaskService.handleDewormingDeleted(entryId)
       } catch (e: Exception) {
         _events.emit(
-          DewormingEvent.Error(e.message ?: context.getString(R.string.deworming_error_delete))
+          DewormingEvent.Error(e.uiFailureText(context, R.string.deworming_error_delete))
         )
       }
     }
@@ -357,61 +309,9 @@ constructor(
         _events.emit(DewormingEvent.DewormingDeleted(petId))
       } catch (e: Exception) {
         _events.emit(
-          DewormingEvent.Error(e.message ?: context.getString(R.string.deworming_error_delete))
+          DewormingEvent.Error(e.uiFailureText(context, R.string.deworming_error_delete))
         )
       }
     }
   }
-}
-
-private fun DewormingFormState.calculateIntervalDueDate(): LocalDate? {
-  if (!isIntervalCustom) {
-    return applicationDate.plusMonths(selectedMonthlyInterval.toLong())
-  }
-
-  val value = customIntervalValue.toLongOrNull()?.takeIf { it > 0 } ?: return null
-  return when (customIntervalUnit) {
-    DewormingIntervalUnit.DAILY -> applicationDate.plusDays(value)
-    DewormingIntervalUnit.WEEKLY -> applicationDate.plusWeeks(value)
-    DewormingIntervalUnit.MONTHLY -> applicationDate.plusMonths(value)
-  }
-}
-
-private fun DewormingFormState.withIntervalFromDueDate(): DewormingFormState {
-  val dueDate = nextDueDate ?: return this
-  for (months in 1..6) {
-    if (applicationDate.plusMonths(months.toLong()) == dueDate) {
-      return copy(
-        selectedMonthlyInterval = months,
-        isIntervalCustom = false,
-        customIntervalValue = "",
-        customIntervalUnit = DewormingIntervalUnit.MONTHLY,
-      )
-    }
-  }
-
-  val totalMonths = ChronoUnit.MONTHS.between(applicationDate, dueDate)
-  if (totalMonths > 0 && applicationDate.plusMonths(totalMonths) == dueDate) {
-    return copy(
-      isIntervalCustom = true,
-      customIntervalValue = totalMonths.toString(),
-      customIntervalUnit = DewormingIntervalUnit.MONTHLY,
-    )
-  }
-
-  val totalWeeks = ChronoUnit.WEEKS.between(applicationDate, dueDate)
-  if (totalWeeks > 0 && applicationDate.plusWeeks(totalWeeks) == dueDate) {
-    return copy(
-      isIntervalCustom = true,
-      customIntervalValue = totalWeeks.toString(),
-      customIntervalUnit = DewormingIntervalUnit.WEEKLY,
-    )
-  }
-
-  val totalDays = ChronoUnit.DAYS.between(applicationDate, dueDate).coerceAtLeast(0)
-  return copy(
-    isIntervalCustom = true,
-    customIntervalValue = totalDays.toString(),
-    customIntervalUnit = DewormingIntervalUnit.DAILY,
-  )
 }

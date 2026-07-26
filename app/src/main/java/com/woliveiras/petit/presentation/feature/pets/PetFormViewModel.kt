@@ -14,6 +14,8 @@ import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.Sex
 import com.woliveiras.petit.domain.model.SyncStatus
+import com.woliveiras.petit.presentation.util.rethrowIfCancellation
+import com.woliveiras.petit.presentation.util.uiFailureText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
@@ -77,6 +79,7 @@ constructor(
 
   private val petId: String? = savedStateHandle["petId"]
   private var pendingCameraPhoto: PendingCameraPhoto? = null
+  private var petLoadedForEdit: Pet? = null
 
   private val _uiState = MutableStateFlow(PetFormUiState())
   val uiState: StateFlow<PetFormUiState> = _uiState.asStateFlow()
@@ -96,6 +99,7 @@ constructor(
       try {
         val pet = petRepository.getPetById(petId)
         if (pet != null) {
+          petLoadedForEdit = pet
           _uiState.value =
             _uiState.value.copy(
               isLoading = false,
@@ -115,7 +119,7 @@ constructor(
         }
       } catch (e: Exception) {
         _uiState.value = _uiState.value.copy(isLoading = false)
-        _events.emit(PetFormEvent.Error(e.message ?: context.getString(R.string.pet_error_load)))
+        _events.emit(PetFormEvent.Error(e.uiFailureText(context, R.string.pet_error_load)))
       }
     }
   }
@@ -134,7 +138,7 @@ constructor(
   }
 
   fun updatePetType(petType: PetType) {
-    _uiState.value = _uiState.value.copy(petType = petType, breed = "")
+    _uiState.value = _uiState.value.copy(petType = petType)
   }
 
   fun updateSex(sex: Sex) {
@@ -169,7 +173,10 @@ constructor(
     viewModelScope.launch {
       withContext(ioDispatcher) { photoStorage.importFromPicker(uri) }
         .onSuccess { storedUri -> _uiState.value = _uiState.value.copy(photoUri = storedUri) }
-        .onFailure { _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error))) }
+        .onFailure { failure ->
+          failure.rethrowIfCancellation()
+          _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error)))
+        }
     }
   }
 
@@ -180,7 +187,10 @@ constructor(
           pendingCameraPhoto = pending
           _events.emit(PetFormEvent.LaunchCamera(pending.uri))
         }
-        .onFailure { _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error))) }
+        .onFailure { failure ->
+          failure.rethrowIfCancellation()
+          _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error)))
+        }
     }
   }
 
@@ -190,7 +200,8 @@ constructor(
     viewModelScope.launch {
       withContext(ioDispatcher) { photoStorage.completeCameraPhoto(pending, success) }
         .onSuccess { storedUri -> _uiState.value = _uiState.value.copy(photoUri = storedUri) }
-        .onFailure {
+        .onFailure { failure ->
+          failure.rethrowIfCancellation()
           if (success) {
             _events.emit(PetFormEvent.Error(context.getString(R.string.pet_photo_error)))
           }
@@ -295,7 +306,7 @@ constructor(
               name = state.name.trim(),
               birthDate = state.birthDate,
               sex = state.sex,
-              breed = state.breed.trim().ifBlank { null },
+              breed = normalizeChangedText(state.breed, petLoadedForEdit?.breed),
               color = state.color.trim().ifBlank { null },
               microchipNumber = state.microchipNumber.trim().ifBlank { null },
               passportNumber = state.passportNumber.trim().ifBlank { null },
@@ -326,10 +337,13 @@ constructor(
         petRepository.savePet(petToSave)
         _events.emit(PetFormEvent.PetSaved(petToSave.id))
       } catch (e: Exception) {
-        _events.emit(PetFormEvent.Error(e.message ?: context.getString(R.string.pet_error_save)))
+        _events.emit(PetFormEvent.Error(e.uiFailureText(context, R.string.pet_error_save)))
       } finally {
         _uiState.value = _uiState.value.copy(isSaving = false)
       }
     }
   }
+
+  private fun normalizeChangedText(current: String, original: String?): String? =
+    if (current == original.orEmpty()) original else current.trim().ifBlank { null }
 }

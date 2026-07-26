@@ -21,6 +21,7 @@ import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
 import com.woliveiras.petit.domain.model.Pet
+import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
@@ -98,6 +99,58 @@ class ExportImportUseCaseTest {
       .inOrder()
     assertThat(backup.tasks.single { it.id == "completed" }.status).isEqualTo(TaskStatus.COMPLETED)
     assertThat(shareable.tasks.single { it.id == "deleted" }.deletedAt).isEqualTo(5L)
+  }
+
+  @Test
+  fun importAndExportPreserveCompatibilityCareValuesWithoutCatalogRewrite() = runTest {
+    val bundle =
+      completeBundle(updatedAt = 10L)
+        .copy(
+          pets =
+            PetType.entries.mapIndexed { index, petType ->
+              Pet(
+                id = "pet-$index",
+                name = "Pet $index",
+                petType = petType,
+                breed = listOf("PERSIAN", "Custom rescue breed", "legacy_Breed-ç")[index % 3],
+                createdAt = 1L,
+                updatedAt = 10L,
+              )
+            },
+          vaccinationEntries =
+            listOf(
+              VaccinationEntry(
+                id = "vaccination-compat",
+                petId = "pet-0",
+                vaccineType = VaccineType.OTHER,
+                customVaccineTypeName = "Historical custom vaccine",
+                applicationDate = LocalDate.of(2026, 7, 1),
+                createdAt = 1L,
+                updatedAt = 10L,
+              )
+            ),
+          dewormingEntries =
+            listOf(
+              DewormingEntry(
+                id = "deworming-compat",
+                petId = "pet-5",
+                type = DewormingType.BOTH,
+                medication = "Legacy active ingredient",
+                applicationDate = LocalDate.of(2026, 7, 1),
+                createdAt = 1L,
+                updatedAt = 10L,
+              )
+            ),
+          weightEntries = emptyList(),
+          tasks = emptyList(),
+        )
+
+    useCase.importData(bundle, ConflictResolution.MERGE)
+    val exported = useCase.exportAll()
+
+    assertThat(exported.pets).containsExactlyElementsIn(bundle.pets)
+    assertThat(exported.vaccinationEntries).containsExactlyElementsIn(bundle.vaccinationEntries)
+    assertThat(exported.dewormingEntries).containsExactlyElementsIn(bundle.dewormingEntries)
   }
 
   @Test

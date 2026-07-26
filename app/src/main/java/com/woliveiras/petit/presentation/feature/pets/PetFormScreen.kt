@@ -71,53 +71,18 @@ import coil.request.ImageRequest
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.Sex
+import com.woliveiras.petit.domain.model.SpeciesCareCatalog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedBreed
 import com.woliveiras.petit.presentation.util.localizedColor
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 // Common option key
 private const val OTHER_OPTION = "OTHER"
-
-private fun breedsForPetType(petType: PetType): List<String> =
-  when (petType) {
-    PetType.CAT ->
-      listOf(
-        "MIXED_BREED",
-        "PERSIAN",
-        "SIAMESE",
-        "MAINE_COON",
-        "RAGDOLL",
-        "BRITISH_SHORTHAIR",
-        "BENGAL",
-        "ABYSSINIAN",
-        "SPHYNX",
-        "SCOTTISH_FOLD",
-        "BURMESE",
-        "RUSSIAN_BLUE",
-        "NORWEGIAN_FOREST",
-        "TURKISH_ANGORA",
-        OTHER_OPTION,
-      )
-    PetType.DOG ->
-      listOf(
-        "MIXED_BREED",
-        "LABRADOR",
-        "GOLDEN_RETRIEVER",
-        "GERMAN_SHEPHERD",
-        "POODLE",
-        "BULLDOG",
-        "BEAGLE",
-        "SHIH_TZU",
-        "YORKSHIRE",
-        OTHER_OPTION,
-      )
-    else -> listOf("MIXED_BREED", OTHER_OPTION)
-  }
 
 private val commonColors =
   listOf(
@@ -147,6 +112,7 @@ fun PetFormScreen(
   viewModel: PetFormViewModel = hiltViewModel(),
 ) {
   val context = LocalContext.current
+  val displayFormatter = rememberAppDisplayFormatter()
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   var showDatePicker by remember { mutableStateOf(false) }
   var showPetTypeDropdown by remember { mutableStateOf(false) }
@@ -158,9 +124,6 @@ fun PetFormScreen(
   // Track if user explicitly selected "Other"
   var isBreedOther by remember { mutableStateOf(false) }
   var isColorOther by remember { mutableStateOf(false) }
-
-  // Reset breed "Other" state when petType changes
-  LaunchedEffect(uiState.petType) { isBreedOther = false }
 
   val photoPickerLauncher =
     rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) {
@@ -338,8 +301,7 @@ fun PetFormScreen(
 
           // Birth Date Field
           val birthDateLabel = stringResource(R.string.pet_form_birth_date)
-          val formattedBirthDate =
-            uiState.birthDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+          val formattedBirthDate = uiState.birthDate?.let(displayFormatter::shortDate)
           FormField(label = birthDateLabel) {
             Box(modifier = Modifier.fillMaxWidth()) {
               OutlinedTextField(
@@ -455,15 +417,12 @@ fun PetFormScreen(
 
           // Breed Dropdown
           FormField(label = stringResource(R.string.pet_form_breed)) {
-            // Build localized breeds map
-            val localizedBreeds =
-              breedsForPetType(uiState.petType).associateWith { localizedBreed(it) }
+            val breedPresets = SpeciesCareCatalog.breedPresets(uiState.petType)
             val otherLabel = stringResource(R.string.option_other)
 
             // Determine if current breed is a known option or custom
             val isKnownBreed =
-              uiState.breed.isNotEmpty() &&
-                breedsForPetType(uiState.petType).any { it == uiState.breed }
+              uiState.breed.isNotEmpty() && breedPresets.any { it.storedValue == uiState.breed }
             val showCustomBreedInput = isBreedOther || (uiState.breed.isNotEmpty() && !isKnownBreed)
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -498,16 +457,21 @@ fun PetFormScreen(
                   expanded = showBreedDropdown,
                   onDismissRequest = { showBreedDropdown = false },
                 ) {
-                  localizedBreeds.forEach { (key, displayName) ->
+                  breedPresets.forEach { preset ->
                     DropdownMenuItem(
-                      text = { Text(displayName) },
+                      text = {
+                        Text(
+                          if (preset.isManualEntry) otherLabel
+                          else localizedBreed(requireNotNull(preset.storedValue))
+                        )
+                      },
                       onClick = {
-                        if (key == OTHER_OPTION) {
+                        if (preset.isManualEntry) {
                           isBreedOther = true
                           viewModel.updateBreed("")
                         } else {
                           isBreedOther = false
-                          viewModel.updateBreed(key)
+                          viewModel.updateBreed(requireNotNull(preset.storedValue))
                         }
                         showBreedDropdown = false
                       },

@@ -46,4 +46,26 @@ class PetMapperTest {
     assertThat(mapped.sex).isEqualTo(Sex.UNKNOWN)
     assertThat(mapped.syncStatus).isEqualTo(SyncStatus.LOCAL_ONLY)
   }
+
+  @Test
+  fun everySupportedSpeciesPreservesKnownCustomAndLegacyBreedBytesThroughTheMapper() {
+    val breeds = listOf("PERSIAN", "Custom rescue breed", "legacy_Breed-\u00e7")
+
+    PetType.entries.forEach { petType ->
+      breeds.forEach { breed ->
+        val pet =
+          Pet(
+            id = "$petType-$breed",
+            name = "Mimi",
+            petType = petType,
+            sex = Sex.UNKNOWN,
+            breed = breed,
+            createdAt = 1L,
+            updatedAt = 1L,
+          )
+
+        assertThat(pet.toEntity().toDomain().breed).isEqualTo(breed)
+      }
+    }
+  }
 }

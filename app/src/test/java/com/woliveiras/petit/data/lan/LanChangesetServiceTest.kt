@@ -15,6 +15,8 @@ import com.woliveiras.petit.data.repository.WeightEntryRepositoryImpl
 import com.woliveiras.petit.domain.lan.LanChangesetBatcher
 import com.woliveiras.petit.domain.lan.LanProtocolException
 import com.woliveiras.petit.domain.lan.LanSessionScope
+import com.woliveiras.petit.domain.model.DewormingEntry
+import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
 import com.woliveiras.petit.domain.model.FamilyGroupInfo
@@ -23,10 +25,14 @@ import com.woliveiras.petit.domain.model.MembershipChange
 import com.woliveiras.petit.domain.model.MembershipChangeType
 import com.woliveiras.petit.domain.model.PendingDeparture
 import com.woliveiras.petit.domain.model.Pet
+import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.SyncLog
+import com.woliveiras.petit.domain.model.VaccinationEntry
+import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.domain.usecase.ExportImportUseCase
 import com.woliveiras.petit.domain.usecase.MergeDataUseCase
 import java.time.Clock
+import java.time.LocalDate
 import java.util.Base64
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,6 +101,28 @@ class LanChangesetServiceTest {
     assertThat(logs).hasSize(1)
     assertThat(logs.single().syncType).isEqualTo("LAN")
     assertThat(logs.single().id).isEqualTo(batch.batchId)
+  }
+
+  @Test
+  fun clinicalChangesetPreservesSpeciesAndRawCareValuesThroughRoom() = runTest {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val expected = compatibilityBundle()
+    val batch = LanChangesetBatcher.create(PEER_ID, 0L, expected).single()
+
+    service.apply(
+      PEER_ID,
+      "Kitchen",
+      batch.batchId,
+      batch.cursor,
+      batch.payload,
+      LanSessionScope.CLINICAL,
+      GROUP_ID,
+    )
+
+    val restored = createExportUseCase(context, database).exportAll()
+    assertThat(restored.pets).containsExactlyElementsIn(expected.pets)
+    assertThat(restored.vaccinationEntries).containsExactlyElementsIn(expected.vaccinationEntries)
+    assertThat(restored.dewormingEntries).containsExactlyElementsIn(expected.dewormingEntries)
   }
 
   @Test
@@ -255,6 +283,58 @@ class LanChangesetServiceTest {
       dewormingEntries = emptyList(),
       tasks = emptyList(),
     )
+
+  private fun compatibilityBundle(): ExportBundle {
+    val pets =
+      PetType.entries.mapIndexed { index, petType ->
+        Pet(
+          id = "compat-pet-$index",
+          name = "Pet $index",
+          petType = petType,
+          breed = listOf("PERSIAN", "Custom rescue breed", "legacy_Breed-ç")[index % 3],
+          createdAt = 1L,
+          updatedAt = 10L,
+        )
+      }
+    return ExportBundle(
+      metadata = ExportMetadata("1", "2026-07-18T00:00:00Z"),
+      pets = pets,
+      weightEntries = emptyList(),
+      vaccinationEntries =
+        listOf(
+          VaccinationEntry(
+            id = "compat-custom-vaccine",
+            petId = pets.first().id,
+            vaccineType = VaccineType.OTHER,
+            customVaccineTypeName = "Historical custom vaccine",
+            applicationDate = LocalDate.of(2026, 7, 1),
+            createdAt = 1L,
+            updatedAt = 10L,
+          ),
+          VaccinationEntry(
+            id = "compat-historical-vaccine",
+            petId = pets[2].id,
+            vaccineType = VaccineType.DHPP,
+            applicationDate = LocalDate.of(2025, 7, 1),
+            createdAt = 1L,
+            updatedAt = 10L,
+          ),
+        ),
+      dewormingEntries =
+        listOf(
+          DewormingEntry(
+            id = "compat-deworming",
+            petId = pets.last().id,
+            type = DewormingType.BOTH,
+            medication = "Legacy active ingredient",
+            applicationDate = LocalDate.of(2026, 7, 1),
+            createdAt = 1L,
+            updatedAt = 10L,
+          )
+        ),
+      tasks = emptyList(),
+    )
+  }
 
   private fun createExportUseCase(context: Context, database: PetitDatabase) =
     ExportImportUseCase(

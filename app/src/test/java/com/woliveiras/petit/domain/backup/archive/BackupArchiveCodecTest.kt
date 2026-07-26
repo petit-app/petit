@@ -4,12 +4,18 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.domain.backup.BackupTrigger
 import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.AppTheme
+import com.woliveiras.petit.domain.model.DewormingEntry
+import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
 import com.woliveiras.petit.domain.model.Pet
+import com.woliveiras.petit.domain.model.PetType
+import com.woliveiras.petit.domain.model.VaccinationEntry
+import com.woliveiras.petit.domain.model.VaccineType
 import java.io.File
 import java.security.MessageDigest
 import java.time.Instant
+import java.time.LocalDate
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -26,6 +32,66 @@ class BackupArchiveCodecTest {
   @get:Rule val temporaryFolder = TemporaryFolder()
 
   private val codec = BackupArchiveCodec()
+
+  @Test
+  fun archiveRoundTripPreservesAllSpeciesAndRawBreedValues() {
+    val base = snapshot()
+    val pets =
+      PetType.entries.mapIndexed { index, petType ->
+        Pet(
+          id = "pet-$index",
+          name = "Pet $index",
+          petType = petType,
+          breed = listOf("PERSIAN", "Custom rescue breed", "legacy_Breed-ç")[index % 3],
+          createdAt = 1L,
+          updatedAt = 2L,
+        )
+      }
+    val vaccination =
+      VaccinationEntry(
+        id = "vaccination-custom",
+        petId = pets.first().id,
+        vaccineType = VaccineType.OTHER,
+        customVaccineTypeName = "Historical custom vaccine",
+        applicationDate = LocalDate.of(2026, 7, 1),
+        createdAt = 1L,
+        updatedAt = 2L,
+      )
+    val deworming =
+      DewormingEntry(
+        id = "deworming-legacy",
+        petId = pets.last().id,
+        type = DewormingType.BOTH,
+        medication = "Legacy active ingredient",
+        applicationDate = LocalDate.of(2026, 7, 1),
+        createdAt = 1L,
+        updatedAt = 2L,
+      )
+    val archive =
+      codec.create(
+        BackupArchiveRequest(
+          backupId = "compat",
+          createdAt = Instant.parse("2026-07-18T10:15:30Z"),
+          appVersion = "1.2.3",
+          trigger = BackupTrigger.MANUAL,
+          snapshot =
+            base.copy(
+              exportBundle =
+                base.exportBundle.copy(
+                  pets = pets,
+                  vaccinationEntries = listOf(vaccination),
+                  dewormingEntries = listOf(deworming),
+                )
+            ),
+          outputDirectory = temporaryFolder.newFolder("compat"),
+        )
+      )
+
+    val restored = codec.validate(archive.file).snapshot.exportBundle
+    assertThat(restored.pets).isEqualTo(pets)
+    assertThat(restored.vaccinationEntries).containsExactly(vaccination)
+    assertThat(restored.dewormingEntries).containsExactly(deworming)
+  }
 
   @Test
   fun createBuildsPortableArchiveWithManifestChecksumsAndFinalMetadata() {

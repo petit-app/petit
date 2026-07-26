@@ -34,14 +34,20 @@ import com.woliveiras.petit.domain.backup.archive.BackupReminderPreferences
 import com.woliveiras.petit.domain.backup.archive.BackupSnapshot
 import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.AppTheme
+import com.woliveiras.petit.domain.model.DewormingEntry
+import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ExportMetadata
 import com.woliveiras.petit.domain.model.Pet
+import com.woliveiras.petit.domain.model.PetType
+import com.woliveiras.petit.domain.model.VaccinationEntry
+import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.domain.usecase.ExportImportUseCase
 import java.io.File
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -222,6 +228,21 @@ class RestoreBackupUseCaseTest {
   }
 
   @Test
+  fun replaceInstallsCompatibilityValuesFromPortableArchiveIntoRoomWithoutRewrite() = runTest {
+    val expected = compatibilityBundle()
+    val archive = createArchive("compatibility-restore", exportBundle = expected)
+    val useCase = restoreUseCase(archive)
+
+    useCase.execute(RestoreBackupRequest("remote-1", RestoreMode.REPLACE))
+
+    val restored = exportImport.exportBackupSnapshot()
+    assertThat(restored.pets.map { Triple(it.id, it.petType, it.breed) })
+      .containsExactlyElementsIn(expected.pets.map { Triple(it.id, it.petType, it.breed) })
+    assertThat(restored.vaccinationEntries).containsExactlyElementsIn(expected.vaccinationEntries)
+    assertThat(restored.dewormingEntries).containsExactlyElementsIn(expected.dewormingEntries)
+  }
+
+  @Test
   fun mergeUsesSharedResolverKeepsLocalPreferencesAndAssetsFollowWinningPet() = runTest {
     database
       .petDao()
@@ -364,6 +385,7 @@ class RestoreBackupUseCaseTest {
     petId: String = "pet-1",
     petUpdatedAt: Long = 2L,
     photo: Boolean = false,
+    exportBundle: ExportBundle? = null,
   ): File {
     val source =
       if (photo) {
@@ -383,7 +405,7 @@ class RestoreBackupUseCaseTest {
           snapshot =
             BackupSnapshot(
               exportBundle =
-                bundle(petId, petUpdatedAt).let { bundle ->
+                (exportBundle ?: bundle(petId, petUpdatedAt)).let { bundle ->
                   if (source == null) bundle
                   else bundle.copy(pets = bundle.pets.map { it.copy(photoUri = "content://old") })
                 },
@@ -417,6 +439,50 @@ class RestoreBackupUseCaseTest {
       dewormingEntries = emptyList(),
       tasks = emptyList(),
     )
+
+  private fun compatibilityBundle(): ExportBundle {
+    val pets =
+      PetType.entries.mapIndexed { index, petType ->
+        Pet(
+          id = "compat-pet-$index",
+          name = "Pet $index",
+          petType = petType,
+          breed = listOf("PERSIAN", "Custom rescue breed", "legacy_Breed-ç")[index % 3],
+          createdAt = 1L,
+          updatedAt = 20L,
+        )
+      }
+    return ExportBundle(
+      metadata = ExportMetadata("1.2.3", "2026-07-18T10:15:30Z"),
+      pets = pets,
+      weightEntries = emptyList(),
+      vaccinationEntries =
+        listOf(
+          VaccinationEntry(
+            id = "compat-vaccination",
+            petId = pets.first().id,
+            vaccineType = VaccineType.OTHER,
+            customVaccineTypeName = "Historical custom vaccine",
+            applicationDate = LocalDate.of(2026, 7, 1),
+            createdAt = 1L,
+            updatedAt = 20L,
+          )
+        ),
+      dewormingEntries =
+        listOf(
+          DewormingEntry(
+            id = "compat-deworming",
+            petId = pets.last().id,
+            type = DewormingType.BOTH,
+            medication = "Legacy active ingredient",
+            applicationDate = LocalDate.of(2026, 7, 1),
+            createdAt = 1L,
+            updatedAt = 20L,
+          )
+        ),
+      tasks = emptyList(),
+    )
+  }
 
   private fun metadata(file: File) =
     BackupMetadata(

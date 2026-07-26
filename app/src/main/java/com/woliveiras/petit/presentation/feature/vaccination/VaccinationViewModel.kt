@@ -8,12 +8,15 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.data.repository.VaccinationEntryRepository
 import com.woliveiras.petit.domain.model.PetType
+import com.woliveiras.petit.domain.model.SpeciesCareCatalog
 import com.woliveiras.petit.domain.model.SyncStatus
 import com.woliveiras.petit.domain.model.VaccinationDraft
 import com.woliveiras.petit.domain.model.VaccinationEntry
 import com.woliveiras.petit.domain.model.VaccinationValidationError
 import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.domain.model.validate
+import com.woliveiras.petit.presentation.util.rethrowIfCancellation
+import com.woliveiras.petit.presentation.util.uiFailureText
 import com.woliveiras.petit.worker.AutoTaskService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -47,7 +50,19 @@ data class VaccinationUiState(
 
   /** Vaccine types available for this pet's species. */
   val availableVaccineTypes: List<VaccineType>
-    get() = VaccineType.forPetType(petType)
+    get() {
+      val catalogTypes = SpeciesCareCatalog.vaccinePresets(petType).map { it.vaccineType }
+      val historicalType = form.historicalVaccineType
+      return if (
+        historicalType != null &&
+          form.vaccineType == historicalType &&
+          historicalType !in catalogTypes
+      ) {
+        catalogTypes + historicalType
+      } else {
+        catalogTypes
+      }
+    }
 }
 
 /** Form-specific state for vaccination entry creation/editing. */
@@ -55,7 +70,8 @@ data class VaccinationFormState(
   val isEditMode: Boolean = false,
   val editingEntryId: String? = null,
   val editingCreatedAt: Long? = null,
-  val vaccineType: VaccineType = VaccineType.V3,
+  val vaccineType: VaccineType = VaccineType.OTHER,
+  val historicalVaccineType: VaccineType? = null,
   val customName: String = "",
   val applicationDate: LocalDate = LocalDate.now(),
   val nextDueDate: LocalDate? = null,
@@ -108,6 +124,7 @@ constructor(
 
   private val _events = MutableSharedFlow<VaccinationEvent>()
   val events: SharedFlow<VaccinationEvent> = _events.asSharedFlow()
+  private var entryLoadedForEdit: VaccinationEntry? = null
 
   init {
     loadPetInfo()
@@ -118,9 +135,9 @@ constructor(
     viewModelScope.launch {
       petRepository.getPetById(petId)?.let { pet ->
         _uiState.update { state ->
-          val availableTypes = VaccineType.forPetType(pet.petType)
+          val availableTypes = SpeciesCareCatalog.vaccinePresets(pet.petType).map { it.vaccineType }
           val selectedType =
-            state.form.vaccineType.takeIf { it in availableTypes } ?: availableTypes.first()
+            state.form.vaccineType.takeIf { state.form.isEditMode } ?: availableTypes.first()
           state.copy(
             petName = pet.name,
             petType = pet.petType,
@@ -149,15 +166,7 @@ constructor(
   fun updateVaccineType(type: VaccineType) {
     _uiState.update { state ->
       val form = state.form
-      // Auto-suggest next dose date based on vaccine interval
-      val suggestedNextDue =
-        if (!form.isEditMode && form.nextDueDate == null) {
-          type.defaultIntervalMonths?.let { months ->
-            form.applicationDate.plusMonths(months.toLong())
-          }
-        } else {
-          form.nextDueDate
-        }
+      if (type !in state.availableVaccineTypes) return@update state
       state.copy(
         form =
           form.copy(
@@ -165,7 +174,6 @@ constructor(
             customName = if (type == VaccineType.OTHER) form.customName else "",
             vaccineTypeError = null,
             customNameError = null,
-            nextDueDate = suggestedNextDue,
           )
       )
     }
@@ -178,17 +186,7 @@ constructor(
   fun updateApplicationDate(date: LocalDate) {
     _uiState.update { state ->
       val form = state.form
-      // Auto-update next dose date if vaccine has default interval
-      val suggestedNextDue =
-        form.vaccineType.defaultIntervalMonths?.let { months -> date.plusMonths(months.toLong()) }
-      state.copy(
-        form =
-          form.copy(
-            applicationDate = date,
-            applicationDateError = null,
-            nextDueDate = suggestedNextDue,
-          )
-      )
+      state.copy(form = form.copy(applicationDate = date, applicationDateError = null))
     }
   }
 
@@ -217,6 +215,7 @@ constructor(
     viewModelScope.launch {
       val entry = vaccinationRepository.getVaccinationEntryById(entryId)
       if (entry != null) {
+        entryLoadedForEdit = entry
         _uiState.update {
           it.copy(
             form =
@@ -225,6 +224,7 @@ constructor(
                 editingEntryId = entry.id,
                 editingCreatedAt = entry.createdAt,
                 vaccineType = entry.vaccineType,
+                historicalVaccineType = entry.vaccineType,
                 customName = entry.customVaccineTypeName ?: "",
                 applicationDate = entry.applicationDate,
                 nextDueDate = entry.nextDueDate,
@@ -240,8 +240,15 @@ constructor(
   }
 
   fun resetForm() {
-    _uiState.update { it.copy(form = VaccinationFormState(applicationDate = LocalDate.now(clock))) }
+    entryLoadedForEdit = null
+    _uiState.update { state -> state.copy(form = newFormFor(state.petType)) }
   }
+
+  private fun newFormFor(petType: PetType) =
+    VaccinationFormState(
+      vaccineType = SpeciesCareCatalog.vaccinePresets(petType).first().vaccineType,
+      applicationDate = LocalDate.now(clock),
+    )
 
   fun saveVaccination() {
     val state = _uiState.value
@@ -251,6 +258,7 @@ constructor(
       VaccinationDraft(
           petType = state.petType,
           vaccineType = form.vaccineType,
+          historicalVaccineType = form.historicalVaccineType,
           customName = form.customName,
           applicationDate = form.applicationDate,
           nextDueDate = form.nextDueDate,
@@ -275,9 +283,7 @@ constructor(
             id = form.editingEntryId ?: UUID.randomUUID().toString(),
             petId = petId,
             vaccineType = form.vaccineType,
-            customVaccineTypeName =
-              if (form.vaccineType == VaccineType.OTHER) form.customName.trim().ifBlank { null }
-              else null,
+            customVaccineTypeName = customVaccineNameForSave(form),
             applicationDate = form.applicationDate,
             nextDueDate = form.nextDueDate,
             veterinarian = form.veterinarian.trim().ifBlank { null },
@@ -294,22 +300,35 @@ constructor(
         // Create/update automatic task if nextDueDate is set
         try {
           autoTaskService.handleVaccinationSaved(entry)
-        } catch (_: Exception) {
+        } catch (failure: Exception) {
+          failure.rethrowIfCancellation()
           // DB saved but auto-task failed — non-critical
         }
 
-        _uiState.update {
-          it.copy(form = VaccinationFormState(applicationDate = LocalDate.now(clock)))
-        }
+        resetForm()
 
         _events.emit(VaccinationEvent.VaccinationSaved(petId))
       } catch (e: Exception) {
         _events.emit(
-          VaccinationEvent.Error(e.message ?: context.getString(R.string.vaccination_error_save))
+          VaccinationEvent.Error(e.uiFailureText(context, R.string.vaccination_error_save))
         )
       } finally {
         _uiState.update { it.copy(form = it.form.copy(isSaving = false)) }
       }
+    }
+  }
+
+  private fun customVaccineNameForSave(form: VaccinationFormState): String? {
+    if (form.vaccineType != VaccineType.OTHER) return null
+    val original = entryLoadedForEdit
+    return if (
+      form.isEditMode &&
+        original?.vaccineType == VaccineType.OTHER &&
+        form.customName == original.customVaccineTypeName.orEmpty()
+    ) {
+      original.customVaccineTypeName
+    } else {
+      form.customName.trim().ifBlank { null }
     }
   }
 
@@ -366,7 +385,7 @@ constructor(
         autoTaskService.handleVaccinationDeleted(entryId)
       } catch (e: Exception) {
         _events.emit(
-          VaccinationEvent.Error(e.message ?: context.getString(R.string.vaccination_error_delete))
+          VaccinationEvent.Error(e.uiFailureText(context, R.string.vaccination_error_delete))
         )
       }
     }
@@ -382,7 +401,7 @@ constructor(
         _events.emit(VaccinationEvent.VaccinationDeleted(petId))
       } catch (e: Exception) {
         _events.emit(
-          VaccinationEvent.Error(e.message ?: context.getString(R.string.vaccination_error_delete))
+          VaccinationEvent.Error(e.uiFailureText(context, R.string.vaccination_error_delete))
         )
       }
     }

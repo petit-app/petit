@@ -37,49 +37,65 @@ class VaccinationValidationTest {
   }
 
   @Test
-  fun catalogTypeMustApplyToPetsSpeciesWhileGeneralTypesRemainValid() {
+  fun newOrChangedTypeMustBeOfferedByTheSpeciesCatalog() {
     assertThat(valid.copy(vaccineType = VaccineType.DHPP).validate(clock))
       .containsExactly(VaccinationValidationError.VACCINE_TYPE_NOT_APPLICABLE)
-    assertThat(valid.copy(vaccineType = VaccineType.RABIES).validate(clock)).isEmpty()
+    assertThat(
+        valid.copy(petType = PetType.RABBIT, vaccineType = VaccineType.RABIES).validate(clock)
+      )
+      .containsExactly(VaccinationValidationError.VACCINE_TYPE_NOT_APPLICABLE)
     assertThat(valid.copy(vaccineType = VaccineType.OTHER, customName = "Especial").validate(clock))
       .isEmpty()
   }
 
   @Test
-  fun catalogContainsGeneralAndEverySpeciesSpecificVaccine() {
-    assertThat(VaccineType.forPetType(PetType.CAT))
+  fun validationUsesTheExactCatalogMatrixForAllSixSpecies() {
+    assertThat(SpeciesCareCatalog.vaccinePresets(PetType.CAT).map { it.vaccineType })
       .containsExactly(
         VaccineType.RABIES,
-        VaccineType.OTHER,
         VaccineType.V3,
         VaccineType.V4,
         VaccineType.V5,
         VaccineType.FELV,
         VaccineType.FIV,
+        VaccineType.OTHER,
       )
       .inOrder()
-    assertThat(VaccineType.forPetType(PetType.DOG))
+    assertThat(SpeciesCareCatalog.vaccinePresets(PetType.DOG).map { it.vaccineType })
       .containsExactly(
         VaccineType.RABIES,
-        VaccineType.OTHER,
         VaccineType.DHPP,
         VaccineType.BORDETELLA,
         VaccineType.LEPTOSPIROSIS,
         VaccineType.LEISHMANIA,
         VaccineType.GRIPE_CANINA,
-      )
-      .inOrder()
-    assertThat(VaccineType.forPetType(PetType.RABBIT))
-      .containsExactly(
-        VaccineType.RABIES,
         VaccineType.OTHER,
-        VaccineType.RHDV,
-        VaccineType.MYXOMATOSIS,
       )
       .inOrder()
-    assertThat(VaccineType.forPetType(PetType.BIRD))
-      .containsExactly(VaccineType.RABIES, VaccineType.OTHER, VaccineType.POLYOMAVIRUS)
+    assertThat(SpeciesCareCatalog.vaccinePresets(PetType.RABBIT).map { it.vaccineType })
+      .containsExactly(VaccineType.RHDV, VaccineType.MYXOMATOSIS, VaccineType.OTHER)
       .inOrder()
+    assertThat(SpeciesCareCatalog.vaccinePresets(PetType.BIRD).map { it.vaccineType })
+      .containsExactly(VaccineType.POLYOMAVIRUS, VaccineType.OTHER)
+      .inOrder()
+    listOf(PetType.HAMSTER, PetType.OTHER).forEach { petType ->
+      assertThat(SpeciesCareCatalog.vaccinePresets(petType).map { it.vaccineType })
+        .containsExactly(VaccineType.OTHER)
+    }
+  }
+
+  @Test
+  fun unchangedHistoricalIncompatibleTypeIsValidButAReplacementIsRejected() {
+    val historical =
+      valid.copy(
+        petType = PetType.RABBIT,
+        vaccineType = VaccineType.DHPP,
+        historicalVaccineType = VaccineType.DHPP,
+      )
+
+    assertThat(historical.validate(clock)).isEmpty()
+    assertThat(historical.copy(vaccineType = VaccineType.RABIES).validate(clock))
+      .containsExactly(VaccinationValidationError.VACCINE_TYPE_NOT_APPLICABLE)
   }
 
   @Test
