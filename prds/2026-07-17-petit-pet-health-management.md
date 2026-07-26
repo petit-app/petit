@@ -303,6 +303,13 @@ never translated or matched to a breed by fuzzy inference. Mixed breed, unknown
 breed, and manual entry are Petit-owned categories rather than VBO breed
 concepts.
 
+For cats and dogs, breed selection opens as a dedicated screen instead of a
+dialog over the pet form. The screen gives the catalog, search results, and
+non-breed choices the full viewport. A choice remains a draft until the
+caregiver confirms it. Confirmation returns to the pet form and applies the
+chosen ID and fallback together. Navigating back without confirmation leaves
+the form's previous breed value unchanged.
+
 ---
 
 # Reminders and Notifications

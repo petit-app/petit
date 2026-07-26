@@ -3,6 +3,8 @@
 Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
 > Spec and ADR approved on 2026-07-26. Implementation may proceed.
+>
+> The dedicated-screen interaction revision was approved on 2026-07-26.
 
 ## Tasks
 
@@ -63,6 +65,20 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - test expectations: ViewModel/state tests plus focused Compose tests for
     English and pt-BR.
   - verification: focused JVM and instrumented pet-form suites.
+
+- [~] **Move breed selection to a dedicated confirmation screen** (test-type: both)
+  - blocked-by: none
+  - desired behavior: cat and dog breed selection uses a focused full-screen
+    destination, keeps choices as drafts, and returns only an explicitly
+    confirmed result to the existing pet form.
+  - acceptance criteria: current-value preselection, catalog/mixed/unknown/
+    manual/empty choices, fixed search and confirmation controls, confirmation,
+    system/app back cancellation, form-state preservation, process restoration,
+    and accessibility semantics match the revised spec.
+  - test expectations: navigation-result and ViewModel tests plus focused
+    Compose navigation tests in English and pt-BR.
+  - verification: focused JVM tests, API 34 emulator journey, Android-test
+    compilation, and physical TalkBack review reported separately.
 
 - [x] **Expose catalog provenance and license** (test-type: both)
   - blocked-by: reviewed offline breed snapshot

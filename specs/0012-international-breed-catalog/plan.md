@@ -4,8 +4,8 @@ Spec: [spec.md](./spec.md)
 
 ## Status
 
-This plan is **Approved**. The user approved spec 0012 and ADR 0001 on
-2026-07-26.
+This plan is **Approved**. The user approved the dedicated confirmation screen
+revision on 2026-07-26.
 
 ## Dependencies
 
@@ -43,6 +43,9 @@ This plan is **Approved**. The user approved spec 0012 and ADR 0001 on
    review, and validate failure fallback.
 8. [~] Run focused, nearest-suite, formatting, lint, build/install, physical
    accessibility, and separately scoped two-device checks.
+9. [ ] Replace the dialog with a dedicated breed-selection navigation
+   destination. Keep the pet form on the back stack, return confirmed choices
+   through navigation state, and discard unconfirmed drafts on back.
 
 ## Commit boundaries
 
@@ -55,6 +58,7 @@ boundaries are:
 4. searchable localized and accessible UI;
 5. transport, attribution, and final verification adjustments if they are not
    already contained in the preceding vertical changes.
+6. dedicated breed-selection screen and removal of the dialog.
 
 No push, amend, rebase, merge, force-push, or pull request is authorized.
 
@@ -72,6 +76,10 @@ No push, amend, rebase, merge, force-push, or pull request is authorized.
   generator validation.
 - **Catalog failure:** keep current value and manual entry available when the
   bundled asset fails to load.
+- **Form state loss during navigation:** keep the existing form ViewModel and
+  saved state on the back stack; return only an explicitly confirmed selection.
+- **Accidental selection:** keep screen choices as drafts until confirmation;
+  back navigation does not publish a result.
 - **License misuse:** ship attribution from VBO and exclude registry prose and
   images.
 

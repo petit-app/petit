@@ -3,7 +3,7 @@ spec: "0012"
 title: International dog and cat breed catalog
 family: pet-care
 phase: 1
-status: Implemented
+status: Approved
 owner: woliveiras
 depends_on: ["0001", "0006", "0011"]
 origin: prds/2026-07-17-petit-pet-health-management.md
@@ -92,9 +92,21 @@ TICA.
 
 ## Breed selection experience
 
-- Replace the cat/dog breed dropdown with a searchable, accessible selector.
+- Replace the cat/dog breed dropdown with a searchable, accessible dedicated
+  screen. Do not present the catalog in a dialog, modal sheet, or popup.
 - Keep rabbit, bird, hamster, and `OTHER` breed behavior from spec 0011
   unchanged.
+- Open the dedicated screen from the breed field while retaining the pet form
+  and all unsaved form values on the navigation back stack.
+- Treat selection on the dedicated screen as a draft. A catalog breed, mixed
+  breed, unknown breed, manual value, or empty value changes the pet form only
+  after the caregiver activates the explicit confirmation action.
+- After confirmation, return to the same pet form with the confirmed ID,
+  fallback, and localized display value applied together.
+- Navigating back without confirmation discards changes made on the selector
+  screen and leaves the pet form's previous breed value unchanged.
+- Preselect the form's current breed when the dedicated screen opens. An
+  unknown future ID or exact custom value must remain visible and selectable.
 - Search the active species only.
 - Match the localized display name, canonical name, and aliases without case or
   accent sensitivity.
@@ -104,6 +116,9 @@ TICA.
   search result.
 - Show a clear empty state and retain the manual-entry action when no catalog
   result matches.
+- Keep the search field and screen title visible while the result list scrolls.
+  Keep the confirmation action reachable without scrolling to the end of the
+  catalog.
 - A species change clears an unsaved catalog selection that belongs to the
   previous species, but preserves a value loaded from an existing pet until the
   caregiver explicitly replaces or clears it.
@@ -168,7 +183,7 @@ TICA.
 | --- | --- |
 | Unit | Source parsing, inclusion rules, IDs, authority status, locale lookup, normalized search, legacy mapping, unknown-ID fallback, and deterministic generation. |
 | Integration | Room migration, mapper, JSON, archive, Nearby, LAN, and conflict round trips for VBO, Petit-owned, custom, missing, and unknown future IDs. |
-| Instrumented | Searchable selector for cat and dog, locale switching, empty search, manual entry, species changes, state restoration, and accessibility semantics. |
+| Instrumented | Dedicated searchable selector screen for cat and dog, explicit confirmation, back-without-confirmation, locale switching, empty search, manual entry, species changes, state restoration, navigation results, and accessibility semantics. |
 | Manual | Physical-device review in English and pt-BR with TalkBack and a large catalog; two-device transfer remains a separately reported check. |
 
 ## Acceptance criteria
@@ -187,6 +202,18 @@ TICA.
   for that species are returned in deterministic locale order.
 - [ ] Given no matching result, when the selector shows its empty state, then
   mixed breed, unknown breed, and manual entry remain available.
+- [ ] Given the caregiver opens breed selection for a cat or dog, when
+  navigation completes, then a dedicated full-screen destination is visible
+  and the partially completed pet form remains on the back stack.
+- [ ] Given a breed choice is highlighted on the dedicated screen, when the
+  caregiver has not confirmed it, then the pet form's breed value remains
+  unchanged.
+- [ ] Given a catalog, mixed, unknown, manual, or empty choice, when the
+  caregiver confirms it, then the selector returns to the same pet form and
+  applies the complete confirmed value.
+- [ ] Given the caregiver changes the draft choice and navigates back without
+  confirmation, when the pet form resumes, then its prior breed value is
+  unchanged.
 - [ ] Given a catalog selection, when the pet is saved and reloaded, then its
   `breedId` and canonical fallback remain paired and the localized name is
   displayed.
@@ -207,8 +234,9 @@ TICA.
 - [ ] Given airplane mode and no account, when the caregiver opens and searches
   the catalog, then all catalog and manual-entry behavior remains available.
 - [ ] Given TalkBack in English or pt-BR, when the caregiver searches, selects,
-  clears, or enters a breed, then each action and state is announced with
-  localized text.
+  clears, enters, or confirms a breed, then the dedicated screen, current draft
+  selection, result state, confirmation action, and navigation outcome are
+  announced with localized text.
 - [ ] Given the app's legal or attribution screen, when the caregiver inspects
   catalog sources, then the VBO license, release, and configured registry
   sources are visible.
