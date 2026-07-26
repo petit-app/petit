@@ -54,11 +54,11 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /** Screen for creating or editing a standalone task. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -206,8 +206,7 @@ fun TaskFormScreen(
     },
     modifier = modifier,
   ) { padding ->
-    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val displayFormatter = rememberAppDisplayFormatter()
 
     Column(
       modifier =
@@ -311,7 +310,7 @@ fun TaskFormScreen(
       // Date and Time
       Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
-          value = uiState.scheduledDate.format(dateFormatter),
+          value = displayFormatter.shortDate(uiState.scheduledDate.toLocalDate()),
           onValueChange = {},
           label = { Text(stringResource(R.string.task_field_date)) },
           modifier = Modifier.weight(1f).clickable { showDatePicker = true },
@@ -328,7 +327,7 @@ fun TaskFormScreen(
           },
         )
         OutlinedTextField(
-          value = uiState.scheduledDate.format(timeFormatter),
+          value = displayFormatter.time(uiState.scheduledDate.toLocalTime()),
           onValueChange = {},
           label = { Text(stringResource(R.string.task_field_time)) },
           modifier = Modifier.width(120.dp).clickable { showTimePicker = true },

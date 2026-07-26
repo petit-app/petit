@@ -50,6 +50,7 @@ import com.woliveiras.petit.presentation.util.formatAge
 import com.woliveiras.petit.presentation.util.localizedBreed
 import com.woliveiras.petit.presentation.util.localizedColor
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,6 +136,7 @@ private fun PetListContent(pets: List<PetListItem>, onPetClick: (String) -> Unit
 private fun PetListCard(petItem: PetListItem, onClick: () -> Unit) {
   val pet = petItem.pet
   val context = LocalContext.current
+  val displayFormatter = rememberAppDisplayFormatter()
 
   Card(
     onClick = onClick,
@@ -212,7 +214,7 @@ private fun PetListCard(petItem: PetListItem, onClick: () -> Unit) {
         // Weight chip
         ListInfoChip(
           label = stringResource(R.string.pet_list_weight_label),
-          value = petItem.latestWeight?.formattedWeight ?: "-",
+          value = petItem.latestWeight?.let { displayFormatter.weight(it.weightGrams) } ?: "-",
           modifier = Modifier.weight(1f),
         )
 

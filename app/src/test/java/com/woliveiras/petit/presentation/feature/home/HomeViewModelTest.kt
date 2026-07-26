@@ -4,7 +4,11 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.data.repository.TaskRepository
 import com.woliveiras.petit.data.repository.TimelineRepository
+import com.woliveiras.petit.data.repository.UserPreferences
+import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepository
+import com.woliveiras.petit.domain.model.AppLanguage
+import com.woliveiras.petit.domain.model.AppTheme
 import com.woliveiras.petit.domain.model.HealthStatus
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetHealthSummary
@@ -16,6 +20,8 @@ import com.woliveiras.petit.domain.model.TimelineEvent
 import com.woliveiras.petit.domain.model.TimelineEventType
 import com.woliveiras.petit.domain.model.WeightEntry
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
+import com.woliveiras.petit.presentation.util.TaskDisplayText
+import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +43,9 @@ import org.junit.Test
 class HomeViewModelTest {
 
   private val dispatcher: TestDispatcher = StandardTestDispatcher()
+  private val identityTaskDisplayTextResolver = TaskDisplayTextResolver { task, _ ->
+    TaskDisplayText(task.title, task.description)
+  }
 
   @Before
   fun setUp() {
@@ -67,6 +76,8 @@ class HomeViewModelTest {
             ),
           taskRepository = FakeTaskRepository(),
           timelineRepository = FailingTimelineRepository(),
+          taskDisplayTextResolver = identityTaskDisplayTextResolver,
+          userPreferencesRepository = FakeUserPreferencesRepository(),
         )
 
       advanceUntilIdle()
@@ -93,6 +104,8 @@ class HomeViewModelTest {
           getPetHealthSummary = healthSummary,
           taskRepository = FakeTaskRepository(),
           timelineRepository = timeline,
+          taskDisplayTextResolver = identityTaskDisplayTextResolver,
+          userPreferencesRepository = FakeUserPreferencesRepository(),
         )
       advanceUntilIdle()
 
@@ -140,6 +153,8 @@ class HomeViewModelTest {
             FakeHealthSummaryAction(mapOf("mimi" to Result.success(PetHealthSummary("mimi")))),
           taskRepository = taskRepository,
           timelineRepository = MutableTimelineRepository(),
+          taskDisplayTextResolver = identityTaskDisplayTextResolver,
+          userPreferencesRepository = FakeUserPreferencesRepository(),
         )
 
       advanceUntilIdle()
@@ -148,6 +163,34 @@ class HomeViewModelTest {
         .containsExactly("1", "2", "3", "4", "5")
         .inOrder()
       assertThat(viewModel.uiState.value.hasMoreTasks).isTrue()
+    }
+
+  @Test
+  fun automaticTaskTextIsDecoratedOnlyInDashboardPresentationState() =
+    runTest(dispatcher) {
+      val storedTask = task("automatic", 1).copy(title = "Stored English title")
+      val taskRepository = FakeTaskRepository().apply { dueToday.value = listOf(storedTask) }
+      val viewModel =
+        HomeViewModel(
+          petRepository = FakePetRepository(listOf(pet("mimi"))),
+          weightEntryRepository = FakeWeightEntryRepository(),
+          getPetHealthSummary =
+            FakeHealthSummaryAction(mapOf("mimi" to Result.success(PetHealthSummary("mimi")))),
+          taskRepository = taskRepository,
+          timelineRepository = MutableTimelineRepository(),
+          taskDisplayTextResolver =
+            TaskDisplayTextResolver { _, _ ->
+              TaskDisplayText("Título localizado", "Descrição localizada")
+            },
+          userPreferencesRepository = FakeUserPreferencesRepository(),
+        )
+
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.nextTasks.single().title).isEqualTo("Título localizado")
+      assertThat(viewModel.uiState.value.nextTasks.single().description)
+        .isEqualTo("Descrição localizada")
+      assertThat(taskRepository.dueToday.value.single()).isEqualTo(storedTask)
     }
 
   @Test
@@ -166,6 +209,8 @@ class HomeViewModelTest {
             FakeHealthSummaryAction(mapOf("mimi" to Result.success(PetHealthSummary("mimi")))),
           taskRepository = FakeTaskRepository(),
           timelineRepository = timeline,
+          taskDisplayTextResolver = identityTaskDisplayTextResolver,
+          userPreferencesRepository = FakeUserPreferencesRepository(),
         )
 
       advanceUntilIdle()
@@ -291,6 +336,24 @@ class HomeViewModelTest {
     override suspend fun deleteTask(id: String) = Unit
 
     override suspend fun deleteTasksByReferenceEntity(entityId: String) = Unit
+  }
+
+  private class FakeUserPreferencesRepository(language: AppLanguage = AppLanguage.ENGLISH) :
+    UserPreferencesRepository {
+    private val state = MutableStateFlow(UserPreferences(AppTheme.SYSTEM, language))
+    override val userPreferences: Flow<UserPreferences> = state
+
+    override suspend fun updateTheme(theme: AppTheme) {
+      state.value = state.value.copy(theme = theme)
+    }
+
+    override suspend fun updateLanguage(language: AppLanguage) {
+      state.value = state.value.copy(language = language)
+    }
+
+    override suspend fun setOnboardingCompleted() {
+      state.value = state.value.copy(hasCompletedOnboarding = true)
+    }
   }
 
   private class FailingTimelineRepository : TimelineRepository {

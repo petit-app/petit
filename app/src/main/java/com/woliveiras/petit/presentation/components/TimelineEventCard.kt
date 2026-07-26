@@ -36,9 +36,9 @@ import androidx.compose.ui.unit.dp
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.TimelineEvent
 import com.woliveiras.petit.domain.model.TimelineEventType
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import com.woliveiras.petit.ui.theme.LocalPetitColors
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 /**
@@ -154,11 +154,12 @@ private fun buildEventTitle(event: TimelineEvent): String {
 
 @Composable
 private fun formatSubtitle(event: TimelineEvent): String {
+  val displayFormatter = rememberAppDisplayFormatter()
   return when (event.eventType) {
     TimelineEventType.WEIGHT -> {
       // Subtitle contains weight in grams, convert to kg
       val grams = event.subtitle?.toIntOrNull() ?: 0
-      String.format("%.1f kg", grams / 1000.0)
+      displayFormatter.weight(grams)
     }
     else -> event.subtitle ?: ""
   }
@@ -166,6 +167,7 @@ private fun formatSubtitle(event: TimelineEvent): String {
 
 @Composable
 private fun formatEventDate(event: TimelineEvent): String {
+  val displayFormatter = rememberAppDisplayFormatter()
   val today = LocalDate.now()
   val days = ChronoUnit.DAYS.between(today, event.eventDate)
 
@@ -176,8 +178,7 @@ private fun formatEventDate(event: TimelineEvent): String {
     days > 1 && days <= 7 -> stringResource(R.string.timeline_in_days, days.toInt())
     days < -1 && days >= -7 -> stringResource(R.string.timeline_days_ago, (-days).toInt())
     else -> {
-      val formatter = DateTimeFormatter.ofPattern("dd MMM")
-      event.eventDate.format(formatter)
+      displayFormatter.dayMonth(event.eventDate)
     }
   }
 }

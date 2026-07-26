@@ -10,6 +10,7 @@ import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.data.repository.VaccinationEntryRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepository
 import com.woliveiras.petit.domain.model.Pet
+import com.woliveiras.petit.presentation.util.uiFailureText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -87,7 +88,7 @@ constructor(
         _uiState.value =
           _uiState.value.copy(
             isLoading = false,
-            error = e.message ?: context.getString(R.string.pet_error_delete_load),
+            error = e.uiFailureText(context, R.string.pet_error_delete_load),
           )
       }
     }
@@ -101,9 +102,7 @@ constructor(
         _uiState.value = _uiState.value.copy(isDeleted = true)
       } catch (e: Exception) {
         _events.emit(
-          PetDeleteConfirmationEvent.Error(
-            e.message ?: context.getString(R.string.pet_error_delete)
-          )
+          PetDeleteConfirmationEvent.Error(e.uiFailureText(context, R.string.pet_error_delete))
         )
       } finally {
         _uiState.value = _uiState.value.copy(isDeleting = false)

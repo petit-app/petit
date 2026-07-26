@@ -9,6 +9,9 @@ import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepository
 import com.woliveiras.petit.domain.model.SyncStatus
 import com.woliveiras.petit.domain.model.WeightEntry
+import com.woliveiras.petit.presentation.util.AppDisplayFormatter
+import com.woliveiras.petit.presentation.util.rethrowIfCancellation
+import com.woliveiras.petit.presentation.util.uiFailureText
 import com.woliveiras.petit.worker.AutoTaskService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -124,7 +127,7 @@ constructor(
       it.copy(
         isEditMode = true,
         editingEntryId = entry.id,
-        weightValue = String.format("%.2f", entry.weightKg),
+        weightValue = AppDisplayFormatter(context).decimal(entry.weightKg, fractionDigits = 2),
         weightUnit = WeightUnit.KG,
         date = entry.date,
         note = entry.note ?: "",
@@ -159,7 +162,7 @@ constructor(
     val state = _uiState.value
 
     // Validate and convert weight to grams
-    val weightValue = state.weightValue.toDoubleOrNull()
+    val weightValue = AppDisplayFormatter(context).parseDecimal(state.weightValue)
 
     // Validation based on unit
     val maxWeight = if (state.weightUnit == WeightUnit.KG) 50.0 else 50000.0
@@ -217,7 +220,8 @@ constructor(
         // Create automatic task for next weighing
         try {
           autoTaskService.handleWeightSaved(petId, _uiState.value.petName)
-        } catch (_: Exception) {
+        } catch (failure: Exception) {
+          failure.rethrowIfCancellation()
           // DB saved but auto-task failed — non-critical
         }
 
@@ -234,9 +238,7 @@ constructor(
 
         _events.emit(WeightFormEvent.WeightSaved(petId))
       } catch (e: Exception) {
-        _events.emit(
-          WeightFormEvent.Error(e.message ?: context.getString(R.string.weight_error_save))
-        )
+        _events.emit(WeightFormEvent.Error(e.uiFailureText(context, R.string.weight_error_save)))
       } finally {
         _uiState.update { it.copy(isSaving = false) }
       }
@@ -251,9 +253,7 @@ constructor(
           cancelEdit()
         }
       } catch (e: Exception) {
-        _events.emit(
-          WeightFormEvent.Error(e.message ?: context.getString(R.string.weight_error_delete))
-        )
+        _events.emit(WeightFormEvent.Error(e.uiFailureText(context, R.string.weight_error_delete)))
       }
     }
   }
@@ -266,9 +266,7 @@ constructor(
         weightEntryRepository.deleteWeightEntry(entryId)
         _events.emit(WeightFormEvent.WeightDeleted(petId))
       } catch (e: Exception) {
-        _events.emit(
-          WeightFormEvent.Error(e.message ?: context.getString(R.string.weight_error_delete))
-        )
+        _events.emit(WeightFormEvent.Error(e.uiFailureText(context, R.string.weight_error_delete)))
       }
     }
   }

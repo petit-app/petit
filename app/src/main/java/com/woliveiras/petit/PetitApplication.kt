@@ -6,14 +6,19 @@ import android.app.NotificationManager
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
+import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.backup.restore.RestoreBackupUseCase
+import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.usecase.backup.BackupTriggerCoordinator
+import com.woliveiras.petit.util.LocaleApplicator
 import com.woliveiras.petit.worker.LanSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -25,11 +30,20 @@ class PetitApplication : Application(), Configuration.Provider {
   @Inject lateinit var lanSyncScheduler: LanSyncScheduler
   @Inject lateinit var restoreBackupUseCase: RestoreBackupUseCase
   @Inject lateinit var backupTriggerCoordinator: BackupTriggerCoordinator
+  @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
+  @Inject lateinit var localeApplicator: LocaleApplicator
   private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
   override fun onCreate() {
     super.onCreate()
-    createNotificationChannel()
+    runBlocking {
+      initializeLanguageBeforeNotifications(
+        context = this@PetitApplication,
+        userPreferencesRepository = userPreferencesRepository,
+        localeApplicator = localeApplicator,
+        createNotificationChannel = ::createNotificationChannel,
+      )
+    }
     runBlocking(Dispatchers.IO) { restoreBackupUseCase.recoverInterruptedRestore() }
     applicationScope.launch {
       familyGroupRepository.isSyncEnabled.collect { shouldSchedule ->
@@ -61,4 +75,24 @@ class PetitApplication : Application(), Configuration.Provider {
   companion object {
     const val TASKS_CHANNEL_ID = "petit_reminders"
   }
+}
+
+internal suspend fun UserPreferencesRepository.initialLanguageOrSystem(): AppLanguage =
+  try {
+    userPreferences.first().language
+  } catch (cancellation: CancellationException) {
+    throw cancellation
+  } catch (_: Exception) {
+    AppLanguage.SYSTEM
+  }
+
+internal suspend fun initializeLanguageBeforeNotifications(
+  context: android.content.Context,
+  userPreferencesRepository: UserPreferencesRepository,
+  localeApplicator: LocaleApplicator,
+  createNotificationChannel: () -> Unit,
+) {
+  val language = userPreferencesRepository.initialLanguageOrSystem()
+  localeApplicator.applyLanguageAtStartup(context, language)
+  createNotificationChannel()
 }

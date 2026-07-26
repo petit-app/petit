@@ -65,8 +65,8 @@ constructor(
           _uiState.update { it.copy(isDeleting = false, isDeleted = true) }
           _events.emit(DeleteAllDataEvent.Success)
         }
-        .onFailure { error ->
-          val message = error.message ?: context.getString(R.string.error_unknown)
+        .onFailure {
+          val message = context.getString(R.string.error_unknown)
           _uiState.update { it.copy(isDeleting = false, errorMessage = message) }
           _events.emit(DeleteAllDataEvent.Error(message))
         }

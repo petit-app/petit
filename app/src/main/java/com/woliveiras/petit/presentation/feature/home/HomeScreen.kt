@@ -64,10 +64,8 @@ import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.components.TimelineSection
 import com.woliveiras.petit.presentation.feature.tasks.getTaskKindIcon
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
-private val TaskDateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,6 +149,7 @@ internal fun HomeContent(
   onSeeAllTasks: () -> Unit,
   onTimelineClick: () -> Unit,
 ) {
+  val displayFormatter = rememberAppDisplayFormatter()
   LazyColumn(
     contentPadding = PaddingValues(16.dp),
     verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -198,7 +197,7 @@ internal fun HomeContent(
           data =
             PetCardData(
               pet = petWithSummary.pet,
-              weight = petWithSummary.latestWeight?.formattedWeight,
+              weight = petWithSummary.latestWeight?.let { displayFormatter.weight(it.weightGrams) },
               nextVaccineType = petWithSummary.nextVaccineType,
               nextVaccinationDate = petWithSummary.nextVaccinationDate,
               nextDewormingType = petWithSummary.nextDewormingType,
@@ -316,8 +315,9 @@ private fun AllGoodBanner() {
 
 @Composable
 private fun HomeAlertCard(alert: HomeAlert, onClick: () -> Unit) {
+  val displayFormatter = rememberAppDisplayFormatter()
   val status = alert.petWithSummary.overallStatus.localizedName()
-  val date = alert.relevantDate?.format(TaskDateFormatter)
+  val date = alert.relevantDate?.let(displayFormatter::shortDate)
   val dateText = date?.let { stringResource(R.string.home_alert_relevant_date, it) }
   val description =
     listOfNotNull(alert.petWithSummary.pet.name, status, dateText).joinToString(", ")
@@ -356,16 +356,17 @@ private fun HomeAlertCard(alert: HomeAlert, onClick: () -> Unit) {
 
 @Composable
 private fun HomeTaskCard(task: Task, onClick: () -> Unit, onComplete: () -> Unit) {
+  val displayFormatter = rememberAppDisplayFormatter()
   val isOverdue = task.isPastDue
   val taskDate = task.scheduledFor.toLocalDate()
   val today = LocalDate.now()
   val dateText =
     when {
       taskDate.isBefore(today) ->
-        stringResource(R.string.task_date_overdue, taskDate.format(TaskDateFormatter))
+        stringResource(R.string.task_date_overdue, displayFormatter.shortDate(taskDate))
       taskDate == today -> stringResource(R.string.task_date_today)
       taskDate == today.plusDays(1) -> stringResource(R.string.task_date_tomorrow)
-      else -> taskDate.format(TaskDateFormatter)
+      else -> displayFormatter.shortDate(taskDate)
     }
   val cardDescription = "${task.title}, $dateText"
 

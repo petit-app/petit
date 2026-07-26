@@ -1,6 +1,11 @@
 package com.woliveiras.petit.presentation.feature.backup
 
+import android.app.Application
+import android.content.Context
+import android.content.res.Configuration
+import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
 import com.woliveiras.petit.domain.backup.BackupAuthorizationResult
 import com.woliveiras.petit.domain.backup.BackupAuthorizationState
@@ -10,7 +15,10 @@ import com.woliveiras.petit.domain.backup.BackupProgress
 import com.woliveiras.petit.domain.backup.BackupTrigger
 import com.woliveiras.petit.domain.usecase.backup.BackupCreationResult
 import com.woliveiras.petit.domain.usecase.backup.CreateBackupAction
+import java.io.File
 import java.time.Instant
+import java.util.Locale
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,10 +31,16 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class ManualBackupViewModelTest {
   private val dispatcher = StandardTestDispatcher()
+  private val context: Context = ApplicationProvider.getApplicationContext()
 
   @Before
   fun setUp() {
@@ -43,7 +57,7 @@ class ManualBackupViewModelTest {
     runTest(dispatcher) {
       val authorization = FakeAuthorization()
       val action = FakeCreateBackupAction()
-      val viewModel = ManualBackupViewModel(authorization, action) { "backup-1" }
+      val viewModel = ManualBackupViewModel(context, authorization, action) { "backup-1" }
 
       viewModel.authorizeAndBackUp()
       advanceUntilIdle()
@@ -61,7 +75,7 @@ class ManualBackupViewModelTest {
       val action = FakeCreateBackupAction()
       action.results += BackupCreationResult.RetryableFailure("offline")
       action.results += BackupCreationResult.Success(metadata("backup-1"))
-      val viewModel = ManualBackupViewModel(authorization, action) { "backup-1" }
+      val viewModel = ManualBackupViewModel(context, authorization, action) { "backup-1" }
 
       viewModel.backUpNow()
       advanceUntilIdle()
@@ -80,7 +94,7 @@ class ManualBackupViewModelTest {
       val authorization = FakeAuthorization()
       authorization.nextResult = BackupAuthorizationResult.Cancelled
       val action = FakeCreateBackupAction()
-      val viewModel = ManualBackupViewModel(authorization, action)
+      val viewModel = ManualBackupViewModel(context, authorization, action)
 
       viewModel.authorizeAndBackUp()
       advanceUntilIdle()
@@ -94,7 +108,8 @@ class ManualBackupViewModelTest {
   fun revokedAuthorizationAfterCompletionReturnsToAnActionableState() =
     runTest(dispatcher) {
       val authorization = FakeAuthorization(BackupAuthorizationState.Authorized())
-      val viewModel = ManualBackupViewModel(authorization, FakeCreateBackupAction()) { "backup-1" }
+      val viewModel =
+        ManualBackupViewModel(context, authorization, FakeCreateBackupAction()) { "backup-1" }
       viewModel.backUpNow()
       advanceUntilIdle()
       assertThat(viewModel.uiState.value.operation)
@@ -108,20 +123,51 @@ class ManualBackupViewModelTest {
     }
 
   @Test
-  fun unexpectedActionFailureLeavesCreatingWithSafeErrorState() =
+  fun unexpectedActionFailureUsesPortugueseAppCopyWithoutExposingDiagnosticsOrLiteralFallback() =
     runTest(dispatcher) {
+      val portugueseContext = context.forLocale(Locale.forLanguageTag("pt-BR"))
       val authorization = FakeAuthorization(BackupAuthorizationState.Authorized())
       val action = FakeCreateBackupAction()
       action.failure = IllegalStateException("private path")
-      val viewModel = ManualBackupViewModel(authorization, action) { "backup-1" }
+      val viewModel = ManualBackupViewModel(portugueseContext, authorization, action) { "backup-1" }
 
       viewModel.backUpNow()
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.operation)
-        .isEqualTo(ManualBackupOperation.PermanentFailure("Backup could not be completed"))
+        .isEqualTo(
+          ManualBackupOperation.PermanentFailure(
+            portugueseContext.getString(R.string.backup_permanent_error)
+          )
+        )
       assertThat(viewModel.uiState.value.operation.toString()).doesNotContain("private path")
+      assertThat(
+          File(
+              "src/main/java/com/woliveiras/petit/presentation/feature/backup/ManualBackupViewModel.kt"
+            )
+            .readText()
+        )
+        .doesNotContain("\"Backup could not be completed\"")
     }
+
+  @Test
+  fun cancellationReturnsToIdleInsteadOfBecomingLocalizedFailure() =
+    runTest(dispatcher) {
+      val authorization = FakeAuthorization(BackupAuthorizationState.Authorized())
+      val action = FakeCreateBackupAction()
+      action.failure = CancellationException("cancelled")
+      val viewModel = ManualBackupViewModel(context, authorization, action) { "backup-1" }
+
+      viewModel.backUpNow()
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.operation).isEqualTo(ManualBackupOperation.Idle)
+    }
+
+  private fun Context.forLocale(locale: Locale): Context {
+    val configuration = Configuration(resources.configuration).apply { setLocale(locale) }
+    return createConfigurationContext(configuration)
+  }
 
   private class FakeAuthorization(
     initial: BackupAuthorizationState = BackupAuthorizationState.AuthorizationRequired

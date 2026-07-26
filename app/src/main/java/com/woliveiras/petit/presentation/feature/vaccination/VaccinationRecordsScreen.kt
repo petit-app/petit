@@ -49,9 +49,9 @@ import com.woliveiras.petit.presentation.components.EmptyState
 import com.woliveiras.petit.presentation.components.HealthStatusBadge
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import com.woliveiras.petit.ui.theme.*
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /**
  * Screen displaying vaccination records for a pet. Shows latest vaccination for each type with
@@ -170,12 +170,12 @@ private fun VaccinationTimelineCard(
   onEdit: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  val displayFormatter = rememberAppDisplayFormatter()
   val cardDescription =
     listOfNotNull(
         vaccination.effectiveVaccineDisplayName,
-        vaccination.applicationDate.format(dateFormatter),
-        vaccination.nextDueDate?.let { it.format(dateFormatter) },
+        displayFormatter.shortDate(vaccination.applicationDate),
+        vaccination.nextDueDate?.let(displayFormatter::shortDate),
         status.localizedName(),
       )
       .joinToString(", ")
@@ -217,7 +217,7 @@ private fun VaccinationTimelineCard(
 
         // Application date
         Text(
-          text = vaccination.applicationDate.format(dateFormatter),
+          text = displayFormatter.shortDate(vaccination.applicationDate),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(top = 4.dp),
@@ -229,7 +229,7 @@ private fun VaccinationTimelineCard(
         vaccination.nextDueDate?.let { nextDate ->
           DetailRow(
             label = stringResource(R.string.vaccination_detail_next_dose),
-            value = nextDate.format(dateFormatter),
+            value = displayFormatter.shortDate(nextDate),
           )
         }
 

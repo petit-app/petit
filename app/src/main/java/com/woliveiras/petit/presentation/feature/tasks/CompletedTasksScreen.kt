@@ -42,7 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
-import java.time.format.DateTimeFormatter
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 
 /** Screen showing completed tasks that can be reactivated or deleted. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,8 +119,9 @@ private fun CompletedTaskCard(
   onDelete: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-  val cardDescription = "${task.title}, ${task.scheduledFor.toLocalDate().format(formatter)}"
+  val displayFormatter = rememberAppDisplayFormatter()
+  val formattedDate = displayFormatter.shortDate(task.scheduledFor.toLocalDate())
+  val cardDescription = "${task.title}, $formattedDate"
 
   Card(
     colors =
@@ -154,7 +155,7 @@ private fun CompletedTaskCard(
             overflow = TextOverflow.Ellipsis,
           )
           Text(
-            text = task.scheduledFor.toLocalDate().format(formatter),
+            text = formattedDate,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )

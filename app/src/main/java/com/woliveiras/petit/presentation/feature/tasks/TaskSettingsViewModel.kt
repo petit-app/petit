@@ -1,9 +1,13 @@
 package com.woliveiras.petit.presentation.feature.tasks
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.data.repository.ReminderPreferencesRepository
+import com.woliveiras.petit.presentation.util.AppDisplayFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.LocalTime
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,18 +26,19 @@ data class TaskSettingsUiState(
   val weightIntervalDays: Int = 30,
   val notificationHour: Int = 9,
   val notificationMinute: Int = 0,
+  val notificationTimeFormatted: String = "",
   val showTimePicker: Boolean = false,
-) {
-  val notificationTimeFormatted: String
-    get() = String.format("%02d:%02d", notificationHour, notificationMinute)
-}
+)
 
 @HiltViewModel
 class TaskSettingsViewModel
 @Inject
-constructor(private val reminderPreferencesRepository: ReminderPreferencesRepository) :
-  ViewModel() {
+constructor(
+  @ApplicationContext context: Context,
+  private val reminderPreferencesRepository: ReminderPreferencesRepository,
+) : ViewModel() {
 
+  private val displayFormatter = AppDisplayFormatter(context)
   private val _uiState = MutableStateFlow(TaskSettingsUiState())
   val uiState: StateFlow<TaskSettingsUiState> = _uiState.asStateFlow()
 
@@ -55,6 +60,10 @@ constructor(private val reminderPreferencesRepository: ReminderPreferencesReposi
             weightIntervalDays = prefs.weightReminderIntervalDays,
             notificationHour = prefs.defaultNotificationHour,
             notificationMinute = prefs.defaultNotificationMinute,
+            notificationTimeFormatted =
+              displayFormatter.time(
+                LocalTime.of(prefs.defaultNotificationHour, prefs.defaultNotificationMinute)
+              ),
           )
         }
       }
@@ -122,7 +131,12 @@ constructor(private val reminderPreferencesRepository: ReminderPreferencesReposi
 
   fun updateNotificationTime(hour: Int, minute: Int) {
     _uiState.update {
-      it.copy(notificationHour = hour, notificationMinute = minute, showTimePicker = false)
+      it.copy(
+        notificationHour = hour,
+        notificationMinute = minute,
+        notificationTimeFormatted = displayFormatter.time(LocalTime.of(hour, minute)),
+        showTimePicker = false,
+      )
     }
     viewModelScope.launch { reminderPreferencesRepository.updateNotificationTime(hour, minute) }
   }

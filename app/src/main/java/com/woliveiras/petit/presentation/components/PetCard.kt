@@ -51,8 +51,8 @@ import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.presentation.util.formatAge
 import com.woliveiras.petit.presentation.util.localizedBreed
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /** Data class containing all the information needed to display a pet card. */
 data class PetCardData(
@@ -172,7 +172,7 @@ private fun CompactPetCard(data: PetCardData, onClick: () -> Unit, modifier: Mod
 @Composable
 private fun FullPetCard(data: PetCardData, onClick: () -> Unit, modifier: Modifier = Modifier) {
   val context = LocalContext.current
-  val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  val displayFormatter = rememberAppDisplayFormatter()
   val ageInMonths = data.pet.getAgeInMonths()
   val ageText = ageInMonths?.let { formatAge(it) }
   val sexText = if (data.pet.sex != Sex.UNKNOWN) data.pet.sex.localizedName() else null
@@ -284,7 +284,7 @@ private fun FullPetCard(data: PetCardData, onClick: () -> Unit, modifier: Modifi
           value =
             if (data.nextVaccinationDate != null) {
               val vaccineName = data.nextVaccineType?.localizedName() ?: ""
-              val dateStr = dateFormatter.format(data.nextVaccinationDate)
+              val dateStr = displayFormatter.shortDate(data.nextVaccinationDate)
               if (vaccineName.isNotEmpty()) "$vaccineName • $dateStr" else dateStr
             } else {
               stringResource(R.string.pet_card_no_data)
@@ -303,7 +303,7 @@ private fun FullPetCard(data: PetCardData, onClick: () -> Unit, modifier: Modifi
           value =
             if (data.nextDewormingDate != null) {
               val dewormingName = data.nextDewormingType?.localizedName() ?: ""
-              val dateStr = dateFormatter.format(data.nextDewormingDate)
+              val dateStr = displayFormatter.shortDate(data.nextDewormingDate)
               if (dewormingName.isNotEmpty()) "$dewormingName • $dateStr" else dateStr
             } else {
               stringResource(R.string.pet_card_no_data)

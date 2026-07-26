@@ -1,7 +1,9 @@
 package com.woliveiras.petit.presentation.feature.backup
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.backup.BackupAuthorizationGateway
 import com.woliveiras.petit.domain.backup.BackupAuthorizationResult
 import com.woliveiras.petit.domain.backup.BackupAuthorizationState
@@ -11,6 +13,7 @@ import com.woliveiras.petit.domain.backup.BackupTrigger
 import com.woliveiras.petit.domain.usecase.backup.BackupCreationResult
 import com.woliveiras.petit.domain.usecase.backup.CreateBackupAction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
@@ -50,15 +53,17 @@ sealed interface ManualBackupOperation {
 @HiltViewModel
 class ManualBackupViewModel
 internal constructor(
+  private val context: Context,
   private val authorizationGateway: BackupAuthorizationGateway,
   private val createBackup: CreateBackupAction,
   private val backupIdFactory: () -> String,
 ) : ViewModel() {
   @Inject
   constructor(
+    @ApplicationContext context: Context,
     authorizationGateway: BackupAuthorizationGateway,
     createBackup: CreateBackupAction,
-  ) : this(authorizationGateway, createBackup, { UUID.randomUUID().toString() })
+  ) : this(context, authorizationGateway, createBackup, { UUID.randomUUID().toString() })
 
   private val mutableUiState =
     MutableStateFlow(ManualBackupUiState(authorization = authorizationGateway.state.value))
@@ -161,7 +166,12 @@ internal constructor(
     } catch (_: Exception) {
       pendingBackupId = null
       mutableUiState.update {
-        it.copy(operation = ManualBackupOperation.PermanentFailure("Backup could not be completed"))
+        it.copy(
+          operation =
+            ManualBackupOperation.PermanentFailure(
+              context.getString(R.string.backup_permanent_error)
+            )
+        )
       }
     }
   }

@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.data.repository.TaskRepository
 import com.woliveiras.petit.data.repository.TimelineRepository
+import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.data.repository.WeightEntryRepository
+import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.HealthStatus
 import com.woliveiras.petit.domain.model.Pet
@@ -15,6 +17,7 @@ import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.domain.model.WeightEntry
 import com.woliveiras.petit.domain.model.WeightStatus
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
+import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
@@ -25,6 +28,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /** UI State for the Home Dashboard. */
@@ -117,6 +122,8 @@ constructor(
   private val getPetHealthSummary: GetPetHealthSummaryAction,
   private val taskRepository: TaskRepository,
   private val timelineRepository: TimelineRepository,
+  private val taskDisplayTextResolver: TaskDisplayTextResolver,
+  private val userPreferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(HomeUiState())
@@ -140,22 +147,31 @@ constructor(
             DashboardTimeline(recentActivity.take(10), upcomingTimeline.take(5))
           }
 
-        // Combine pet, health-change, and task sources so the dashboard remains current.
-        combine(
-            combine(
-              petRepository.getAllPets().catch { emit(emptyList()) },
-              weightEntryRepository.observeWeightChanges().catch { emit(null) },
-              taskRepository.getTasksDueToday().catch { emit(emptyList()) },
-              taskRepository.getTasksDueThisWeek().catch { emit(emptyList()) },
-              taskRepository.getTasksDueThisMonth().catch { emit(emptyList()) },
-            ) { pets, _, tasksToday, tasksThisWeek, tasksThisMonth ->
-              DashboardData(pets, tasksToday, tasksThisWeek, tasksThisMonth)
-            },
-            timeline,
-          ) { dashboardData, dashboardTimeline ->
-            dashboardData to dashboardTimeline
+        val dashboardData =
+          combine(
+            petRepository.getAllPets().catch { emit(emptyList()) },
+            weightEntryRepository.observeWeightChanges().catch { emit(null) },
+            taskRepository.getTasksDueToday().catch { emit(emptyList()) },
+            taskRepository.getTasksDueThisWeek().catch { emit(emptyList()) },
+            taskRepository.getTasksDueThisMonth().catch { emit(emptyList()) },
+          ) { pets, _, tasksToday, tasksThisWeek, tasksThisMonth ->
+            DashboardData(pets, tasksToday, tasksThisWeek, tasksThisMonth)
           }
-          .collect { (data, dashboardTimeline) ->
+        val localizedDashboardData =
+          combine(
+            dashboardData,
+            userPreferencesRepository.userPreferences
+              .map { preferences -> preferences.language }
+              .distinctUntilChanged(),
+          ) { data, language ->
+            data to language
+          }
+
+        // Combine pet, health-change, task, language, and timeline sources.
+        combine(localizedDashboardData, timeline) { (data, language), dashboardTimeline ->
+            Triple(data, language, dashboardTimeline)
+          }
+          .collect { (data, language, dashboardTimeline) ->
             if (data.pets.isEmpty()) {
               _uiState.value = HomeUiState(isLoading = false, isEmpty = true)
               return@collect
@@ -166,14 +182,17 @@ constructor(
 
             // Also include overdue tasks in the "today" section
             val overdueTasks = safelyLoad { taskRepository.getPastDueTasks() }.orEmpty()
-            val tasksDueToday =
+            val unresolvedTasksDueToday =
               (overdueTasks + data.tasksDueToday).distinctBy { it.id }.sortedBy { it.scheduledFor }
+            val tasksDueToday = displayTasks(unresolvedTasksDueToday, language)
 
             // Exclude today's tasks from week and week's from month
             val todayIds = tasksDueToday.map { it.id }.toSet()
-            val tasksDueThisWeek = data.tasksDueThisWeek.filter { it.id !in todayIds }
+            val tasksDueThisWeek =
+              displayTasks(data.tasksDueThisWeek.filter { it.id !in todayIds }, language)
             val weekIds = (todayIds + tasksDueThisWeek.map { it.id }).toSet()
-            val tasksDueThisMonth = data.tasksDueThisMonth.filter { it.id !in weekIds }
+            val tasksDueThisMonth =
+              displayTasks(data.tasksDueThisMonth.filter { it.id !in weekIds }, language)
 
             // Pre-compute merged task list (max 5) for the "Next Tasks" section
             val allTasks =
@@ -202,6 +221,22 @@ constructor(
           }
       }
   }
+
+  private suspend fun displayTask(task: Task, language: AppLanguage): Task =
+    try {
+      taskDisplayTextResolver.resolve(task, language).let { text ->
+        task.copy(title = text.title, description = text.description)
+      }
+    } catch (exception: CancellationException) {
+      throw exception
+    } catch (_: Exception) {
+      task
+    }
+
+  private suspend fun displayTasks(tasks: List<Task>, language: AppLanguage): List<Task> =
+    buildList {
+      tasks.forEach { task -> add(displayTask(task, language)) }
+    }
 
   private data class DashboardData(
     val pets: List<Pet>,

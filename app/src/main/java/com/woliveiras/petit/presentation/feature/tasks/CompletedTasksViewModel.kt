@@ -5,18 +5,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.TaskRepository
+import com.woliveiras.petit.data.repository.UserPreferencesRepository
+import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskStatus
+import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
 import com.woliveiras.petit.worker.TaskScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -35,6 +42,8 @@ constructor(
   @ApplicationContext private val context: Context,
   private val taskRepository: TaskRepository,
   private val taskScheduler: TaskScheduler,
+  private val taskDisplayTextResolver: TaskDisplayTextResolver,
+  private val userPreferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(CompletedTasksUiState())
@@ -49,11 +58,35 @@ constructor(
 
   private fun loadCompletedTasks() {
     viewModelScope.launch {
-      taskRepository.getCompletedTasks().collect { tasks ->
-        _uiState.update { it.copy(isLoading = false, tasks = tasks) }
-      }
+      combine(
+          taskRepository.getCompletedTasks(),
+          userPreferencesRepository.userPreferences
+            .map { preferences -> preferences.language }
+            .distinctUntilChanged(),
+        ) { tasks, language ->
+          tasks to language
+        }
+        .collect { (tasks, language) ->
+          _uiState.update { it.copy(isLoading = false, tasks = displayTasks(tasks, language)) }
+        }
     }
   }
+
+  private suspend fun displayTask(task: Task, language: AppLanguage): Task =
+    try {
+      taskDisplayTextResolver.resolve(task, language).let { text ->
+        task.copy(title = text.title, description = text.description)
+      }
+    } catch (exception: CancellationException) {
+      throw exception
+    } catch (_: Exception) {
+      task
+    }
+
+  private suspend fun displayTasks(tasks: List<Task>, language: AppLanguage): List<Task> =
+    buildList {
+      tasks.forEach { task -> add(displayTask(task, language)) }
+    }
 
   fun reactivateTask(taskId: String) {
     viewModelScope.launch {
@@ -64,10 +97,8 @@ constructor(
         if (task != null) {
           taskScheduler.scheduleTask(task)
         }
-      } catch (e: Exception) {
-        _events.emit(
-          CompletedTasksEvent.Error(e.message ?: context.getString(R.string.task_error_reactivate))
-        )
+      } catch (_: Exception) {
+        _events.emit(CompletedTasksEvent.Error(context.getString(R.string.task_error_reactivate)))
       }
     }
   }
@@ -76,10 +107,8 @@ constructor(
     viewModelScope.launch {
       try {
         taskRepository.deleteTask(taskId)
-      } catch (e: Exception) {
-        _events.emit(
-          CompletedTasksEvent.Error(e.message ?: context.getString(R.string.task_error_delete))
-        )
+      } catch (_: Exception) {
+        _events.emit(CompletedTasksEvent.Error(context.getString(R.string.task_error_delete)))
       }
     }
   }

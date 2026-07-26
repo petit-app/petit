@@ -77,8 +77,8 @@ import com.woliveiras.petit.presentation.feature.settings.ExportImportViewModel
 import com.woliveiras.petit.presentation.feature.settings.createBackupShareIntent
 import com.woliveiras.petit.presentation.util.localizedBreed
 import com.woliveiras.petit.presentation.util.localizedColor
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import com.woliveiras.petit.ui.theme.LocalPetitColors
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -215,7 +215,7 @@ internal fun PetDetailContent(
 ) {
   val pet = uiState.pet ?: return
   val context = LocalContext.current
-  val dateFormatter = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy") }
+  val displayFormatter = rememberAppDisplayFormatter()
 
   Column(
     modifier =
@@ -281,7 +281,7 @@ internal fun PetDetailContent(
             // Birth date
             pet.birthDate?.let { birthDate ->
               Text(
-                text = birthDate.format(dateFormatter),
+                text = displayFormatter.shortDate(birthDate),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
               )
@@ -335,7 +335,7 @@ internal fun PetDetailContent(
 
     ManagementActionsGrid(
       weightRecordCount = uiState.weightRecordCount,
-      currentWeight = uiState.latestWeight?.formattedWeight,
+      currentWeight = uiState.latestWeight?.let { displayFormatter.weight(it.weightGrams) },
       vaccinationRecordCount = uiState.vaccinationRecordCount,
       dewormingRecordCount = uiState.dewormingRecordCount,
       onWeightClick = onWeightClick,
@@ -619,20 +619,11 @@ private fun WeightHealthCard(
       // Weight value at bottom
       if (currentWeight != null) {
         Spacer(modifier = Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.Bottom) {
-          Text(
-            text = currentWeight.replace(" kg", "").replace(",", "."),
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
-          )
-          Spacer(modifier = Modifier.width(4.dp))
-          Text(
-            text = "kg",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 6.dp),
-          )
-        }
+        Text(
+          text = currentWeight,
+          style = MaterialTheme.typography.displaySmall,
+          fontWeight = FontWeight.Bold,
+        )
       }
     }
   }

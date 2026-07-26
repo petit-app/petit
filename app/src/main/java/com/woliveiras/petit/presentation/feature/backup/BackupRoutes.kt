@@ -11,8 +11,7 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.backup.BackupCompatibility
 import com.woliveiras.petit.domain.backup.BackupMetadata
 import com.woliveiras.petit.domain.backup.BackupTrigger
-import java.text.DateFormat
-import java.util.Date
+import com.woliveiras.petit.presentation.util.AppDisplayFormatter
 
 @Composable
 fun SavedBackupsRoute(
@@ -46,9 +45,8 @@ fun SavedBackupsRoute(
 @Composable
 private fun savedBackupsCopy(): SavedBackupsCopy {
   val context = LocalContext.current
-  fun date(metadata: BackupMetadata): String =
-    DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-      .format(Date.from(metadata.createdAt))
+  val displayFormatter = AppDisplayFormatter(context)
+  fun date(metadata: BackupMetadata): String = displayFormatter.dateTime(metadata.createdAt)
   fun size(bytes: Long): String = Formatter.formatFileSize(context, bytes)
   fun trigger(trigger: BackupTrigger): String =
     context.getString(

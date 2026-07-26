@@ -12,6 +12,7 @@ import com.woliveiras.petit.data.repository.WeightEntryRepository
 import com.woliveiras.petit.domain.model.HealthStatus
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.WeightEntry
+import com.woliveiras.petit.presentation.util.uiFailureText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -119,7 +120,7 @@ constructor(
         _uiState.value =
           _uiState.value.copy(
             isLoading = false,
-            error = e.message ?: context.getString(R.string.pet_error_load_data),
+            error = e.uiFailureText(context, R.string.pet_error_load_data),
           )
       }
     }

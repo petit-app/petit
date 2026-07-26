@@ -29,8 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.SyncLog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
-import java.text.DateFormat
-import java.util.Date
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 
 @Composable
 fun SyncHistoryScreen(
@@ -79,6 +78,7 @@ fun SyncHistoryScreen(
 
 @Composable
 private fun SyncHistoryItem(log: SyncLog) {
+  val displayFormatter = rememberAppDisplayFormatter()
   Card(modifier = Modifier.fillMaxWidth()) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
       Text(
@@ -89,7 +89,7 @@ private fun SyncHistoryItem(log: SyncLog) {
       Text(
         stringResource(
           R.string.family_group_sync_history_time,
-          DateFormat.getDateTimeInstance().format(Date(log.syncTimestamp)),
+          displayFormatter.dateTime(log.syncTimestamp),
         )
       )
       val localizedType =

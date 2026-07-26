@@ -1,8 +1,10 @@
 package com.woliveiras.petit.presentation.feature.settings
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.woliveiras.petit.R
 import com.woliveiras.petit.data.lan.LanSyncController
 import com.woliveiras.petit.data.lan.LanSyncState
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
@@ -16,12 +18,15 @@ import com.woliveiras.petit.domain.model.SyncLog
 import com.woliveiras.petit.domain.usecase.DeleteAllDataAction
 import com.woliveiras.petit.util.LanguageApplyResult
 import com.woliveiras.petit.util.LocaleApplicator
+import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -225,6 +230,41 @@ class SettingsViewModelTest {
       assertThat(viewModel.uiState.value.showLanguageDialog).isTrue()
       assertThat(viewModel.uiState.value.preferenceError).isNotNull()
     }
+
+  @Test
+  fun deleteFailureDoesNotExposeExceptionMessageInEnglishOrBrazilianPortuguese() =
+    runTest(dispatcher) {
+      for (locale in listOf(Locale.ENGLISH, Locale.forLanguageTag("pt-BR"))) {
+        val localizedContext = localizedContext(locale)
+        val failingAction =
+          object : DeleteAllDataAction {
+            override suspend fun execute(): Result<Unit> =
+              Result.failure(IllegalStateException("Provider detail: permission denied"))
+          }
+        val localizedViewModel =
+          SettingsViewModel(
+            localizedContext,
+            preferences,
+            family,
+            failingAction,
+            localeApplicator,
+            lanSync,
+          )
+        val event = async { localizedViewModel.events.first() }
+        runCurrent()
+
+        localizedViewModel.deleteAllData()
+        advanceUntilIdle()
+
+        assertThat((event.await() as SettingsEvent.DeleteAllDataError).message)
+          .isEqualTo(localizedContext.getString(R.string.error_unknown))
+      }
+    }
+
+  private fun localizedContext(locale: Locale): Context {
+    val configuration = Configuration(context.resources.configuration).apply { setLocale(locale) }
+    return context.createConfigurationContext(configuration)
+  }
 
   private class FakeUserPreferencesRepository : UserPreferencesRepository {
     val state = MutableStateFlow(UserPreferences())

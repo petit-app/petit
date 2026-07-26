@@ -49,8 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.FamilyGroupMember
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
-import java.text.DateFormat
-import java.util.Date
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 
 @Composable
 fun FamilyGroupScreen(
@@ -61,6 +60,7 @@ fun FamilyGroupScreen(
   onNavigateToSyncHistory: () -> Unit,
   viewModel: FamilyGroupViewModel = hiltViewModel(),
 ) {
+  val displayFormatter = rememberAppDisplayFormatter()
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   var showLeaveDialog by remember { mutableStateOf(false) }
   var memberToRemove by remember { mutableStateOf<String?>(null) }
@@ -217,7 +217,7 @@ fun FamilyGroupScreen(
                     } else {
                       stringResource(
                         R.string.family_group_member_last_sync,
-                        DateFormat.getDateTimeInstance().format(Date(member.lastSyncAt)),
+                        displayFormatter.dateTime(member.lastSyncAt),
                       )
                     }
                   )

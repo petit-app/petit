@@ -209,13 +209,9 @@ constructor(
           _uiState.update { it.copy(isDeletingAllData = false, showDeleteAllDataDialog = false) }
           _events.emit(SettingsEvent.DeleteAllDataSuccess)
         }
-        .onFailure { error ->
+        .onFailure {
           _uiState.update { it.copy(isDeletingAllData = false, showDeleteAllDataDialog = false) }
-          _events.emit(
-            SettingsEvent.DeleteAllDataError(
-              error.message ?: context.getString(R.string.error_unknown)
-            )
-          )
+          _events.emit(SettingsEvent.DeleteAllDataError(context.getString(R.string.error_unknown)))
         }
     }
   }

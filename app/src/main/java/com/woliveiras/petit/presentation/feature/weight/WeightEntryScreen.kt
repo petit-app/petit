@@ -58,10 +58,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /** Screen for adding or editing a weight entry. After saving, navigates back to the weight list. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -198,7 +198,7 @@ fun WeightEntryScreen(
           shape = RoundedCornerShape(12.dp),
         ) {
           Text(
-            text = uiState.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+            text = rememberAppDisplayFormatter().shortDate(uiState.date),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth().padding(16.dp),
           )
@@ -352,7 +352,7 @@ private fun UnitToggle(selectedUnit: WeightUnit, onUnitSelected: (WeightUnit) ->
       onClick = { onUnitSelected(WeightUnit.KG) },
       label = {
         Text(
-          text = "kg",
+          text = stringResource(R.string.weight_unit_kilograms),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Medium,
         )
@@ -368,7 +368,7 @@ private fun UnitToggle(selectedUnit: WeightUnit, onUnitSelected: (WeightUnit) ->
       onClick = { onUnitSelected(WeightUnit.GRAMS) },
       label = {
         Text(
-          text = "g",
+          text = stringResource(R.string.weight_unit_grams),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Medium,
         )

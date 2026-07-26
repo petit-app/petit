@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,9 +27,10 @@ import com.patrykandpatrick.vico.core.common.Fill
 import com.patrykandpatrick.vico.core.common.component.LineComponent
 import com.patrykandpatrick.vico.core.common.component.TextComponent
 import com.patrykandpatrick.vico.core.common.shape.CorneredShape
+import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.WeightEntry
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import com.woliveiras.petit.ui.theme.PetitTheme
-import java.time.format.DateTimeFormatter
 
 /**
  * A bar chart component that displays weight evolution over time.
@@ -41,6 +43,13 @@ fun WeightChart(entries: List<WeightEntry>, modifier: Modifier = Modifier) {
   if (entries.size < 2) return
 
   val primaryColor = MaterialTheme.colorScheme.primary
+  val displayFormatter = rememberAppDisplayFormatter()
+  val chartDescription =
+    pluralStringResource(
+      R.plurals.weight_chart_accessibility_description,
+      entries.size,
+      entries.size,
+    )
 
   val modelProducer = remember { CartesianChartModelProducer() }
 
@@ -49,8 +58,10 @@ fun WeightChart(entries: List<WeightEntry>, modifier: Modifier = Modifier) {
   val weights = remember(sortedEntries) { sortedEntries.map { it.weightKg } }
 
   // Date formatter for axis labels
-  val dateFormatter = remember { DateTimeFormatter.ofPattern("dd/MM") }
-  val dateLabels = remember(sortedEntries) { sortedEntries.map { it.date.format(dateFormatter) } }
+  val dateLabels =
+    remember(sortedEntries, displayFormatter) {
+      sortedEntries.map { displayFormatter.dayMonth(it.date) }
+    }
 
   // Update chart data
   LaunchedEffect(sortedEntries) {
@@ -88,7 +99,7 @@ fun WeightChart(entries: List<WeightEntry>, modifier: Modifier = Modifier) {
             label = axisLabel,
             line = axisLine,
             guideline = guideline,
-            valueFormatter = { _, value, _ -> String.format("%.1f", value) },
+            valueFormatter = { _, value, _ -> displayFormatter.decimal(value, fractionDigits = 1) },
           ),
         bottomAxis =
           HorizontalAxis.rememberBottom(
@@ -100,9 +111,7 @@ fun WeightChart(entries: List<WeightEntry>, modifier: Modifier = Modifier) {
       ),
     modelProducer = modelProducer,
     modifier =
-      modifier.fillMaxWidth().height(200.dp).semantics {
-        contentDescription = "Gráfico de evolução de peso com ${entries.size} registros"
-      },
+      modifier.fillMaxWidth().height(200.dp).semantics { contentDescription = chartDescription },
   )
 }
 

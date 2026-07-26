@@ -1,14 +1,19 @@
 package com.woliveiras.petit.presentation.feature.pets
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.domain.model.WeightEntry
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
+import com.woliveiras.petit.presentation.util.rethrowIfCancellation
+import com.woliveiras.petit.presentation.util.uiFailureText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,6 +49,7 @@ sealed class PetListEvent {
 class PetListViewModel
 @Inject
 constructor(
+  @param:ApplicationContext private val context: Context,
   private val petRepository: PetRepository,
   private val getPetHealthSummary: GetPetHealthSummaryAction,
 ) : ViewModel() {
@@ -71,7 +77,8 @@ constructor(
             pets.map { pet ->
               try {
                 loadPetDetails(pet)
-              } catch (_: Exception) {
+              } catch (failure: Exception) {
+                failure.rethrowIfCancellation()
                 PetListItem(pet = pet) // show pet without health summary on error
               }
             }
@@ -80,7 +87,7 @@ constructor(
         }
       } catch (e: Exception) {
         _uiState.value = PetListUiState(isLoading = false, isEmpty = true)
-        _events.emit(PetListEvent.Error(e.message ?: "Error loading pets"))
+        _events.emit(PetListEvent.Error(e.uiFailureText(context, R.string.pet_error_load)))
       }
     }
   }

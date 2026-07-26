@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -40,8 +39,8 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.WeightEntry
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.components.WeightChart
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import com.woliveiras.petit.ui.theme.LocalPetitColors
-import java.time.format.DateTimeFormatter
 
 /**
  * Screen displaying weight history and chart for a pet. The form for adding/editing is now a
@@ -96,13 +95,16 @@ internal fun WeightHistoryContent(
   onNavigateToEditEntry: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val displayFormatter = rememberAppDisplayFormatter()
   val latestWeight = entries.maxByOrNull { it.date }
   LazyColumn(
     modifier = modifier,
     contentPadding = PaddingValues(16.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    item { CurrentWeightCard(weight = latestWeight?.formattedWeight) }
+    item {
+      CurrentWeightCard(weight = latestWeight?.let { displayFormatter.weight(it.weightGrams) })
+    }
 
     if (entries.size >= 2) {
       item { EvolutionChartCard(entries = entries) }
@@ -153,23 +155,12 @@ private fun CurrentWeightCard(weight: String?) {
       )
       Spacer(modifier = Modifier.height(8.dp))
       if (weight != null) {
-        val weightValue = weight.replace(" kg", "").replace(",", ".")
-
-        Row(verticalAlignment = Alignment.Bottom) {
-          Text(
-            text = weightValue,
-            fontSize = 48.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-          )
-          Spacer(modifier = Modifier.width(4.dp))
-          Text(
-            text = "kg",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp),
-          )
-        }
+        Text(
+          text = weight,
+          fontSize = 48.sp,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.primary,
+        )
       } else {
         Text(
           text = "-",
@@ -184,6 +175,7 @@ private fun CurrentWeightCard(weight: String?) {
 
 @Composable
 private fun EvolutionChartCard(entries: List<WeightEntry>) {
+  val displayFormatter = rememberAppDisplayFormatter()
   val sortedEntries = entries.sortedBy { it.date }
   val firstEntry = sortedEntries.firstOrNull()
   val lastEntry = sortedEntries.lastOrNull()
@@ -191,10 +183,10 @@ private fun EvolutionChartCard(entries: List<WeightEntry>) {
     if (firstEntry != null && lastEntry != null) {
       stringResource(
         R.string.weight_chart_description,
-        String.format("%.1f", firstEntry.weightKg),
-        firstEntry.date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")),
-        String.format("%.1f", lastEntry.weightKg),
-        lastEntry.date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")),
+        displayFormatter.decimal(firstEntry.weightKg, fractionDigits = 1),
+        displayFormatter.dayMonth(firstEntry.date),
+        displayFormatter.decimal(lastEntry.weightKg, fractionDigits = 1),
+        displayFormatter.dayMonth(lastEntry.date),
       )
     } else {
       ""
@@ -236,13 +228,14 @@ private fun EmptyHistoryCard() {
 @Composable
 private fun WeightHistoryItem(entry: WeightEntry, weightDifference: Double?, onClick: () -> Unit) {
   val petitColors = LocalPetitColors.current
-  val dateText = entry.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+  val displayFormatter = rememberAppDisplayFormatter()
+  val weightText = displayFormatter.weight(entry.weightGrams)
+  val dateText = displayFormatter.shortDate(entry.date)
   val diffText =
     if (weightDifference != null && weightDifference != 0.0) {
-      if (weightDifference > 0) "+${String.format("%.1f", weightDifference)} kg"
-      else "${String.format("%.1f", weightDifference)} kg"
+      displayFormatter.signedKilograms(weightDifference)
     } else null
-  val itemDescription = listOfNotNull(entry.formattedWeight, dateText, diffText).joinToString(", ")
+  val itemDescription = listOfNotNull(weightText, dateText, diffText).joinToString(", ")
 
   Card(
     modifier =
@@ -258,12 +251,12 @@ private fun WeightHistoryItem(entry: WeightEntry, weightDifference: Double?, onC
       // Weight and Date
       Column(modifier = Modifier.weight(1f)) {
         Text(
-          text = entry.formattedWeight,
+          text = weightText,
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold,
         )
         Text(
-          text = entry.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+          text = dateText,
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -272,12 +265,7 @@ private fun WeightHistoryItem(entry: WeightEntry, weightDifference: Double?, onC
       // Weight Difference
       if (weightDifference != null && weightDifference != 0.0) {
         val isPositive = weightDifference > 0
-        val diffText =
-          if (isPositive) {
-            "+${String.format("%.1f", weightDifference)} kg"
-          } else {
-            "${String.format("%.1f", weightDifference)} kg"
-          }
+        val diffText = displayFormatter.signedKilograms(weightDifference)
         val diffColor =
           if (isPositive) {
             petitColors.weightGain

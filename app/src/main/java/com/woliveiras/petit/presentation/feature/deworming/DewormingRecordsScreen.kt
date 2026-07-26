@@ -45,10 +45,9 @@ import com.woliveiras.petit.presentation.components.EmptyState
 import com.woliveiras.petit.presentation.components.HealthStatusBadge
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * Screen displaying deworming records for a pet. Shows a timeline of all deworming treatments
@@ -116,7 +115,7 @@ internal fun DewormingTimeline(
   onEditEntry: (DewormingEntry) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val monthFormatter = remember { DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()) }
+  val displayFormatter = rememberAppDisplayFormatter()
   val categorySummaries = remember(dewormings) { dewormings.dewormingCategorySummaries() }
 
   // Group dewormings by YearMonth, sorted descending (most recent first)
@@ -148,7 +147,7 @@ internal fun DewormingTimeline(
           Spacer(modifier = Modifier.height(8.dp))
         }
         Text(
-          text = yearMonth.format(monthFormatter).uppercase(),
+          text = displayFormatter.monthYear(yearMonth.atDay(1)),
           style = MaterialTheme.typography.labelLarge,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -218,12 +217,12 @@ private fun DewormingTimelineCard(
   onEdit: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  val displayFormatter = rememberAppDisplayFormatter()
   val cardDescription =
     listOfNotNull(
         deworming.medication,
         deworming.type.localizedName(),
-        deworming.applicationDate.format(dateFormatter),
+        displayFormatter.shortDate(deworming.applicationDate),
         status.localizedName(),
       )
       .joinToString(", ")
@@ -257,7 +256,7 @@ private fun DewormingTimelineCard(
 
       // Application date
       Text(
-        text = deworming.applicationDate.format(dateFormatter),
+        text = displayFormatter.shortDate(deworming.applicationDate),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 4.dp),
@@ -274,7 +273,7 @@ private fun DewormingTimelineCard(
       deworming.nextDueDate?.let { nextDate ->
         DetailRow(
           label = stringResource(R.string.deworming_detail_next_dose),
-          value = nextDate.format(dateFormatter),
+          value = displayFormatter.shortDate(nextDate),
         )
       }
     }

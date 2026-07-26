@@ -1,9 +1,12 @@
 package com.woliveiras.petit.presentation.feature.settings
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.usecase.DeleteAllDataAction
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -76,7 +79,8 @@ class DeleteAllDataViewModelTest {
 
       assertThat(viewModel.uiState.value.isDeleted).isFalse()
       assertThat(viewModel.uiState.value.isDeleting).isFalse()
-      assertThat(viewModel.uiState.value.errorMessage).isEqualTo("Could not clear data")
+      assertThat(viewModel.uiState.value.errorMessage)
+        .isEqualTo(context.getString(R.string.error_unknown))
 
       viewModel.deleteAllData("DELETE")
       advanceUntilIdle()
@@ -105,6 +109,31 @@ class DeleteAllDataViewModelTest {
 
       assertThat(viewModel.uiState.value.isDeleted).isTrue()
     }
+
+  @Test
+  fun failuresUseLocalizedGenericErrorInsteadOfExceptionMessage() =
+    runTest(dispatcher) {
+      for (locale in listOf(Locale.ENGLISH, Locale.forLanguageTag("pt-BR"))) {
+        val localizedContext = localizedContext(locale)
+        val localizedAction =
+          FakeDeleteAllDataAction().apply {
+            nextResult = Result.failure(IllegalStateException("Provider detail: permission denied"))
+          }
+        val localizedViewModel = DeleteAllDataViewModel(localizedContext, localizedAction)
+
+        localizedViewModel.updateConfirmText("DELETE")
+        localizedViewModel.deleteAllData("DELETE")
+        advanceUntilIdle()
+
+        assertThat(localizedViewModel.uiState.value.errorMessage)
+          .isEqualTo(localizedContext.getString(R.string.error_unknown))
+      }
+    }
+
+  private fun localizedContext(locale: Locale): Context {
+    val configuration = Configuration(context.resources.configuration).apply { setLocale(locale) }
+    return context.createConfigurationContext(configuration)
+  }
 
   private class FakeDeleteAllDataAction : DeleteAllDataAction {
     var calls = 0

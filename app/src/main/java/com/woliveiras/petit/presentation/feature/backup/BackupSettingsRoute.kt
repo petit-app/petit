@@ -12,8 +12,7 @@ import com.woliveiras.petit.data.repository.BackupAttempt
 import com.woliveiras.petit.data.repository.BackupAttemptStatus
 import com.woliveiras.petit.domain.backup.BackupAuthorizationState
 import com.woliveiras.petit.domain.backup.BackupTrigger
-import java.text.DateFormat
-import java.util.Date
+import com.woliveiras.petit.presentation.util.AppDisplayFormatter
 
 @Composable
 fun BackupSettingsRoute(
@@ -39,6 +38,7 @@ fun BackupSettingsRoute(
 @Composable
 internal fun backupSettingsCopy(): BackupSettingsCopy {
   val context = LocalContext.current
+  val displayFormatter = AppDisplayFormatter(context)
   fun status(status: BackupAttemptStatus): String =
     context.getString(
       when (status) {
@@ -50,10 +50,7 @@ internal fun backupSettingsCopy(): BackupSettingsCopy {
         BackupAttemptStatus.AUTHORIZATION_REQUIRED -> R.string.backup_status_authorization_required
       }
     )
-  fun instant(value: java.time.Instant?): String =
-    value?.let {
-      DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date.from(it))
-    } ?: "—"
+  fun instant(value: java.time.Instant?): String = value?.let(displayFormatter::dateTime) ?: "—"
   fun attempt(attempt: BackupAttempt): String =
     context.getString(
       R.string.backup_preferences_attempt,

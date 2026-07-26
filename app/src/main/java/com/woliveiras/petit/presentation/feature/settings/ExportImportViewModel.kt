@@ -8,6 +8,7 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.ConflictResolution
 import com.woliveiras.petit.domain.model.ExportBundle
 import com.woliveiras.petit.domain.model.ImportAnalysis
+import com.woliveiras.petit.domain.model.MergeResult
 import com.woliveiras.petit.domain.usecase.ExportImportUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,6 +21,42 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+internal interface ExportImportOperations {
+  suspend fun exportAll(): ExportBundle
+
+  suspend fun exportForPet(petId: String): ExportBundle
+
+  fun generateExportFilename(): String
+
+  suspend fun writeExportToUri(bundle: ExportBundle, uri: Uri)
+
+  suspend fun readImportFromUri(uri: Uri): ExportBundle
+
+  suspend fun analyzeImport(bundle: ExportBundle): ImportAnalysis
+
+  suspend fun importData(bundle: ExportBundle, resolution: ConflictResolution): MergeResult
+}
+
+private class UseCaseExportImportOperations(private val useCase: ExportImportUseCase) :
+  ExportImportOperations {
+  override suspend fun exportAll(): ExportBundle = useCase.exportAll()
+
+  override suspend fun exportForPet(petId: String): ExportBundle = useCase.exportForPet(petId)
+
+  override fun generateExportFilename(): String = useCase.generateExportFilename()
+
+  override suspend fun writeExportToUri(bundle: ExportBundle, uri: Uri) =
+    useCase.writeExportToUri(bundle, uri)
+
+  override suspend fun readImportFromUri(uri: Uri): ExportBundle = useCase.readImportFromUri(uri)
+
+  override suspend fun analyzeImport(bundle: ExportBundle): ImportAnalysis =
+    useCase.analyzeImport(bundle)
+
+  override suspend fun importData(bundle: ExportBundle, resolution: ConflictResolution) =
+    useCase.importData(bundle, resolution)
+}
 
 /** UI state for export/import operations. */
 data class ExportImportUiState(
@@ -45,11 +82,16 @@ sealed class ExportImportEvent {
 
 @HiltViewModel
 class ExportImportViewModel
-@Inject
-constructor(
+internal constructor(
   @ApplicationContext private val context: Context,
-  private val exportImportUseCase: ExportImportUseCase,
+  private val operations: ExportImportOperations,
 ) : ViewModel() {
+
+  @Inject
+  constructor(
+    @ApplicationContext context: Context,
+    exportImportUseCase: ExportImportUseCase,
+  ) : this(context, UseCaseExportImportOperations(exportImportUseCase))
 
   private val _uiState = MutableStateFlow(ExportImportUiState())
   val uiState: StateFlow<ExportImportUiState> = _uiState.asStateFlow()
@@ -62,14 +104,12 @@ constructor(
     viewModelScope.launch {
       _uiState.update { it.copy(isExporting = true) }
       try {
-        val bundle = exportImportUseCase.exportAll()
-        val filename = exportImportUseCase.generateExportFilename()
+        val bundle = operations.exportAll()
+        val filename = operations.generateExportFilename()
         _uiState.update { it.copy(pendingExportBundle = bundle) }
         _events.emit(ExportImportEvent.ExportReady(filename, bundle))
-      } catch (e: Exception) {
-        _events.emit(
-          ExportImportEvent.Error(e.message ?: context.getString(R.string.export_error_failed))
-        )
+      } catch (_: Exception) {
+        _events.emit(ExportImportEvent.Error(context.getString(R.string.export_error_failed)))
       } finally {
         _uiState.update { it.copy(isExporting = false) }
       }
@@ -81,14 +121,12 @@ constructor(
     viewModelScope.launch {
       _uiState.update { it.copy(isExporting = true) }
       try {
-        val bundle = exportImportUseCase.exportForPet(petId)
-        val filename = exportImportUseCase.generateExportFilename()
+        val bundle = operations.exportForPet(petId)
+        val filename = operations.generateExportFilename()
         _uiState.update { it.copy(pendingExportBundle = bundle) }
         _events.emit(ExportImportEvent.ExportReady(filename, bundle))
-      } catch (e: Exception) {
-        _events.emit(
-          ExportImportEvent.Error(e.message ?: context.getString(R.string.export_error_failed))
-        )
+      } catch (_: Exception) {
+        _events.emit(ExportImportEvent.Error(context.getString(R.string.export_error_failed)))
       } finally {
         _uiState.update { it.copy(isExporting = false) }
       }
@@ -101,13 +139,11 @@ constructor(
     viewModelScope.launch {
       _uiState.update { it.copy(isExporting = true) }
       try {
-        exportImportUseCase.writeExportToUri(bundle, uri)
+        operations.writeExportToUri(bundle, uri)
         _uiState.update { it.copy(pendingExportBundle = null) }
         _events.emit(ExportImportEvent.ExportSuccess(uri))
-      } catch (e: Exception) {
-        _events.emit(
-          ExportImportEvent.Error(e.message ?: context.getString(R.string.export_error_save_file))
-        )
+      } catch (_: Exception) {
+        _events.emit(ExportImportEvent.Error(context.getString(R.string.export_error_save_file)))
       } finally {
         _uiState.update { it.copy(isExporting = false) }
       }
@@ -119,18 +155,14 @@ constructor(
     viewModelScope.launch {
       _uiState.update { it.copy(isImporting = true) }
       try {
-        val bundle = exportImportUseCase.readImportFromUri(uri)
-        val analysis = exportImportUseCase.analyzeImport(bundle)
+        val bundle = operations.readImportFromUri(uri)
+        val analysis = operations.analyzeImport(bundle)
 
         _uiState.update {
           it.copy(showImportDialog = true, importAnalysis = analysis, pendingImportBundle = bundle)
         }
-      } catch (e: Exception) {
-        _events.emit(
-          ExportImportEvent.Error(
-            e.message ?: context.getString(R.string.import_error_invalid_file)
-          )
-        )
+      } catch (_: Exception) {
+        _events.emit(ExportImportEvent.Error(context.getString(R.string.import_error_invalid_file)))
       } finally {
         _uiState.update { it.copy(isImporting = false) }
       }
@@ -150,13 +182,11 @@ constructor(
     viewModelScope.launch {
       _uiState.update { it.copy(isImporting = true, showImportDialog = false) }
       try {
-        exportImportUseCase.importData(bundle, resolution)
+        operations.importData(bundle, resolution)
         _uiState.update { it.copy(pendingImportBundle = null, importAnalysis = null) }
         _events.emit(ExportImportEvent.ImportSuccess)
-      } catch (e: Exception) {
-        _events.emit(
-          ExportImportEvent.Error(e.message ?: context.getString(R.string.import_error_failed))
-        )
+      } catch (_: Exception) {
+        _events.emit(ExportImportEvent.Error(context.getString(R.string.import_error_failed)))
       } finally {
         _uiState.update { it.copy(isImporting = false) }
       }

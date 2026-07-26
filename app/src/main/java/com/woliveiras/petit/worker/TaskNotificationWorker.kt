@@ -16,10 +16,15 @@ import com.woliveiras.petit.MainActivity
 import com.woliveiras.petit.PetitApplication
 import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.TaskRepository
+import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
+import com.woliveiras.petit.initialLanguageOrSystem
+import com.woliveiras.petit.presentation.util.TaskDisplayText
+import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 
 /**
  * Worker that triggers task notifications. Runs at the scheduled time and shows a notification to
@@ -32,6 +37,8 @@ constructor(
   @Assisted private val context: Context,
   @Assisted private val params: WorkerParameters,
   private val taskRepository: TaskRepository,
+  private val taskDisplayTextResolver: TaskDisplayTextResolver,
+  private val userPreferencesRepository: UserPreferencesRepository,
 ) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
@@ -44,9 +51,25 @@ constructor(
         return Result.success()
       }
 
-      showNotification(task.id, task.title, task.description, task.kind)
+      val language = userPreferencesRepository.initialLanguageOrSystem()
+      val displayText =
+        try {
+          taskDisplayTextResolver.resolve(task, language)
+        } catch (cancellation: CancellationException) {
+          throw cancellation
+        } catch (failure: Exception) {
+          Log.w(
+            TAG,
+            "Using persisted text for task $taskId after display resolution failed",
+            failure,
+          )
+          TaskDisplayText(task.title, task.description)
+        }
+      showNotification(task.id, displayText.title, displayText.description, task.kind)
 
       Result.success()
+    } catch (cancellation: CancellationException) {
+      throw cancellation
     } catch (e: Exception) {
       Log.w(TAG, "Attempt $runAttemptCount failed for task $taskId", e)
       if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()

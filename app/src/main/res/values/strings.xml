@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- App -->
     <string name="app_name">Petit</string>
     <string name="app_name_full">Petit - Pet Care</string>
@@ -14,6 +14,9 @@
     <string name="reminder_next_dose_description">Next dose in %1$d days</string>
     <string name="reminder_weight_title">%1$s - Weigh</string>
     <string name="reminder_weight_description">Reminder to check weight</string>
+    <string name="task_auto_care_title" tools:ignore="MissingTranslation">%1$s - %2$s</string>
+    <string name="task_auto_care_description" tools:ignore="MissingTranslation">Automatic reminder for upcoming care</string>
+    <string name="care_presets_veterinary_advisory" tools:ignore="MissingTranslation">Presets make record entry easier and do not replace veterinary guidance.</string>
     <string name="default_pet_name">Pet</string>
 
     <!-- Common Actions -->
@@ -210,6 +213,10 @@
     <string name="weight_current_label">Current Weight</string>
     <string name="weight_evolution_title">Evolution</string>
     <string name="weight_chart_description">Weight evolution: from %1$s kg on %2$s to %3$s kg on %4$s</string>
+    <plurals name="weight_chart_accessibility_description" tools:ignore="MissingTranslation">
+        <item quantity="one">Weight evolution chart with %1$d record</item>
+        <item quantity="other">Weight evolution chart with %1$d records</item>
+    </plurals>
     <string name="weight_empty_title">No weight records</string>
     <string name="weight_empty_message">Tap the scale button to add your first measurement</string>
     <string name="weight_no_history">No weight record found</string>
@@ -686,6 +693,10 @@
     <string name="weight_error_note_max_length">Note must be at most 500 characters</string>
     <string name="weight_error_save">Error saving weight</string>
     <string name="weight_error_delete">Error deleting entry</string>
+    <string name="weight_value_kilograms" tools:ignore="MissingTranslation">%1$s kg</string>
+    <string name="weight_value_grams" tools:ignore="MissingTranslation">%1$s g</string>
+    <string name="weight_unit_kilograms" tools:ignore="MissingTranslation">kg</string>
+    <string name="weight_unit_grams" tools:ignore="MissingTranslation">g</string>
 
     <!-- Export/Import errors -->
     <string name="export_error_failed">Export failed</string>

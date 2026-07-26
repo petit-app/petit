@@ -56,8 +56,8 @@ import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
+import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /** Tasks list screen showing pending tasks with time-based filters. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -272,14 +272,14 @@ fun getTaskKindIcon(kind: TaskKind): ImageVector {
 
 @Composable
 private fun formatTaskDate(task: Task): String {
+  val displayFormatter = rememberAppDisplayFormatter()
   val today = LocalDate.now()
   val taskDate = task.scheduledFor.toLocalDate()
-  val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
   return when {
     taskDate.isBefore(today) ->
-      stringResource(R.string.task_date_overdue, taskDate.format(formatter))
+      stringResource(R.string.task_date_overdue, displayFormatter.shortDate(taskDate))
     taskDate == today -> stringResource(R.string.task_date_today)
     taskDate == today.plusDays(1) -> stringResource(R.string.task_date_tomorrow)
-    else -> taskDate.format(formatter)
+    else -> displayFormatter.shortDate(taskDate)
   }
 }

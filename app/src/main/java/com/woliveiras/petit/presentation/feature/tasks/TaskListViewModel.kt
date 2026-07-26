@@ -5,9 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.TaskRepository
+import com.woliveiras.petit.data.repository.UserPreferencesRepository
+import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
+import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
 import com.woliveiras.petit.worker.TaskScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,12 +19,17 @@ import java.time.LocalTime
 import java.time.YearMonth
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -49,6 +57,8 @@ constructor(
   @ApplicationContext private val context: Context,
   private val taskRepository: TaskRepository,
   private val taskScheduler: TaskScheduler,
+  private val taskDisplayTextResolver: TaskDisplayTextResolver,
+  private val userPreferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(TaskListUiState())
@@ -56,6 +66,8 @@ constructor(
 
   private val _events = MutableSharedFlow<TaskListEvent>()
   val events: SharedFlow<TaskListEvent> = _events.asSharedFlow()
+
+  private var tasksJob: Job? = null
 
   init {
     loadTasks()
@@ -67,27 +79,51 @@ constructor(
   }
 
   private fun loadTasks() {
-    viewModelScope.launch {
-      val filter = _uiState.value.activeFilter
-      val (from, to) = getTimeRange(filter)
-      taskRepository.getTasksDueInRange(from, to).collect { tasks ->
-        // Also include overdue tasks (past due, still pending)
-        val overdueTasks = taskRepository.getPastDueTasks()
-        val allTasks = (overdueTasks + tasks).distinctBy { it.id }.sortedBy { it.scheduledFor }
-        _uiState.update { it.copy(isLoading = false, tasks = allTasks) }
+    tasksJob?.cancel()
+    tasksJob =
+      viewModelScope.launch {
+        val filter = _uiState.value.activeFilter
+        val (from, to) = getTimeRange(filter)
+        combine(
+            taskRepository.getTasksDueInRange(from, to),
+            userPreferencesRepository.userPreferences
+              .map { preferences -> preferences.language }
+              .distinctUntilChanged(),
+          ) { tasks, language ->
+            tasks to language
+          }
+          .collect { (tasks, language) ->
+            // Also include overdue tasks (past due, still pending)
+            val overdueTasks = taskRepository.getPastDueTasks()
+            val allTasks = (overdueTasks + tasks).distinctBy { it.id }.sortedBy { it.scheduledFor }
+            _uiState.update { it.copy(isLoading = false, tasks = displayTasks(allTasks, language)) }
+          }
       }
-    }
   }
+
+  private suspend fun displayTask(task: Task, language: AppLanguage): Task =
+    try {
+      taskDisplayTextResolver.resolve(task, language).let { text ->
+        task.copy(title = text.title, description = text.description)
+      }
+    } catch (exception: CancellationException) {
+      throw exception
+    } catch (_: Exception) {
+      task
+    }
+
+  private suspend fun displayTasks(tasks: List<Task>, language: AppLanguage): List<Task> =
+    buildList {
+      tasks.forEach { task -> add(displayTask(task, language)) }
+    }
 
   fun completeTask(taskId: String) {
     viewModelScope.launch {
       try {
         taskScheduler.cancelTask(taskId)
         taskRepository.updateTaskStatus(taskId, TaskStatus.COMPLETED)
-      } catch (e: Exception) {
-        _events.emit(
-          TaskListEvent.Error(e.message ?: context.getString(R.string.task_error_complete))
-        )
+      } catch (_: Exception) {
+        _events.emit(TaskListEvent.Error(context.getString(R.string.task_error_complete)))
       }
     }
   }
@@ -97,10 +133,8 @@ constructor(
       try {
         taskScheduler.cancelTask(taskId)
         taskRepository.deleteTask(taskId)
-      } catch (e: Exception) {
-        _events.emit(
-          TaskListEvent.Error(e.message ?: context.getString(R.string.task_error_delete))
-        )
+      } catch (_: Exception) {
+        _events.emit(TaskListEvent.Error(context.getString(R.string.task_error_delete)))
       }
     }
   }

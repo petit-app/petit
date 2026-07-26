@@ -11,6 +11,8 @@ import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
+import com.woliveiras.petit.presentation.util.rethrowIfCancellation
+import com.woliveiras.petit.presentation.util.uiFailureText
 import com.woliveiras.petit.worker.TaskScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -188,13 +190,14 @@ constructor(
 
         try {
           taskScheduler.scheduleTask(task)
-        } catch (_: Exception) {
+        } catch (failure: Exception) {
+          failure.rethrowIfCancellation()
           // DB saved but schedule failed — non-critical
         }
 
         _events.emit(TaskFormEvent.TaskSaved)
       } catch (e: Exception) {
-        _events.emit(TaskFormEvent.Error(e.message ?: context.getString(R.string.task_error_save)))
+        _events.emit(TaskFormEvent.Error(e.uiFailureText(context, R.string.task_error_save)))
       } finally {
         _uiState.update { it.copy(isSaving = false) }
       }
@@ -209,9 +212,7 @@ constructor(
         taskRepository.deleteTask(id)
         _events.emit(TaskFormEvent.TaskDeleted)
       } catch (e: Exception) {
-        _events.emit(
-          TaskFormEvent.Error(e.message ?: context.getString(R.string.task_error_delete))
-        )
+        _events.emit(TaskFormEvent.Error(e.uiFailureText(context, R.string.task_error_delete)))
       }
     }
   }
