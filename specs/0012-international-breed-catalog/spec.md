@@ -3,7 +3,7 @@ spec: "0012"
 title: International dog and cat breed catalog
 family: pet-care
 phase: 1
-status: Approved
+status: Implemented
 owner: woliveiras
 depends_on: ["0001", "0006", "0011"]
 origin: prds/2026-07-17-petit-pet-health-management.md

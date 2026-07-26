@@ -48,7 +48,7 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 | [0009](0009-app-preferences/spec.md) | App preferences           | In Progress | —          |
 | [0010](0010-delete-all-data/spec.md) | Delete all data           | Completed | 0001–0005  |
 | [0011](0011-species-aware-care-presets/spec.md) | Species-aware care presets | In Progress | 0001, 0003, 0004 |
-| [0012](0012-international-breed-catalog/spec.md) | International dog and cat breed catalog | Approved | 0001, 0006, 0011 |
+| [0012](0012-international-breed-catalog/spec.md) | International dog and cat breed catalog | Implemented | 0001, 0006, 0011 |
 
 ### local-sharing
 

@@ -14,6 +14,36 @@ import java.time.LocalDateTime
 import org.junit.Test
 
 class ConflictResolverTest {
+
+  @Test
+  fun petConflictChoosesBreedIdentityAndFallbackFromTheSameVersion() {
+    val local =
+      Pet(
+          id = "pet-1",
+          name = "Mimi",
+          breed = "Siamese",
+          breedId = "VBO:0100221",
+          createdAt = 1,
+          updatedAt = 10,
+        )
+        .asConflictVersion()
+    val remote =
+      Pet(
+          id = "pet-1",
+          name = "Mimi",
+          breed = "Custom fallback",
+          breedId = "FUTURE:remote",
+          createdAt = 1,
+          updatedAt = 20,
+        )
+        .asConflictVersion()
+
+    val resolved = ConflictResolver().resolve(local, remote)
+
+    assertThat(resolved.selected.value.breedId).isEqualTo("FUTURE:remote")
+    assertThat(resolved.selected.value.breed).isEqualTo("Custom fallback")
+  }
+
   private val resolver = ConflictResolver()
 
   @Test

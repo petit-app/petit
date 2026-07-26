@@ -18,7 +18,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     the committed artifact.
   - verification: focused generator tests and byte-for-byte snapshot comparison.
 
-- [ ] **Search and resolve catalog identities offline** (test-type: unit)
+- [x] **Search and resolve catalog identities offline** (test-type: unit)
   - blocked-by: reviewed offline breed snapshot
   - desired behavior: the domain catalog resolves VBO and Petit-owned IDs,
     searches only the active species across locale names and aliases, and falls
@@ -30,7 +30,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     Android or network dependencies.
   - verification: focused catalog repository and search tests.
 
-- [ ] **Persist identity without rewriting custom or legacy data** (test-type: both)
+- [x] **Persist identity without rewriting custom or legacy data** (test-type: both)
   - blocked-by: search and resolve catalog identities offline
   - desired behavior: optional `breedId` remains paired with the existing
     fallback, exact legacy keys receive only reviewed mappings, and custom text
@@ -42,7 +42,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     no fuzzy mapping or silent rewrite.
   - verification: focused Room migration and pet persistence tests.
 
-- [ ] **Preserve paired fields across sharing paths** (test-type: integration)
+- [x] **Preserve paired fields across sharing paths** (test-type: integration)
   - blocked-by: persist identity without rewriting custom or legacy data
   - desired behavior: `breedId` and `breed` survive schema version 1 JSON,
     archive, Nearby, LAN, and conflicts as one versioned decision.
@@ -53,7 +53,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - verification: focused export/import, archive, Nearby, LAN, and conflict
     suites.
 
-- [ ] **Let caregivers search and choose cat and dog breeds** (test-type: both)
+- [x] **Let caregivers search and choose cat and dog breeds** (test-type: both)
   - blocked-by: offline search and paired persistence
   - desired behavior: an accessible searchable selector replaces the large
     dropdown for cats and dogs while other species retain manual entry.
@@ -64,7 +64,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     English and pt-BR.
   - verification: focused JVM and instrumented pet-form suites.
 
-- [ ] **Expose catalog provenance and license** (test-type: both)
+- [x] **Expose catalog provenance and license** (test-type: both)
   - blocked-by: reviewed offline breed snapshot
   - desired behavior: caregivers can inspect the VBO license, pinned release,
     and configured registry sources without copying protected standards or
@@ -75,7 +75,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - test expectations: asset/package contract test and focused UI coverage.
   - verification: attribution contract and settings/about screen tests.
 
-- [ ] **Complete release-level catalog verification** (test-type: both)
+- [~] **Complete release-level catalog verification** (test-type: both)
   - blocked-by: all implementation tasks
   - desired behavior: automated and manual evidence covers the full offline,
     compatibility, localization, accessibility, and source-update story.
@@ -88,3 +88,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     `./gradlew spotlessCheck`, `./gradlew lintDebug`, build/install as required,
     `git diff --check`, `git status --short`, physical TalkBack review, and
     separately reported two-device checks.
+  - evidence: generator reproduction, JVM tests, formatting, Android-test
+    compilation, Room migration, and focused Compose tests ran on the API 34
+    emulator. `lintDebug` remains blocked by pre-existing repository debt;
+    physical TalkBack and two-device validation remain open.

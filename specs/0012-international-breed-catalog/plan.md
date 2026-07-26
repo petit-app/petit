@@ -31,17 +31,17 @@ This plan is **Approved**. The user approved spec 0012 and ADR 0001 on
 1. [x] Accept the proposed ADR and spec, then commit the documentation boundary.
 2. [x] Add a reproducible VBO and authority-crosswalk generator with fixture
    tests, validation, pinned checksums, attribution, and a generated snapshot.
-3. [ ] Add catalog loading, locale resolution, search, Petit-owned categories,
+3. [x] Add catalog loading, locale resolution, search, Petit-owned categories,
    and exact legacy-key mapping through vertical domain tests.
-4. [ ] Add `breedId` to the domain and Room model with an additive migration and
+4. [x] Add `breedId` to the domain and Room model with an additive migration and
    paired-field invariants.
-5. [ ] Preserve the optional ID and fallback through JSON, portable archive,
+5. [x] Preserve the optional ID and fallback through JSON, portable archive,
    Nearby, LAN, and conflict resolution without changing schema version 1.
-6. [ ] Replace cat/dog breed dropdown behavior with the searchable accessible
+6. [x] Replace cat/dog breed dropdown behavior with the searchable accessible
    selector while leaving other species unchanged.
-7. [ ] Add source and license attribution, finish English and pt-BR catalog
+7. [x] Add source and license attribution, finish English and pt-BR catalog
    review, and validate failure fallback.
-8. [ ] Run focused, nearest-suite, formatting, lint, build/install, physical
+8. [~] Run focused, nearest-suite, formatting, lint, build/install, physical
    accessibility, and separately scoped two-device checks.
 
 ## Commit boundaries

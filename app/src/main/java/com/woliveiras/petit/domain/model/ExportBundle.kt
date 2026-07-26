@@ -274,6 +274,8 @@ fun Pet.toExportJson(): JSONObject {
 }
 
 fun Pet.Companion.fromExportJson(json: JSONObject): Pet {
+  val breedId = json.optStringOrNull("breedId")
+  require(breedId == null || isPortableBreedId(breedId)) { "Invalid breedId" }
   return Pet(
     id = json.getString("id"),
     name = json.getString("name"),
@@ -295,7 +297,7 @@ fun Pet.Companion.fromExportJson(json: JSONObject): Pet {
         Sex.UNKNOWN
       },
     breed = json.optStringOrNull("breed"),
-    breedId = json.optStringOrNull("breedId")?.takeIf(::isPortableBreedId),
+    breedId = breedId,
     color = json.optStringOrNull("color"),
     microchipNumber = json.optStringOrNull("microchipNumber"),
     passportNumber = json.optStringOrNull("passportNumber"),

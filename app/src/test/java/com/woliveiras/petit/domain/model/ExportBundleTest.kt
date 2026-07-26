@@ -123,6 +123,23 @@ class ExportBundleTest {
   }
 
   @Test
+  fun invalidBreedIdentityIsRejectedInsteadOfSilentlyDiscarded() {
+    val pet =
+      Pet(
+        id = "pet-invalid",
+        name = "Mimi",
+        breed = "Fallback",
+        breedId = "invalid identity",
+        createdAt = 1L,
+        updatedAt = 2L,
+      )
+
+    org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+      ExportBundle.fromJson(emptyBundle().copy(pets = listOf(pet)).toJson())
+    }
+  }
+
+  @Test
   fun membershipChangesRoundTripAndContributeToTheTransferredEntityCount() {
     val change =
       MembershipChange(

@@ -43,6 +43,7 @@ class BackupArchiveCodecTest {
           name = "Pet $index",
           petType = petType,
           breed = listOf("PERSIAN", "Custom rescue breed", "legacy_Breed-ç")[index % 3],
+          breedId = "FUTURE:archive-$index",
           createdAt = 1L,
           updatedAt = 2L,
         )
