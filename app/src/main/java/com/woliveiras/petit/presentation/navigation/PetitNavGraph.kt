@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -53,7 +54,22 @@ fun PetitNavGraph(
   modifier: Modifier = Modifier,
   startDestination: String = Screen.Home.route,
 ) {
-  NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
+  val layoutDirection = LocalLayoutDirection.current
+  NavHost(
+    navController = navController,
+    startDestination = startDestination,
+    modifier = modifier,
+    enterTransition = {
+      navigationEnterTransition(layoutDirection = layoutDirection, isPop = false)
+    },
+    exitTransition = { navigationExitTransition(layoutDirection = layoutDirection, isPop = false) },
+    popEnterTransition = {
+      navigationEnterTransition(layoutDirection = layoutDirection, isPop = true)
+    },
+    popExitTransition = {
+      navigationExitTransition(layoutDirection = layoutDirection, isPop = true)
+    },
+  ) {
     // Onboarding
     composable(Screen.Onboarding.route) {
       OnboardingScreen(

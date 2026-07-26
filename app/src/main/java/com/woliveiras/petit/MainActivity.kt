@@ -31,6 +31,7 @@ import com.woliveiras.petit.presentation.feature.backup.ActivityGoogleAuthorizat
 import com.woliveiras.petit.presentation.navigation.PetitBottomNavBar
 import com.woliveiras.petit.presentation.navigation.PetitNavGraph
 import com.woliveiras.petit.presentation.navigation.Screen
+import com.woliveiras.petit.presentation.navigation.navigateToMainArea
 import com.woliveiras.petit.ui.theme.PetitTheme
 import com.woliveiras.petit.util.LocaleApplicator
 import dagger.hilt.android.AndroidEntryPoint
@@ -149,35 +150,19 @@ private fun PetitAppContent(navController: NavHostController, startDestination: 
     bottomBar = {
       PetitBottomNavBar(
         currentRoute = currentRoute,
-        onHomeClick = {
-          navController.navigate(Screen.Home.route) {
-            popUpTo(Screen.Home.route) { inclusive = true }
-          }
-        },
-        onPetsClick = {
-          navController.navigate(Screen.PetList.route) {
-            popUpTo(Screen.Home.route) { inclusive = false }
-          }
-        },
+        onHomeClick = { navController.navigateToMainArea(Screen.Home.route) },
+        onPetsClick = { navController.navigateToMainArea(Screen.PetList.route) },
         onAddClick = {
           if (currentRoute?.startsWith("select-pet/") == true) {
             navController.navigate(Screen.PetForm.createRoute()) {
               popUpTo(Screen.Home.route) { inclusive = false }
             }
           } else {
-            navController.navigate(Screen.QuickAdd.route)
+            navController.navigateToMainArea(Screen.QuickAdd.route)
           }
         },
-        onTasksClick = {
-          navController.navigate(Screen.Tasks.route) {
-            popUpTo(Screen.Home.route) { inclusive = false }
-          }
-        },
-        onProfileClick = {
-          navController.navigate(Screen.Settings.route) {
-            popUpTo(Screen.Home.route) { inclusive = false }
-          }
-        },
+        onTasksClick = { navController.navigateToMainArea(Screen.Tasks.route) },
+        onProfileClick = { navController.navigateToMainArea(Screen.Settings.route) },
       )
     },
   ) { contentModifier ->
