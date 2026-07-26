@@ -1,8 +1,15 @@
 package com.woliveiras.petit.presentation.util
 
+import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.woliveiras.petit.R
+import com.woliveiras.petit.domain.model.BreedCatalog
+import com.woliveiras.petit.domain.model.BreedIdentity
 import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.HealthStatus
 import com.woliveiras.petit.domain.model.PetType
@@ -10,6 +17,8 @@ import com.woliveiras.petit.domain.model.Sex
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.presentation.feature.tasks.TaskFilter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Utility functions for getting localized display names for enums. */
 @Composable
@@ -152,6 +161,43 @@ fun localizedBreed(breed: String): String =
     "YORKSHIRE" -> stringResource(R.string.breed_yorkshire)
     else -> breed
   }
+
+/** Resolves a catalog identity in the active locale and keeps persisted text as its fallback. */
+@Composable
+fun localizedBreed(breedId: String?, fallback: String?): String? {
+  val context = LocalContext.current
+  val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
+  val fallbackDisplay = fallback
+  if (breedId == null) return fallbackDisplay
+  if (breedId == BreedIdentity.MIXED_BREED_ID) return stringResource(R.string.breed_mixed)
+  if (breedId == BreedIdentity.UNKNOWN_BREED_ID) return stringResource(R.string.breed_unknown)
+
+  val displayName by
+    produceState(initialValue = fallbackDisplay, breedId, localeTag) {
+      value =
+        withContext(Dispatchers.IO) {
+          BreedCatalogCache.get(context).resolve(breedId, localeTag)?.displayName
+        } ?: fallbackDisplay
+    }
+  return displayName
+}
+
+private object BreedCatalogCache {
+  @Volatile private var cached: BreedCatalog? = null
+
+  fun get(context: Context): BreedCatalog =
+    cached
+      ?: synchronized(this) {
+        cached
+          ?: runCatching {
+              context.applicationContext.assets.open("breed_catalog.json").bufferedReader().use {
+                BreedCatalog.fromJsonOrEmpty(it.readText())
+              }
+            }
+            .getOrElse { BreedCatalog.fromJsonOrEmpty("{}") }
+            .also { cached = it }
+      }
+}
 
 /** Convert a color key (e.g. "ORANGE") to a localized display name. Custom colors pass through. */
 @Composable

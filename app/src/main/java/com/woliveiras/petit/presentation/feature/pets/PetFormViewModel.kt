@@ -10,6 +10,9 @@ import com.woliveiras.petit.data.media.PendingCameraPhoto
 import com.woliveiras.petit.data.media.PetPhotoStore
 import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.di.IoDispatcher
+import com.woliveiras.petit.domain.model.BreedCatalog
+import com.woliveiras.petit.domain.model.BreedCatalogItem
+import com.woliveiras.petit.domain.model.BreedIdentity
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.Sex
@@ -42,6 +45,12 @@ data class PetFormUiState(
   val birthDate: LocalDate? = null,
   val sex: Sex = Sex.UNKNOWN,
   val breed: String = "",
+  val breedId: String? = null,
+  val breedDisplayName: String? = null,
+  val breedQuery: String = "",
+  val breedResults: List<BreedCatalogItem> = emptyList(),
+  val isBreedCatalogLoading: Boolean = false,
+  val isBreedSearchLoading: Boolean = false,
   val color: String = "",
   val microchipNumber: String = "",
   val passportNumber: String = "",
@@ -69,7 +78,7 @@ sealed class PetFormEvent {
 class PetFormViewModel
 @Inject
 constructor(
-  savedStateHandle: SavedStateHandle,
+  private val savedStateHandle: SavedStateHandle,
   @ApplicationContext private val context: Context,
   private val petRepository: PetRepository,
   private val photoStorage: PetPhotoStore,
@@ -80,16 +89,55 @@ constructor(
   private val petId: String? = savedStateHandle["petId"]
   private var pendingCameraPhoto: PendingCameraPhoto? = null
   private var petLoadedForEdit: Pet? = null
+  private var breedCatalog = BreedCatalog.fromJsonOrEmpty("{}")
+  private var breedSearchRequest = 0
 
-  private val _uiState = MutableStateFlow(PetFormUiState())
+  private val _uiState =
+    MutableStateFlow(
+      PetFormUiState(
+        petType =
+          savedStateHandle.get<String>("breedPetType")?.let {
+            runCatching { PetType.valueOf(it) }.getOrNull()
+          } ?: PetType.OTHER,
+        breed = savedStateHandle["breed"] ?: "",
+        breedId = savedStateHandle["breedId"],
+        breedDisplayName = savedStateHandle["breedDisplayName"],
+        breedQuery = savedStateHandle["breedQuery"] ?: "",
+      )
+    )
   val uiState: StateFlow<PetFormUiState> = _uiState.asStateFlow()
 
   private val _events = MutableSharedFlow<PetFormEvent>()
   val events: SharedFlow<PetFormEvent> = _events.asSharedFlow()
 
   init {
+    loadBreedCatalog()
     if (petId != null) {
       loadPet(petId)
+    }
+  }
+
+  private fun loadBreedCatalog() {
+    viewModelScope.launch {
+      _uiState.value = _uiState.value.copy(isBreedCatalogLoading = true)
+      breedCatalog =
+        withContext(ioDispatcher) {
+          runCatching {
+              context.assets.open("breed_catalog.json").bufferedReader().use { reader ->
+                BreedCatalog.fromJsonOrEmpty(reader.readText())
+              }
+            }
+            .getOrElse { BreedCatalog.fromJsonOrEmpty("{}") }
+        }
+      refreshBreedResults(_uiState.value.breedQuery)
+      val state = _uiState.value
+      _uiState.value =
+        state.copy(
+          isBreedCatalogLoading = false,
+          breedDisplayName =
+            state.breedId?.let { breedCatalog.resolve(it, localeTag())?.displayName }
+              ?: state.breed.takeIf { it.isNotBlank() },
+        )
     }
   }
 
@@ -110,12 +158,17 @@ constructor(
               birthDate = pet.birthDate,
               sex = pet.sex,
               breed = pet.breed ?: "",
+              breedId = pet.breedId,
+              breedDisplayName =
+                pet.breedId?.let { breedCatalog.resolve(it, localeTag())?.displayName }
+                  ?: pet.breed,
               color = pet.color ?: "",
               microchipNumber = pet.microchipNumber ?: "",
               passportNumber = pet.passportNumber ?: "",
               notes = pet.notes ?: "",
               photoUri = pet.photoUri,
             )
+          persistBreedState(_uiState.value)
         }
       } catch (e: Exception) {
         _uiState.value = _uiState.value.copy(isLoading = false)
@@ -138,7 +191,17 @@ constructor(
   }
 
   fun updatePetType(petType: PetType) {
-    _uiState.value = _uiState.value.copy(petType = petType)
+    val state = _uiState.value
+    val selectedSinceLoad = state.breedId != null && state.breedId != petLoadedForEdit?.breedId
+    _uiState.value =
+      state.copy(
+        petType = petType,
+        breed = if (selectedSinceLoad) "" else state.breed,
+        breedId = if (selectedSinceLoad) null else state.breedId,
+        breedDisplayName = if (selectedSinceLoad) null else state.breedDisplayName,
+      )
+    persistBreedState(_uiState.value)
+    refreshBreedResults("")
   }
 
   fun updateSex(sex: Sex) {
@@ -146,7 +209,68 @@ constructor(
   }
 
   fun updateBreed(breed: String) {
-    _uiState.value = _uiState.value.copy(breed = breed, breedError = null)
+    _uiState.value =
+      _uiState.value.copy(
+        breed = breed,
+        breedId = null,
+        breedDisplayName = breed.takeIf { it.isNotBlank() },
+        breedError = null,
+      )
+    persistBreedState(_uiState.value)
+  }
+
+  fun updateBreedSearch(query: String) {
+    _uiState.value = _uiState.value.copy(breedQuery = query)
+    savedStateHandle["breedQuery"] = query
+    refreshBreedResults(query)
+  }
+
+  fun selectBreed(item: BreedCatalogItem) {
+    _uiState.value =
+      _uiState.value.copy(
+        breed = item.canonicalName,
+        breedId = item.id,
+        breedDisplayName = item.displayName,
+        breedQuery = "",
+        breedError = null,
+      )
+    persistBreedState(_uiState.value)
+  }
+
+  fun selectMixedBreed() {
+    _uiState.value =
+      _uiState.value.copy(
+        breed = "MIXED_BREED",
+        breedId = BreedIdentity.MIXED_BREED_ID,
+        breedDisplayName = context.getString(R.string.breed_mixed),
+        breedQuery = "",
+        breedError = null,
+      )
+    persistBreedState(_uiState.value)
+  }
+
+  fun selectUnknownBreed() {
+    _uiState.value =
+      _uiState.value.copy(
+        breed = "Unknown breed",
+        breedId = BreedIdentity.UNKNOWN_BREED_ID,
+        breedDisplayName = context.getString(R.string.breed_unknown),
+        breedQuery = "",
+        breedError = null,
+      )
+    persistBreedState(_uiState.value)
+  }
+
+  fun clearBreed() {
+    _uiState.value =
+      _uiState.value.copy(
+        breed = "",
+        breedId = null,
+        breedDisplayName = null,
+        breedQuery = "",
+        breedError = null,
+      )
+    persistBreedState(_uiState.value)
   }
 
   fun updateColor(color: String) {
@@ -307,6 +431,7 @@ constructor(
               birthDate = state.birthDate,
               sex = state.sex,
               breed = normalizeChangedText(state.breed, petLoadedForEdit?.breed),
+              breedId = state.breedId,
               color = state.color.trim().ifBlank { null },
               microchipNumber = state.microchipNumber.trim().ifBlank { null },
               passportNumber = state.passportNumber.trim().ifBlank { null },
@@ -323,6 +448,7 @@ constructor(
               birthDate = state.birthDate,
               sex = state.sex,
               breed = state.breed.trim().ifBlank { null },
+              breedId = state.breedId,
               color = state.color.trim().ifBlank { null },
               microchipNumber = state.microchipNumber.trim().ifBlank { null },
               passportNumber = state.passportNumber.trim().ifBlank { null },
@@ -346,4 +472,31 @@ constructor(
 
   private fun normalizeChangedText(current: String, original: String?): String? =
     if (current == original.orEmpty()) original else current.trim().ifBlank { null }
+
+  private fun refreshBreedResults(query: String) {
+    val state = _uiState.value
+    val species = state.petType
+    val request = ++breedSearchRequest
+    _uiState.value = state.copy(breedQuery = query, isBreedSearchLoading = true)
+    viewModelScope.launch {
+      val results = withContext(ioDispatcher) { breedCatalog.search(species, localeTag(), query) }
+      val current = _uiState.value
+      if (
+        request == breedSearchRequest && current.petType == species && current.breedQuery == query
+      ) {
+        _uiState.value = current.copy(breedResults = results, isBreedSearchLoading = false)
+      }
+    }
+  }
+
+  private fun localeTag(): String =
+    context.resources.configuration.locales[0]?.toLanguageTag().orEmpty().ifBlank { "en" }
+
+  private fun persistBreedState(state: PetFormUiState) {
+    savedStateHandle["breedPetType"] = state.petType.name
+    savedStateHandle["breed"] = state.breed
+    savedStateHandle["breedId"] = state.breedId
+    savedStateHandle["breedDisplayName"] = state.breedDisplayName
+    savedStateHandle["breedQuery"] = state.breedQuery
+  }
 }

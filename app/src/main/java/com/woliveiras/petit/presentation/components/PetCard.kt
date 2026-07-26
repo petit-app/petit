@@ -87,7 +87,7 @@ fun PetCard(
 @Composable
 private fun CompactPetCard(data: PetCardData, onClick: () -> Unit, modifier: Modifier = Modifier) {
   val context = LocalContext.current
-  val breedText = data.pet.breed?.takeIf { it.isNotBlank() }?.let { localizedBreed(it) }
+  val breedText = localizedBreed(data.pet.breedId, data.pet.breed)
   val weightText = data.weight
   val infoText = listOfNotNull(breedText, weightText).joinToString(", ")
   val healthStatus =
@@ -141,7 +141,7 @@ private fun CompactPetCard(data: PetCardData, onClick: () -> Unit, modifier: Mod
           fontWeight = FontWeight.Bold,
         )
 
-        val breedText2 = data.pet.breed?.takeIf { it.isNotBlank() }?.let { localizedBreed(it) }
+        val breedText2 = localizedBreed(data.pet.breedId, data.pet.breed)
         val weightText2 = data.weight
         val infoText2 = listOfNotNull(breedText2, weightText2).joinToString(" · ")
 

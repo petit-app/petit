@@ -268,7 +268,7 @@ internal fun PetDetailContent(
               color = MaterialTheme.colorScheme.onSurface,
             )
             // Breed info
-            val breedDisplay = pet.breed?.let { localizedBreed(it) }
+            val breedDisplay = localizedBreed(pet.breedId, pet.breed)
             val colorDisplay = pet.color?.let { localizedColor(it) }
             val breedInfo = listOfNotNull(breedDisplay, colorDisplay).joinToString(" ")
             if (breedInfo.isNotEmpty()) {

@@ -77,6 +77,16 @@
   <string name="pet_form_breed_placeholder">Ej.: Persa, Siamés</string>
   <string name="pet_form_breed_select">Selecciona la raza</string>
   <string name="pet_form_breed_custom">Ingresa el nombre de la raza</string>
+  <string name="pet_form_breed_none_selected">Ninguna raza seleccionada</string>
+  <string name="breed_catalog_title">Elige una raza</string>
+  <string name="breed_catalog_search_label">Buscar razas</string>
+  <string name="breed_catalog_empty">No hay razas coincidentes. Puedes introducir la raza manualmente.</string>
+  <string name="breed_catalog_result_count">%1$d resultados</string>
+  <string name="breed_catalog_manual">Introducir raza manualmente</string>
+  <string name="breed_catalog_clear">Borrar raza</string>
+  <string name="breed_catalog_expanded">Expandido</string>
+  <string name="breed_catalog_collapsed">Contraído</string>
+  <string name="breed_unknown">Raza desconocida</string>
   <string name="pet_form_color">Color</string>
   <string name="pet_form_color_placeholder">Ej.: Naranja, Negro, Atigrado</string>
   <string name="pet_form_color_select">Selecciona el color</string>
@@ -249,6 +259,9 @@
   <string name="settings_language_english">Inglés</string>
   <string name="settings_language_portuguese_br">Portugués (Brasil)</string>
   <string name="settings_version">Versión</string>
+  <string name="settings_breed_catalog">Catálogo de razas</string>
+  <string name="settings_breed_catalog_attribution">Vertebrate Breed Ontology, versión %1$s, bajo licencia %2$s. Selección revisada con %3$s. Fuentes: %4$s. Licencia: %5$s.</string>
+  <string name="settings_breed_catalog_attribution_unavailable">Los metadatos del catálogo no están disponibles. La entrada manual de raza sigue disponible.</string>
   <string name="settings_language_restart_message">Reinicia la app para aplicar los cambios de idioma</string>
 
   <!-- Navigation -->

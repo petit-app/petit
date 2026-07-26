@@ -180,7 +180,7 @@ private fun PetListCard(petItem: PetListItem, onClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
           )
           // Breed info
-          val breedDisplay = pet.breed?.let { localizedBreed(it) }
+          val breedDisplay = localizedBreed(pet.breedId, pet.breed)
           val colorDisplay = pet.color?.let { localizedColor(it) }
           val breedInfo = listOfNotNull(breedDisplay, colorDisplay).joinToString(" ")
           if (breedInfo.isNotEmpty()) {

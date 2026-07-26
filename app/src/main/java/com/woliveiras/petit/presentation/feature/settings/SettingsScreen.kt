@@ -57,6 +57,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -74,9 +75,13 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.data.lan.LanSyncState
 import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.AppTheme
+import com.woliveiras.petit.domain.model.BreedCatalog
+import com.woliveiras.petit.domain.model.BreedCatalogMetadata
 import com.woliveiras.petit.domain.model.ConflictResolution
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.feature.familygroup.FamilyGroupSection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,6 +98,18 @@ fun SettingsScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val exportImportState by exportImportViewModel.uiState.collectAsStateWithLifecycle()
   val context = LocalContext.current
+  val breedCatalogMetadata by
+    produceState<BreedCatalogMetadata?>(initialValue = null) {
+      value =
+        withContext(Dispatchers.IO) {
+          runCatching {
+              context.assets.open("breed_catalog.json").bufferedReader().use {
+                BreedCatalog.fromJsonOrEmpty(it.readText()).metadata
+              }
+            }
+            .getOrNull()
+        }
+    }
   val themeSheetState = rememberModalBottomSheetState()
   val languageSheetState = rememberModalBottomSheetState()
   val snackbarHostState = remember { SnackbarHostState() }
@@ -343,6 +360,29 @@ fun SettingsScreen(
             ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
           headlineContent = { Text(stringResource(R.string.settings_version)) },
           supportingContent = { Text(BuildConfig.VERSION_NAME) },
+        )
+        HorizontalDivider()
+        ListItem(
+          colors =
+            ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+          headlineContent = { Text(stringResource(R.string.settings_breed_catalog)) },
+          supportingContent = {
+            val metadata = breedCatalogMetadata
+            Text(
+              if (metadata == null) {
+                stringResource(R.string.settings_breed_catalog_attribution_unavailable)
+              } else {
+                stringResource(
+                  R.string.settings_breed_catalog_attribution,
+                  metadata.vboRelease,
+                  metadata.license,
+                  metadata.sources.joinToString { it.authority },
+                  metadata.sources.joinToString { it.url },
+                  metadata.licenseUrl,
+                )
+              }
+            )
+          },
         )
       }
     }

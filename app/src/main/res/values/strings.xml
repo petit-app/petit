@@ -83,6 +83,16 @@
     <string name="pet_form_breed_placeholder">E.g.: Persian, Siamese</string>
     <string name="pet_form_breed_select">Select breed</string>
     <string name="pet_form_breed_custom">Enter breed name</string>
+    <string name="pet_form_breed_none_selected">No breed selected</string>
+    <string name="breed_catalog_title">Choose a breed</string>
+    <string name="breed_catalog_search_label">Search breeds</string>
+    <string name="breed_catalog_empty">No matching breeds. You can still enter the breed manually.</string>
+    <string name="breed_catalog_result_count">%1$d results</string>
+    <string name="breed_catalog_manual">Enter breed manually</string>
+    <string name="breed_catalog_clear">Clear breed</string>
+    <string name="breed_catalog_expanded">Expanded</string>
+    <string name="breed_catalog_collapsed">Collapsed</string>
+    <string name="breed_unknown">Unknown breed</string>
     <string name="pet_form_color">Color</string>
     <string name="pet_form_color_placeholder">E.g.: Orange, Black, Tabby</string>
     <string name="pet_form_color_select">Select color</string>
@@ -260,6 +270,9 @@
     <string name="settings_language_english">English</string>
     <string name="settings_language_portuguese_br">Português (Brasil)</string>
     <string name="settings_version">Version</string>
+    <string name="settings_breed_catalog">Breed catalog</string>
+    <string name="settings_breed_catalog_attribution">Vertebrate Breed Ontology release %1$s, licensed under %2$s. Selection reviewed against %3$s. Sources: %4$s. License: %5$s.</string>
+    <string name="settings_breed_catalog_attribution_unavailable">Catalog metadata is unavailable. Manual breed entry remains available.</string>
     <string name="settings_language_restart_message">Restart the app to apply language changes</string>
 
     <!-- Navigation -->

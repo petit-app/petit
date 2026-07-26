@@ -9,6 +9,7 @@ import com.google.common.truth.Truth.assertThat
 import com.woliveiras.petit.data.media.PendingCameraPhoto
 import com.woliveiras.petit.data.media.PetPhotoStore
 import com.woliveiras.petit.data.repository.PetRepository
+import com.woliveiras.petit.domain.model.BreedCatalogItem
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetType
 import java.io.File
@@ -110,6 +111,63 @@ class PetFormViewModelTest {
         assertThat(saved.updatedAt).isEqualTo(clock.millis())
         assertThat(awaitItem()).isEqualTo(PetFormEvent.PetSaved(saved.id))
       }
+    }
+
+  @Test
+  fun catalogSelectionPersistsIdentityWithCanonicalFallbackAndManualEditClearsIdentity() =
+    runTest(dispatcher) {
+      val viewModel = viewModel()
+      viewModel.updateName("Mimi")
+      viewModel.updatePetType(PetType.CAT)
+      viewModel.selectBreed(
+        BreedCatalogItem(id = "VBO:0100221", displayName = "Siamês", canonicalName = "Siamese")
+      )
+
+      viewModel.savePet()
+      advanceUntilIdle()
+
+      assertThat(repository.saved.single().breedId).isEqualTo("VBO:0100221")
+      assertThat(repository.saved.single().breed).isEqualTo("Siamese")
+
+      viewModel.updateBreed("Raça personalizada")
+      assertThat(viewModel.uiState.value.breedId).isNull()
+    }
+
+  @Test
+  fun speciesChangeClearsNewCatalogSelectionButPreservesLoadedIdentity() =
+    runTest(dispatcher) {
+      val createViewModel = viewModel()
+      createViewModel.updatePetType(PetType.CAT)
+      createViewModel.selectBreed(BreedCatalogItem("VBO:0100221", "Siamês", "Siamese"))
+      createViewModel.updatePetType(PetType.DOG)
+      assertThat(createViewModel.uiState.value.breedId).isNull()
+      assertThat(createViewModel.uiState.value.breed).isEmpty()
+
+      repository.pet = pet(breed = "Siamese").copy(breedId = "VBO:0100221")
+      val editViewModel = viewModel(repository.pet?.id)
+      advanceUntilIdle()
+      editViewModel.updatePetType(PetType.DOG)
+
+      assertThat(editViewModel.uiState.value.breedId).isEqualTo("VBO:0100221")
+      assertThat(editViewModel.uiState.value.breed).isEqualTo("Siamese")
+    }
+
+  @Test
+  fun breedSelectorStateRestoresFromSavedStateHandle() =
+    runTest(dispatcher) {
+      val savedState = SavedStateHandle()
+      val original = PetFormViewModel(savedState, context, repository, photos, clock, dispatcher)
+      original.updatePetType(PetType.CAT)
+      original.selectBreed(BreedCatalogItem("VBO:0100221", "Siamês", "Siamese"))
+      original.updateBreedSearch("sia")
+
+      val restored = PetFormViewModel(savedState, context, repository, photos, clock, dispatcher)
+      advanceUntilIdle()
+
+      assertThat(restored.uiState.value.petType).isEqualTo(PetType.CAT)
+      assertThat(restored.uiState.value.breedId).isEqualTo("VBO:0100221")
+      assertThat(restored.uiState.value.breed).isEqualTo("Siamese")
+      assertThat(restored.uiState.value.breedQuery).isEqualTo("sia")
     }
 
   @Test
