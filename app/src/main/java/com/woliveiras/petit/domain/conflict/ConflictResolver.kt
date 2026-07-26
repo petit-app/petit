@@ -74,6 +74,7 @@ fun Pet.asConflictVersion(): ConflictVersion<Pet> =
       birthDate,
       sex,
       breed,
+      breedId,
       color,
       microchipNumber,
       passportNumber,

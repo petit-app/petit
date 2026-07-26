@@ -47,7 +47,7 @@ import com.woliveiras.petit.data.local.entity.WeightEntryEntity
       LanSeenNonceEntity::class,
       RestorableRevisionEntity::class,
     ],
-  version = 3,
+  version = 4,
   exportSchema = true,
 )
 abstract class PetitDatabase : RoomDatabase() {
@@ -156,6 +156,49 @@ abstract class PetitDatabase : RoomDatabase() {
               .trimIndent()
           )
           installRestorableRevisionTriggers(db)
+        }
+      }
+
+    val MIGRATION_3_4 =
+      object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+          db.execSQL("ALTER TABLE pets ADD COLUMN breedId TEXT")
+          db.execSQL(
+            """
+            UPDATE pets
+            SET breedId = CASE
+              WHEN breed = 'MIXED_BREED' AND petType IN ('CAT', 'DOG')
+                THEN 'PETIT:MIXED_BREED'
+              WHEN petType = 'CAT' THEN CASE breed
+                WHEN 'PERSIAN' THEN 'VBO:0100188'
+                WHEN 'SIAMESE' THEN 'VBO:0100221'
+                WHEN 'MAINE_COON' THEN 'VBO:0100154'
+                WHEN 'RAGDOLL' THEN 'VBO:0100196'
+                WHEN 'BRITISH_SHORTHAIR' THEN 'VBO:0100052'
+                WHEN 'BENGAL' THEN 'VBO:0100040'
+                WHEN 'ABYSSINIAN' THEN 'VBO:0100000'
+                WHEN 'SPHYNX' THEN 'VBO:0100230'
+                WHEN 'SCOTTISH_FOLD' THEN 'VBO:0100209'
+                WHEN 'BURMESE' THEN 'VBO:0100053'
+                WHEN 'RUSSIAN_BLUE' THEN 'VBO:0100200'
+                WHEN 'NORWEGIAN_FOREST' THEN 'VBO:0100178'
+                WHEN 'TURKISH_ANGORA' THEN 'VBO:0100249'
+              END
+              WHEN petType = 'DOG' THEN CASE breed
+                WHEN 'LABRADOR' THEN 'VBO:0200800'
+                WHEN 'GOLDEN_RETRIEVER' THEN 'VBO:0200610'
+                WHEN 'GERMAN_SHEPHERD' THEN 'VBO:0200577'
+                WHEN 'POODLE' THEN 'VBO:0201048'
+                WHEN 'BULLDOG' THEN 'VBO:0200258'
+                WHEN 'BEAGLE' THEN 'VBO:0200131'
+                WHEN 'SHIH_TZU' THEN 'VBO:0201223'
+                WHEN 'YORKSHIRE' THEN 'VBO:0201448'
+              END
+            END
+            WHERE breedId IS NULL
+            """
+              .trimIndent()
+          )
         }
       }
 

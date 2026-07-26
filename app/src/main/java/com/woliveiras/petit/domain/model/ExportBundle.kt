@@ -261,6 +261,7 @@ fun Pet.toExportJson(): JSONObject {
     put("birthDate", birthDate?.format(dateFormatter))
     put("sex", sex.name)
     put("breed", breed)
+    put("breedId", breedId)
     put("color", color)
     put("microchipNumber", microchipNumber)
     put("passportNumber", passportNumber)
@@ -294,6 +295,7 @@ fun Pet.Companion.fromExportJson(json: JSONObject): Pet {
         Sex.UNKNOWN
       },
     breed = json.optStringOrNull("breed"),
+    breedId = json.optStringOrNull("breedId")?.takeIf(::isPortableBreedId),
     color = json.optStringOrNull("color"),
     microchipNumber = json.optStringOrNull("microchipNumber"),
     passportNumber = json.optStringOrNull("passportNumber"),
@@ -305,6 +307,9 @@ fun Pet.Companion.fromExportJson(json: JSONObject): Pet {
     syncStatus = SyncStatus.LOCAL_ONLY,
   )
 }
+
+private fun isPortableBreedId(value: String): Boolean =
+  value.length <= 128 && value.matches(Regex("""[A-Za-z0-9][A-Za-z0-9:._-]*"""))
 
 fun WeightEntry.toExportJson(): JSONObject {
   return JSONObject().apply {

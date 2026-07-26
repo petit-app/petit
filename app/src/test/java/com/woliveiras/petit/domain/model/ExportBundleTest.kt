@@ -102,6 +102,27 @@ class ExportBundleTest {
   }
 
   @Test
+  fun breedIdentityAndFallbackRoundTripWhileOlderPayloadsRemainCompatible() {
+    val pet =
+      Pet(
+        id = "pet-identity",
+        name = "Mimi",
+        petType = PetType.CAT,
+        breed = "Siamese",
+        breedId = "VBO:0100221",
+        createdAt = 1L,
+        updatedAt = 2L,
+      )
+
+    val restored = ExportBundle.fromJson(emptyBundle().copy(pets = listOf(pet)).toJson())
+    assertThat(restored.pets).containsExactly(pet)
+
+    val legacyJson = emptyBundle().copy(pets = listOf(pet)).toJson()
+    legacyJson.getJSONArray("pets").getJSONObject(0).remove("breedId")
+    assertThat(ExportBundle.fromJson(legacyJson).pets.single().breedId).isNull()
+  }
+
+  @Test
   fun membershipChangesRoundTripAndContributeToTheTransferredEntityCount() {
     val change =
       MembershipChange(

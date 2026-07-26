@@ -21,11 +21,28 @@ class PetMapperTest {
         birthDate = LocalDate.of(2020, 2, 3),
         sex = Sex.FEMALE,
         breed = "Mixed",
+        breedId = "PETIT:MIXED_BREED",
         photoUri = "content://private/photo",
         createdAt = 10,
         updatedAt = 20,
         deletedAt = 30,
         syncStatus = SyncStatus.SYNCED,
+      )
+
+    assertThat(pet.toEntity().toDomain()).isEqualTo(pet)
+  }
+
+  @Test
+  fun unknownFutureBreedIdentityAndFallbackRoundTripTogether() {
+    val pet =
+      Pet(
+        id = "pet-future",
+        name = "Mimi",
+        petType = PetType.CAT,
+        breed = "Future registry fallback",
+        breedId = "FUTURE:cat-123",
+        createdAt = 1L,
+        updatedAt = 2L,
       )
 
     assertThat(pet.toEntity().toDomain()).isEqualTo(pet)

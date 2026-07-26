@@ -10,6 +10,7 @@ data class Pet(
   val birthDate: LocalDate? = null,
   val sex: Sex = Sex.UNKNOWN,
   val breed: String? = null,
+  val breedId: String? = null,
   val color: String? = null,
   val microchipNumber: String? = null,
   val passportNumber: String? = null,

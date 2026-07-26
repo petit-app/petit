@@ -13,6 +13,7 @@ data class PetEntity(
   val birthDate: Long? = null,
   val sex: String = "UNKNOWN",
   val breed: String? = null,
+  val breedId: String? = null,
   val color: String? = null,
   val microchipNumber: String? = null,
   val passportNumber: String? = null,

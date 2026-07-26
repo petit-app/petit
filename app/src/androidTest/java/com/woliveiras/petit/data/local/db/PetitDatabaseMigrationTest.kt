@@ -27,6 +27,7 @@ class PetitDatabaseMigrationTest {
   fun tearDown() {
     context.deleteDatabase(TEST_DATABASE)
     context.deleteDatabase(TEST_DATABASE_2_3)
+    context.deleteDatabase(TEST_DATABASE_3_4)
   }
 
   @Test
@@ -147,6 +148,45 @@ class PetitDatabaseMigrationTest {
     }
   }
 
+  @Test
+  fun migration3To4BackfillsOnlyExactSpeciesCompatibleLegacyBreeds() {
+    openBreedIdentityDatabase(version = 3).use { helper ->
+      val database = helper.writableDatabase
+      listOf(
+          arrayOf("cat-exact", "CAT", "SIAMESE"),
+          arrayOf("dog-exact", "DOG", "GERMAN_SHEPHERD"),
+          arrayOf("wrong-species", "CAT", "GERMAN_SHEPHERD"),
+          arrayOf("custom", "DOG", "German Shepherd"),
+          arrayOf("mixed", "CAT", "MIXED_BREED"),
+        )
+        .forEach { values ->
+          database.execSQL("INSERT INTO pets(id, petType, breed) VALUES (?, ?, ?)", values)
+        }
+    }
+
+    openBreedIdentityDatabase(version = 4).use { helper ->
+      helper.writableDatabase.query("SELECT id, breed, breedId FROM pets ORDER BY id").use { cursor
+        ->
+        val identities = mutableMapOf<String, Pair<String, String?>>()
+        while (cursor.moveToNext()) {
+          identities[cursor.getString(0)] =
+            cursor.getString(1) to
+              if (cursor.isNull(2)) {
+                null
+              } else {
+                cursor.getString(2)
+              }
+        }
+
+        assertThat(identities["cat-exact"]).isEqualTo("SIAMESE" to "VBO:0100221")
+        assertThat(identities["dog-exact"]).isEqualTo("GERMAN_SHEPHERD" to "VBO:0200577")
+        assertThat(identities["mixed"]).isEqualTo("MIXED_BREED" to "PETIT:MIXED_BREED")
+        assertThat(identities["wrong-species"]).isEqualTo("GERMAN_SHEPHERD" to null)
+        assertThat(identities["custom"]).isEqualTo("German Shepherd" to null)
+      }
+    }
+  }
+
   private fun openDatabase(version: Int): SupportSQLiteOpenHelper =
     FrameworkSQLiteOpenHelperFactory()
       .create(
@@ -205,9 +245,41 @@ class PetitDatabaseMigrationTest {
           .build()
       )
 
+  private fun openBreedIdentityDatabase(version: Int): SupportSQLiteOpenHelper =
+    FrameworkSQLiteOpenHelperFactory()
+      .create(
+        SupportSQLiteOpenHelper.Configuration.builder(context)
+          .name(TEST_DATABASE_3_4)
+          .callback(
+            object : SupportSQLiteOpenHelper.Callback(version) {
+              override fun onCreate(db: SupportSQLiteDatabase) {
+                require(version == 3)
+                db.execSQL(
+                  """
+                  CREATE TABLE pets (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    petType TEXT NOT NULL DEFAULT 'OTHER',
+                    breed TEXT
+                  )
+                  """
+                    .trimIndent()
+                )
+              }
+
+              override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                assertThat(oldVersion).isEqualTo(3)
+                assertThat(newVersion).isEqualTo(4)
+                PetitDatabase.MIGRATION_3_4.migrate(db)
+              }
+            }
+          )
+          .build()
+      )
+
   companion object {
     private const val TEST_DATABASE = "petit-migration-1-2-test"
     private const val TEST_DATABASE_2_3 = "petit-migration-2-3-test"
+    private const val TEST_DATABASE_3_4 = "petit-migration-3-4-test"
 
     private val VERSION_1_FAMILY_GROUP_MEMBERS_SCHEMA =
       """

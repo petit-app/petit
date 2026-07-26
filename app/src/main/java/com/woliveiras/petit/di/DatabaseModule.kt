@@ -30,7 +30,11 @@ object DatabaseModule {
   @Singleton
   fun providePetitDatabase(@ApplicationContext context: Context): PetitDatabase {
     return Room.databaseBuilder(context, PetitDatabase::class.java, PetitDatabase.DATABASE_NAME)
-      .addMigrations(PetitDatabase.MIGRATION_1_2, PetitDatabase.MIGRATION_2_3)
+      .addMigrations(
+        PetitDatabase.MIGRATION_1_2,
+        PetitDatabase.MIGRATION_2_3,
+        PetitDatabase.MIGRATION_3_4,
+      )
       .addCallback(
         object : RoomDatabase.Callback() {
           override fun onOpen(db: SupportSQLiteDatabase) {

@@ -28,6 +28,7 @@ fun PetEntity.toDomain(): Pet =
         Sex.UNKNOWN
       },
     breed = breed,
+    breedId = breedId,
     color = color,
     microchipNumber = microchipNumber,
     passportNumber = passportNumber,
@@ -52,6 +53,7 @@ fun Pet.toEntity(): PetEntity =
     birthDate = birthDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli(),
     sex = sex.name,
     breed = breed,
+    breedId = breedId,
     color = color,
     microchipNumber = microchipNumber,
     passportNumber = passportNumber,
