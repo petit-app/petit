@@ -1,0 +1,4 @@
+package_name("com.woliveiras.petit")
+
+credential_path = ENV["GOOGLE_PLAY_JSON_KEY"]
+json_key_file(credential_path) unless credential_path.to_s.empty?

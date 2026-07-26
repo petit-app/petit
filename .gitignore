@@ -44,3 +44,16 @@ google-services.json
 # Compiler
 *.log
 kotlin-compiler-*
+
+# Ruby and Bundler
+.bundle/
+vendor/bundle/
+
+# Fastlane generated output
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Google GitHub Actions generated credentials
+gha-creds-*.json

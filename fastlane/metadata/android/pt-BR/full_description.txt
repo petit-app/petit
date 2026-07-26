@@ -1,0 +1,19 @@
+Petit é um aplicativo de código aberto para organizar os cuidados dos seus pets.
+
+Cadastre cães, gatos, coelhos, aves, peixes e outros animais. Acompanhe peso, vacinas, vermífugos e lembretes em um só lugar.
+
+Seus dados ficam no dispositivo e os recursos principais funcionam sem internet. Quando você escolhe usar backup, os arquivos são armazenados na sua própria conta do Google Drive. O Petit também oferece opções de compartilhamento local entre dispositivos próximos.
+
+Principais recursos:
+
+- cadastro e acompanhamento de vários pets;
+- histórico de peso;
+- registros de vacinas e vermífugos;
+- tarefas e lembretes locais;
+- exportação e importação de dados;
+- backup na sua conta do Google Drive;
+- compartilhamento local;
+- interface em português;
+- código-fonte público.
+
+O Petit não substitui orientação veterinária. Procure um profissional para decisões sobre saúde, diagnóstico ou tratamento.

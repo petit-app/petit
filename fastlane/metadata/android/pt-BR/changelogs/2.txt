@@ -1,0 +1,1 @@
+Melhorias de compatibilidade com versões recentes do Android e correções de interface.

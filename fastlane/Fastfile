@@ -1,0 +1,147 @@
+require_relative "lib/release_config"
+
+opt_out_usage
+skip_docs
+default_platform(:android)
+
+REPOSITORY_ROOT = File.expand_path("..", __dir__)
+BUILD_FILE = File.join(REPOSITORY_ROOT, "app", "build.gradle.kts")
+METADATA_ROOT = File.join(REPOSITORY_ROOT, "fastlane", "metadata", "android")
+STORE_LISTING_ROOT = File.join(REPOSITORY_ROOT, "docs", "store-listing")
+AAB_PATH = File.join(
+  REPOSITORY_ROOT,
+  "app",
+  "build",
+  "outputs",
+  "bundle",
+  "release",
+  "app-release.aab"
+)
+MAPPING_PATH = File.join(
+  REPOSITORY_ROOT,
+  "app",
+  "build",
+  "outputs",
+  "mapping",
+  "release",
+  "mapping.txt"
+)
+PLAY_TRACKS = %w[internal alpha beta production].freeze
+
+def release_configuration
+  version = PetitRelease.read_version(BUILD_FILE)
+  PetitRelease.validate_signing!(REPOSITORY_ROOT)
+  PetitRelease.validate_metadata!(METADATA_ROOT, version_code: version.fetch(:code))
+  PetitRelease.validate_no_publishable_duplicates!(STORE_LISTING_ROOT)
+  version
+rescue PetitRelease::ConfigurationError => error
+  UI.user_error!(error.message)
+end
+
+def play_credential_path
+  PetitRelease.google_credential_path!(ENV, repository_root: REPOSITORY_ROOT)
+rescue PetitRelease::ConfigurationError => error
+  UI.user_error!(error.message)
+end
+
+def validate_play_identity!
+  validate_play_store_json_key(json_key: play_credential_path)
+end
+
+def ensure_version_available!(version_code)
+  used_codes = PLAY_TRACKS.flat_map do |track|
+    google_play_track_version_codes(
+      package_name: PetitRelease::PACKAGE_NAME,
+      track: track,
+      json_key: play_credential_path
+    )
+  end.uniq
+
+  return unless used_codes.include?(version_code)
+
+  UI.user_error!(
+    "Google Play versionCode #{version_code} has already been used. " \
+    "Update app/build.gradle.kts explicitly before retrying."
+  )
+end
+
+def build_release_artifacts
+  version = release_configuration
+
+  gradle_wrapper = File.join(REPOSITORY_ROOT, "gradlew")
+  sh(gradle_wrapper, "-p", REPOSITORY_ROOT, "spotlessCheck")
+  sh(gradle_wrapper, "-p", REPOSITORY_ROOT, ":app:test")
+  sh(gradle_wrapper, "-p", REPOSITORY_ROOT, ":app:bundleRelease")
+
+  UI.user_error!("Expected release AAB was not generated: #{AAB_PATH}") unless File.file?(AAB_PATH)
+
+  sh("jarsigner", "-verify", AAB_PATH)
+  UI.message(
+    "Built signed AAB for versionCode #{version.fetch(:code)}, " \
+    "versionName #{version.fetch(:name)}"
+  )
+  UI.message("R8 mapping: #{MAPPING_PATH}") if File.file?(MAPPING_PATH)
+
+  {
+    version: version,
+    aab: AAB_PATH,
+    mapping: File.file?(MAPPING_PATH) ? MAPPING_PATH : nil
+  }
+end
+
+def upload_alpha(validate_only:)
+  validate_play_identity!
+  version = release_configuration
+  ensure_version_available!(version.fetch(:code))
+  artifacts = build_release_artifacts
+
+  options = {
+    package_name: PetitRelease::PACKAGE_NAME,
+    json_key: play_credential_path,
+    aab: artifacts.fetch(:aab),
+    metadata_path: METADATA_ROOT,
+    track: PetitRelease::TRACK,
+    release_status: PetitRelease::RELEASE_STATUS,
+    validate_only: validate_only,
+    skip_upload_apk: true,
+    skip_upload_aab: false,
+    skip_upload_metadata: false,
+    skip_upload_changelogs: false,
+    skip_upload_images: false,
+    skip_upload_screenshots: false
+  }
+  options[:mapping] = artifacts.fetch(:mapping) if artifacts.fetch(:mapping)
+
+  upload_to_play_store(**options)
+rescue StandardError => error
+  if error.message.match?(/version code.*already (?:been )?used/i)
+    UI.user_error!(
+      "Google Play rejected versionCode #{version.fetch(:code)} because it has already been used. " \
+      "Update app/build.gradle.kts explicitly before retrying."
+    )
+  end
+
+  raise
+end
+
+platform :android do
+  desc "Validate Google Play credentials without uploading a release"
+  lane :validate_play_credentials do
+    validate_play_identity!
+  end
+
+  desc "Run release checks and build a signed Android App Bundle"
+  lane :build_release do
+    build_release_artifacts
+  end
+
+  desc "Validate the complete alpha release with Google Play without publishing"
+  lane :validate_alpha do
+    upload_alpha(validate_only: true)
+  end
+
+  desc "Build and publish the complete release only to the alpha track"
+  lane :deploy_alpha do
+    upload_alpha(validate_only: false)
+  end
+end
