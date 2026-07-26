@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Last update:** 2026-07-17
+**Last update:** 2026-07-20
 
 ## Problem
 
@@ -15,6 +15,9 @@ professionals.
 1. Prevent basic care tasks from being forgotten.
 2. Centralize the health history of one or more pets.
 3. Keep data available offline and exportable when needed.
+4. Make care-record presets deliberate for every supported species without
+   presenting them as veterinary prescriptions.
+5. Keep every officially supported language complete across the entire app.
 
 ## Product and technical foundation
 
@@ -26,6 +29,7 @@ professionals.
 * **synchronization through Firebase/Google Cloud Platform**
 * **Android only**, at least for now
 * a simple domain with substantial local state and date-based rules
+* English and Brazilian Portuguese as the officially supported app languages
 
 ## Technology Stack:
 
@@ -366,7 +370,7 @@ The "Profile" tab in the bottom navigation (Person icon) is the user's personal 
 ### Profile sections (in order)
 
 1. **Family Group** — group status or onboarding card if no device is paired
-2. **Settings** — theme (system/light/dark), language (system/pt-BR/en/es)
+2. **Settings** — theme (system/light/dark), language (system/pt-BR/en)
 3. **Data** — export, import, delete all data
 4. **About** — app version
 
@@ -396,7 +400,9 @@ This is important for user trust.
 ## 3. Pet Registration
 
 * name
+* species: cat, dog, rabbit, bird, hamster, or other
 * date of birth
+* optional species-aware breed preset or manual breed
 * optional microchip
 * optional passport
 * optional photo at a later stage
@@ -439,6 +445,12 @@ This is important for user trust.
 * application date
 * next application
 
+Treatment presets are recording conveniences, not treatment advice. The app
+must not offer one commercial-product list to every species, calculate doses,
+diagnose disease, or imply that a product is appropriate. When no reviewed,
+market-specific catalog exists, the caregiver records the product or treatment
+manually from veterinary or product-label information.
+
 ### List
 
 * upcoming
@@ -455,6 +467,11 @@ This is important for user trust.
 * vaccine
 * application date
 * next application
+
+New-entry vaccine choices are filtered by species. Historical and custom values
+remain readable and editable after species or catalog changes. Suggested next
+dates are not clinical recommendations and must not be generated without an
+approved, traceable source.
 
 ### List
 
