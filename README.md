@@ -14,6 +14,7 @@ Petit is a multi-pet health tracker — track weight, vaccinations, deworming, a
 - [Accessibility testing guide (TalkBack)](docs/talkback-testing-guide.md)
 - [Design system](docs/design-system.md)
 - [Public release/compliance checklist](docs/release-compliance-checklist.md)
+- [Android release automation](docs/release-automation.md)
 - [Google Drive Cloud Console setup runbook](docs/test-runbooks/google-drive-cloud-console-setup.md)
 
 ## Development
@@ -29,6 +30,24 @@ Quick commands:
 - `./gradlew assembleDebug && ./gradlew installDebug`
 - `./gradlew test`
 - `./gradlew spotlessCheck`
+
+## Release Automation
+
+Android alpha releases use the same Fastlane lanes locally and in the manual
+GitHub Actions workflow:
+
+```bash
+bundle install
+bundle exec fastlane android build_release
+bundle exec fastlane android validate_alpha
+bundle exec fastlane android deploy_alpha
+```
+
+The validation and deployment lanes require separately configured Google Play
+credentials. Deployment is fixed to the alpha track and never changes the app
+version automatically. See the [release automation runbook](docs/release-automation.md)
+for signing, metadata, Google Cloud, GitHub Environment, OIDC, validation, and
+rollback procedures.
 
 ## Policies
 

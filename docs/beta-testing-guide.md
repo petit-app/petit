@@ -1,11 +1,15 @@
-# Practical Google Play Beta Testing Guide
+# Practical Google Play Alpha Testing Guide
 
-This guide assumes you already have a Google Play developer account.
+This guide separates one-time Play setup, automated alpha deployment, tester
+management, and manual fallback. See
+[Android release automation](release-automation.md) for the complete security
+and configuration runbook.
 
 ## Prerequisites
 
 - Active Google Play Console account
-- Signed release AAB build
+- Existing `com.woliveiras.petit` app in Play Console
+- Signed release AAB build using the registered upload key
 - Public privacy policy URL
 - App icon (512x512 PNG)
 - At least two screenshots
@@ -48,7 +52,22 @@ Recommended fields:
 
 Keep listing text aligned with implemented app behavior.
 
-## 4. Generate Release AAB
+## 4. Configure Release Automation
+
+Complete the one-time setup in the
+[release automation runbook](release-automation.md):
+
+- Google Play Developer API;
+- dedicated publisher service account with app-level testing permissions;
+- local credential file outside the repository;
+- GitHub Workload Identity Federation;
+- protected GitHub Environment `alpha`;
+- temporary upload-key secrets.
+
+The repository uses `fastlane/metadata/android/` as the source of truth for
+listing text, release notes, and publishable images.
+
+## 5. Prepare the Release Version
 
 Before building, update app version in:
 
@@ -63,47 +82,74 @@ defaultConfig {
 }
 ```
 
-Build commands:
+Add localized release notes using the exact version code:
 
-```bash
-./gradlew clean
-./gradlew bundleRelease
+```text
+fastlane/metadata/android/pt-BR/changelogs/4.txt
 ```
 
-Generated file:
+Fastlane never changes the version automatically.
+
+## 6. Build Locally Without Publishing
+
+Install locked dependencies and build:
+
+```bash
+bundle install
+bundle exec fastlane android build_release
+```
+
+The lane runs Spotless and unit tests, builds the signed AAB, verifies its JAR
+signature, and reports the R8 mapping when generated.
 
 `app/build/outputs/bundle/release/app-release.aab`
 
-Quick validation:
+This is signed-build evidence only. It does not prove that Google Play accepts
+the upload key or release.
+
+## 7. Validate Through the API Without Publishing
+
+With separately authorized credentials:
 
 ```bash
-ls -lh app/build/outputs/bundle/release/app-release.aab
+export GOOGLE_PLAY_JSON_KEY=/absolute/private/path/play-publisher.json
+bundle exec fastlane android validate_play_credentials
+bundle exec fastlane android validate_alpha
 ```
 
-Recommended pre-upload checks:
+`validate_alpha` uses Google Play `validate_only`. It is an external API check,
+not a deployment.
+
+## 8. Deploy Locally to Alpha
+
+After separate publication authorization:
 
 ```bash
-./gradlew test
-./gradlew spotlessCheck
+bundle exec fastlane android deploy_alpha
 ```
 
-## 5. Internal Testing Track
+The lane publishes only to `alpha` with release status `completed`.
 
-1. Go to Testing -> Internal testing.
-2. Create release.
-3. Upload AAB.
-4. Add release notes.
-5. Start rollout to internal testing.
+## 9. Deploy Through GitHub Actions
 
-## 6. Add Testers
+1. Commit or tag the exact source.
+2. Open Actions -> **Release Android Alpha**.
+3. Select `main` or an approved `v*` tag.
+4. Run the workflow.
+5. Wait for the `alpha` environment reviewer.
+6. Inspect the source SHA/ref summary and Play result.
+
+Local and GitHub deployments call the same Fastlane lane.
+
+## 10. Add Testers
 
 1. Open Testers tab.
 2. Create email list.
 3. Add tester emails.
-4. Save and assign list to the track.
+4. Save and assign the list to the alpha track.
 5. Share invite link with testers.
 
-## 7. Tester Instructions
+## 11. Tester Instructions
 
 Share this checklist with testers:
 
@@ -116,7 +162,7 @@ Share this checklist with testers:
 - Expected vs actual result
 - Screenshot/video when possible
 
-## 8. Collect Feedback
+## 12. Collect Feedback
 
 Use one or more channels:
 
@@ -124,22 +170,40 @@ Use one or more channels:
 - Google Forms
 - Team chat channel
 
-## 9. Release Updates
+## 13. Release Updates
 
 For each new beta iteration:
 
 1. Increase `versionCode`.
 2. Update `versionName`.
-3. Build new AAB (`# from repo root: ./gradlew clean bundleRelease`).
-4. Upload new internal release.
-5. Publish rollout.
+3. Add `<versionCode>.txt` release notes for every metadata locale.
+4. Run the local checks and signed build.
+5. Validate through the API when authorized.
+6. Deploy locally or through the protected workflow.
 
 Notes:
 
 - `versionCode` must be greater than the last uploaded build on Play Console.
 - Keep `versionName` aligned with release notes to simplify tester communication.
 
-## 10. Promote to Production
+## 14. Manual Play Console Fallback
+
+Use the console only when automation is unavailable or an already committed
+release needs intervention:
+
+1. Run `bundle exec fastlane android build_release`.
+2. Open Testing -> Alpha.
+3. Create a release.
+4. Upload `app/build/outputs/bundle/release/app-release.aab`.
+5. Copy reviewed release notes from
+   `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`.
+6. Confirm the source commit or tag.
+7. Start the alpha release.
+
+Do not create independent listing copy in Play Console without applying the
+same reviewed change to the canonical repository metadata.
+
+## 15. Production Promotion
 
 When beta quality is acceptable:
 
@@ -148,7 +212,8 @@ When beta quality is acceptable:
 - Policy sections complete
 - Support and rollback plan ready
 
-Then promote the tested release to production rollout.
+Production promotion is outside the first automation. Perform it only through
+a separately reviewed and authorized process.
 
 ## Common Issues
 
@@ -163,3 +228,13 @@ Ensure project `targetSdk` satisfies current Play policy.
 ### Signing issues
 
 Use Google Play App Signing and verify upload key configuration.
+
+### Version code rejected
+
+Version codes cannot be reused. Update the source version explicitly and add
+the matching localized changelog.
+
+### Workflow cannot access credentials
+
+Confirm that the run uses `main` or a `v*` tag, the `alpha` environment is
+approved, and exactly one Google authentication mode is configured.
