@@ -165,20 +165,24 @@ project. Map at least:
 ```text
 google.subject=assertion.sub
 attribute.repository=assertion.repository
+attribute.repository_owner=assertion.repository_owner
 attribute.ref=assertion.ref
 ```
 
 Restrict the provider with a condition equivalent to:
 
 ```text
+assertion.repository_owner == "petit-app" &&
 assertion.repository == "petit-app/petit" &&
-assertion.sub == "repo:petit-app/petit:environment:alpha" &&
+assertion.environment == "alpha" &&
 (assertion.ref == "refs/heads/main" || assertion.ref.startsWith("refs/tags/v"))
 ```
 
-GitHub environments change the token subject format. Inspect a non-production
-token claim set during setup and keep the repository, environment, and ref
-checks together. Do not trust only the repository owner or organization.
+GitHub can use name-based, customized, or immutable ID-based token subject
+formats. Do not compare `assertion.sub` with a name-only subject. Inspect a
+non-production token claim set during setup and keep the repository owner,
+repository, environment, and ref checks together. Do not trust only the
+repository owner or organization.
 
 Grant the provider principal only
 `roles/iam.workloadIdentityUser` on the dedicated publisher service account.
@@ -386,7 +390,7 @@ generated AAB or ask Fastlane to increment the version.
 ### OIDC authentication fails
 
 Check the provider resource name, service-account email, repository claim,
-environment subject, ref condition, `roles/iam.workloadIdentityUser` binding,
+environment claim, ref condition, `roles/iam.workloadIdentityUser` binding,
 API enablement, and Play Console app permissions.
 
 ### Credential works but upload is forbidden
