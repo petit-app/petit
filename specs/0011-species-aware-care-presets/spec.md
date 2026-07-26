@@ -193,6 +193,8 @@ not approve a product, dose, diagnosis, or individual schedule in Petit.
 - New species.
 - Dosage, diagnosis, treatment recommendation, contraindication, or prescribing.
 - A downloaded or remotely updated catalog.
+- An international cat and dog breed catalog, stable breed identifiers, and
+  searchable selection. These are covered by spec 0012.
 - A country-specific brand or active-ingredient catalog.
 - A Room migration or new export schema version.
 - Rewriting historical records.

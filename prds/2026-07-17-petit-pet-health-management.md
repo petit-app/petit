@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Last update:** 2026-07-20
+**Last update:** 2026-07-26
 
 ## Problem
 
@@ -18,6 +18,9 @@ professionals.
 4. Make care-record presets deliberate for every supported species without
    presenting them as veterinary prescriptions.
 5. Keep every officially supported language complete across the entire app.
+6. Give cat and dog caregivers an internationally sourced, searchable breed
+   catalog that remains available offline and preserves custom or historical
+   values.
 
 ## Product and technical foundation
 
@@ -149,6 +152,7 @@ This pattern follows Android's recommended offline-first architecture.
 * `birthDate`
 * optional `sex`
 * optional `breed`
+* optional `breedId` (VBO ID or a Petit-owned non-breed category ID)
 * optional `microchip`
 * optional `passport`
 * `createdAt`
@@ -268,6 +272,36 @@ A single JSON file is the current official format. The root object contains
 * free export is always available
 * imports include schema + version validation
 * preserve version compatibility through migration
+* additive breed identifiers keep a portable breed-name fallback so older
+  Petit versions can still display the record
+
+---
+
+# International Breed Catalog
+
+Cat and dog breed selection uses an offline catalog derived from a pinned
+release of the [Vertebrate Breed Ontology](https://monarchinitiative.org/ontologies/vbo).
+VBO provides stable identifiers, synonyms, source attribution, and
+source-specific recognition metadata.
+
+The catalog uses the following registration bodies to decide which entries are
+offered for new selection:
+
+* FCI for dog breeds
+* FIFe and TICA for cat breeds
+
+Recognition means that a registration body catalogs the breed. It is not a
+health, temperament, suitability, or veterinary endorsement.
+
+Petit ships a reviewed snapshot with the application. The app does not download
+breed data at runtime. Catalog updates happen through normal app releases and
+record the VBO release, source references, checksums, and review date.
+
+Breed names are presentation data. Persisted catalog selections use stable IDs
+plus a canonical name fallback. Manual values remain exact user data and are
+never translated or matched to a breed by fuzzy inference. Mixed breed, unknown
+breed, and manual entry are Petit-owned categories rather than VBO breed
+concepts.
 
 ---
 
