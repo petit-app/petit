@@ -21,6 +21,8 @@ professionals.
 6. Give cat and dog caregivers an internationally sourced, searchable breed
    catalog that remains available offline and preserves custom or historical
    values.
+7. Make navigation depth visible through directional motion while keeping
+   transitions between the main app areas visually neutral.
 
 ## Product and technical foundation
 
