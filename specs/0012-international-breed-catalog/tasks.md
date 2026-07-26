@@ -6,7 +6,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
 
 ## Tasks
 
-- [ ] **Generate a reviewed offline breed snapshot** (test-type: both)
+- [x] **Generate a reviewed offline breed snapshot** (test-type: both)
   - blocked-by: spec and ADR approval
   - desired behavior: pinned VBO and registry inputs produce one deterministic,
     validated cat/dog asset with locale data, provenance, checksums, and

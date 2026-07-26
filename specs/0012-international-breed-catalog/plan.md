@@ -28,8 +28,8 @@ This plan is **Approved**. The user approved spec 0012 and ADR 0001 on
 
 ## Implementation sequence
 
-1. [ ] Accept the proposed ADR and spec, then commit the documentation boundary.
-2. [ ] Add a reproducible VBO and authority-crosswalk generator with fixture
+1. [x] Accept the proposed ADR and spec, then commit the documentation boundary.
+2. [x] Add a reproducible VBO and authority-crosswalk generator with fixture
    tests, validation, pinned checksums, attribution, and a generated snapshot.
 3. [ ] Add catalog loading, locale resolution, search, Petit-owned categories,
    and exact legacy-key mapping through vertical domain tests.
