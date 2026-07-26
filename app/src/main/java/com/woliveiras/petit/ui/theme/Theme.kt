@@ -15,7 +15,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -172,8 +171,12 @@ fun PetitTheme(
   if (!view.isInEditMode) {
     SideEffect {
       val window = (view.context as Activity).window
-      window.statusBarColor = Color.Transparent.toArgb()
-      WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+      // System bars are drawn transparently by enableEdgeToEdge(); only the bar icon
+      // appearance is managed here. Setting window.statusBarColor/navigationBarColor is
+      // deprecated on Android 15 (API 35) and must not be used with edge-to-edge.
+      val insetsController = WindowCompat.getInsetsController(window, view)
+      insetsController.isAppearanceLightStatusBars = !darkTheme
+      insetsController.isAppearanceLightNavigationBars = !darkTheme
     }
   }
 

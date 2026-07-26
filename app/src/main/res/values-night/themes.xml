@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <!-- Base theme for dark mode -->
-  <style name="Theme.Petit" parent="android:Theme.Material.Light.NoActionBar">
-    <item name="android:statusBarColor">@android:color/transparent</item>
-    <item name="android:navigationBarColor">@color/background_dark</item>
-    <item name="android:windowLightStatusBar">false</item>
-  </style>
+  <!--
+    System bar colors and icon appearance are managed at runtime via
+    enableEdgeToEdge() and WindowInsetsControllerCompat. The android:statusBarColor,
+    android:navigationBarColor and android:windowLightStatusBar attributes are
+    deprecated on Android 15 (API 35) and are intentionally omitted.
+  -->
+  <style name="Theme.Petit" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
