@@ -56,11 +56,12 @@ irreversible data or runtime architecture decision.
    contract tests while preserving the existing CI workflow.
 5. [x] Update `.gitignore`, `README.md`, the new release runbook, beta guide,
    compliance checklist, and affected store-listing source documentation.
-6. [~] Run local/static verification and, when the private upload key is
+6. [x] Run local/static verification and, when the private upload key is
    available, a real signed AAB build. Reconcile tasks and plan from fresh
    evidence.
-7. [ ] Leave API validation, real alpha deployment, and tester availability
-   pending until each is separately authorized and executed.
+7. [~] Keep validate-only API verification and tester availability pending.
+   The real version-code-3 alpha deployment completed through GitHub Actions
+   run `30252123569`.
 
 ## Vertical delivery boundaries
 

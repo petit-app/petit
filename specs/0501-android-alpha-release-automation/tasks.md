@@ -75,7 +75,7 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - verification: documentation review, command/path searches, secret-pattern
     audit, and `git diff --check`.
 
-- [~] **Complete local and signed-build verification** (test-type: both)
+- [x] **Complete local and signed-build verification** (test-type: both)
   - blocked-by: all repository implementation tasks
   - summary: run fresh local/static and signed-build checks, remove temporary
     output, reconcile artifacts, and report external gaps.
@@ -89,11 +89,12 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
     uncovered acceptance criterion.
   - verification: every command in the first two levels of `plan.md`, full diff
     review, and `git status --short`.
-  - current evidence: Ruby syntax and contracts, lane discovery, locked gems,
-    workflow lint, metadata audit, secret-path audit, and a signed AAB build
-    passed. The latest rerun stops at Spotless because unrelated navigation
-    work in the shared checkout currently has formatting violations; those
-    files are intentionally untouched.
+  - current evidence: for version code 3 / version name 1.0.2, the locked
+    Fastlane `build_release` lane passed Spotless, the complete unit test suite,
+    release lint, R8 minification, signed AAB generation, signature
+    verification, and mapping generation. The installed universal APK from the
+    minified AAB listed 356 dog breeds and 96 cat breeds; the related 10
+    instrumented pet-form and breed-selection tests also passed.
 
 - [ ] **Validate the alpha edit against Google Play** (test-type: integration)
   - blocked-by: complete local verification; separate API authorization and
@@ -128,9 +129,10 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - verification: separately authorized alpha deployment record and tester
     installation observation.
   - current evidence: GitHub Actions run
-    `https://github.com/petit-app/petit/actions/runs/30208085376` authenticated
+    `https://github.com/petit-app/petit/actions/runs/30252123569` authenticated
     through Workload Identity Federation, built and verified the signed
-    versionCode 2 / versionName 1.0.1 AAB, uploaded the R8 mapping, pt-BR
-    metadata, images, screenshots, and changelog, and completed the Supply
-    upload to track `alpha` with release status `completed`. Play Console shows
-    release 1.0.1 as `In review`; tester availability remains pending.
+    versionCode 3 / versionName 1.0.2 AAB from
+    `c5b9e4f1a5ce44d21e6f97c843f92fddc19f530a`, uploaded the R8 mapping, pt-BR
+    metadata, images, screenshots, and version-code-3 changelog, and completed
+    the Supply upload to track `alpha` with release status `completed`.
+    Tester installation or update availability has not yet been observed.
