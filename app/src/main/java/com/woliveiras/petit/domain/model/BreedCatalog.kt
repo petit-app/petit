@@ -2,6 +2,7 @@ package com.woliveiras.petit.domain.model
 
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
+import com.google.gson.annotations.SerializedName
 import java.text.Collator
 import java.text.Normalizer
 import java.util.Locale
@@ -174,34 +175,34 @@ private fun String.normalizedForSearch(): String =
     .trim()
 
 private data class CatalogDocument(
-  val schemaVersion: Int = 0,
-  val vboRelease: String = "",
-  val vboUrl: String = "",
-  val reviewedAt: String = "",
-  val license: String = "",
-  val licenseUrl: String = "",
-  val sources: List<CatalogSourceDocument> = emptyList(),
-  val entries: List<CatalogEntryDocument> = emptyList(),
+  @field:SerializedName("schemaVersion") val schemaVersion: Int = 0,
+  @field:SerializedName("vboRelease") val vboRelease: String = "",
+  @field:SerializedName("vboUrl") val vboUrl: String = "",
+  @field:SerializedName("reviewedAt") val reviewedAt: String = "",
+  @field:SerializedName("license") val license: String = "",
+  @field:SerializedName("licenseUrl") val licenseUrl: String = "",
+  @field:SerializedName("sources") val sources: List<CatalogSourceDocument> = emptyList(),
+  @field:SerializedName("entries") val entries: List<CatalogEntryDocument> = emptyList(),
 )
 
 private data class CatalogSourceDocument(
-  val authority: String = "",
-  val url: String = "",
-  val reviewedAt: String = "",
+  @field:SerializedName("authority") val authority: String = "",
+  @field:SerializedName("url") val url: String = "",
+  @field:SerializedName("reviewedAt") val reviewedAt: String = "",
 )
 
 private data class CatalogEntryDocument(
-  val id: String = "",
-  val species: String = "",
-  val canonicalName: String = "",
-  val displayNames: Map<String, String> = emptyMap(),
-  val aliases: List<String> = emptyList(),
-  val registries: List<RegistryDocument> = emptyList(),
+  @field:SerializedName("id") val id: String = "",
+  @field:SerializedName("species") val species: String = "",
+  @field:SerializedName("canonicalName") val canonicalName: String = "",
+  @field:SerializedName("displayNames") val displayNames: Map<String, String> = emptyMap(),
+  @field:SerializedName("aliases") val aliases: List<String> = emptyList(),
+  @field:SerializedName("registries") val registries: List<RegistryDocument> = emptyList(),
 )
 
 private data class RegistryDocument(
-  val authority: String = "",
-  val code: String? = null,
-  val status: String = "",
-  val sourceUrl: String = "",
+  @field:SerializedName("authority") val authority: String = "",
+  @field:SerializedName("code") val code: String? = null,
+  @field:SerializedName("status") val status: String = "",
+  @field:SerializedName("sourceUrl") val sourceUrl: String = "",
 )
