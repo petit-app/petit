@@ -26,4 +26,4 @@ rootProject.name = "Petit"
 
 include(":app")
 
-include(":breed-catalog-tool")
+include(":tools:breed-catalog")

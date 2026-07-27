@@ -24,8 +24,8 @@ Java runtime:
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew :breed-catalog-tool:generateBreedCatalog
-./gradlew :breed-catalog-tool:test :breed-catalog-tool:verifyBreedCatalog
+./gradlew :tools:breed-catalog:generateBreedCatalog
+./gradlew :tools:breed-catalog:test :tools:breed-catalog:verifyBreedCatalog
 ```
 
 `generateBreedCatalog` writes `app/src/main/assets/breed_catalog.json`.

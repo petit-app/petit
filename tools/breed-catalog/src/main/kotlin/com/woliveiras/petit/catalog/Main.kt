@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
     val expected = File(expectedPath)
     require(expected.isFile) { "--verify-against is not a file: $expectedPath" }
     require(expected.readBytes().contentEquals(outputFile.readBytes())) {
-      "Committed breed catalog is stale. Run :breed-catalog-tool:generateBreedCatalog."
+      "Committed breed catalog is stale. Run :tools:breed-catalog:generateBreedCatalog."
     }
   }
 }
