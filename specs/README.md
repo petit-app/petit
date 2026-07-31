@@ -53,6 +53,7 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 | [0013](0013-navigation-motion/spec.md)           | Navigation motion                       | In Progress | —                |
 | [0014](0014-recurring-tasks/spec.md)             | Recurring tasks                         | Draft       | 0005             |
 | [0015](0015-medication-records/spec.md)          | Medication records                      | Draft       | 0001, 0014       |
+| [0016](0016-task-subject/spec.md)                | Task subject                            | Draft       | 0003–0005, 0011  |
 
 ### local-sharing
 

@@ -16,14 +16,19 @@ This plan is **Draft**. It waits for spec approval before any implementation.
 
 ## Architecture
 
-- Model recurrence as a value object in `domain/model` (repeat rule plus end
-  condition), persisted as denormalized columns on `TaskEntity`.
+- Model recurrence as a value object in `domain/model`: an interval, a unit of
+  hours, days, weeks, months, or years, optional weekdays, an optional daily
+  window for hourly rules, and an end condition. Persist it as denormalized
+  columns on `TaskEntity`.
+- Keep the presets (daily, weekly, monthly, quarterly, every six months,
+  yearly, custom) in the presentation layer as mappings onto that value object,
+  so no preset is stored.
 - Put occurrence computation in a pure domain component that receives a clock,
   so every rule is testable without Android or WorkManager.
 - Keep the scheduling boundary unchanged in shape: the repository asks the
   scheduler to schedule or cancel the single pending occurrence.
-- Generate the next occurrence in a use case triggered by completion, by app
-  start reconciliation, and by the notification worker.
+- Generate the next occurrence in a use case triggered by completion, by the
+  notification worker, and by app start reconciliation.
 - Keep display text (repeat summary, next occurrence) in the presentation
   layer, resolved through the existing localized text resolver.
 - Keep automatic health tasks on their current path and add explanatory copy
@@ -33,11 +38,13 @@ This plan is **Draft**. It waits for spec approval before any implementation.
 
 1. [ ] Approve the spec, plan, tasks, and index row.
 2. [ ] Add the recurrence value object and occurrence computation with unit
-       tests for every rule, end condition, month-end, and DST case.
+       tests for every unit, interval, end condition, hourly window, month-end,
+       and DST case.
 3. [ ] Add the Room migration and repeat columns, with a migration test.
-4. [ ] Add next-occurrence generation on completion and a start-up
-       reconciliation for missed occurrences.
-5. [ ] Add the repeat control and plain-language summary to the task form.
+4. [ ] Add next-occurrence generation on completion and when the notification
+       fires, plus a start-up reconciliation for missed occurrences.
+5. [ ] Add the repeat control, the preset list, the custom interval editor, the
+       hourly window, and the plain-language summary to the task form.
 6. [ ] Add the recurring label and next-occurrence text to the task list, task
        detail, home dashboard, and notification.
 7. [ ] Add the stop-series action with confirmation, and scope edits to pending
@@ -64,6 +71,11 @@ No push, amend, rebase, merge, force-push, or pull request is authorized.
 
 - **Notification burst after a long offline period:** resolve missed
   occurrences to a single pending occurrence and cover it with unit tests.
+- **Overnight notifications from hourly series:** offer the daily window in the
+  form and state the resulting schedule in the summary.
+- **Inexact delivery under WorkManager:** accept minute-level drift for now,
+  state it in the spec decisions, and reconcile pending occurrences on app
+  start.
 - **Drifting schedules across DST:** compute occurrences from local dates and
   re-resolve the instant at scheduling time.
 - **Migration data loss:** additive nullable columns with defaults, plus a Room
@@ -83,5 +95,6 @@ No push, amend, rebase, merge, force-push, or pull request is authorized.
 4. Run `./gradlew test`.
 5. Run `./gradlew spotlessCheck`.
 6. Run `./gradlew lintDebug` and report pre-existing failures separately.
-7. Verify a daily series, an every-N-days series, completion, stop, reboot, and
-   time zone change on a device or emulator.
+7. Verify a daily series, an hourly series with a window, an every-N-days
+   series, completion, stop, reboot, and time zone change on a device or
+   emulator.
