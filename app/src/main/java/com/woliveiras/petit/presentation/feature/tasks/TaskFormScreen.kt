@@ -2,6 +2,7 @@ package com.woliveiras.petit.presentation.feature.tasks
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +45,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -277,44 +283,55 @@ fun TaskFormScreen(
       }
 
       // Date and Time
+      val dateLabel = stringResource(R.string.task_field_date)
+      val timeLabel = stringResource(R.string.task_field_time)
+      val formattedDate = displayFormatter.shortDate(uiState.scheduledDate.toLocalDate())
+      val formattedTime = displayFormatter.time(uiState.scheduledDate.toLocalTime())
       Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-          value = displayFormatter.shortDate(uiState.scheduledDate.toLocalDate()),
-          onValueChange = {},
-          label = { Text(stringResource(R.string.task_field_date)) },
-          modifier = Modifier.weight(1f).clickable { showDatePicker = true },
-          readOnly = true,
-          enabled = false,
-          isError = uiState.dateError != null,
-          trailingIcon = {
-            IconButton(onClick = { showDatePicker = true }) {
-              Icon(
-                Icons.Default.CalendarMonth,
-                contentDescription = stringResource(R.string.action_select_date),
-              )
-            }
-          },
-        )
-        OutlinedTextField(
-          value = displayFormatter.time(uiState.scheduledDate.toLocalTime()),
-          onValueChange = {},
-          label = { Text(stringResource(R.string.task_field_time)) },
-          modifier = Modifier.width(120.dp).clickable { showTimePicker = true },
-          readOnly = true,
-          enabled = false,
-          trailingIcon = {
-            IconButton(onClick = { showTimePicker = true }) {
-              Icon(
-                Icons.Default.Schedule,
-                contentDescription = stringResource(R.string.task_field_time),
-              )
-            }
-          },
-        )
+        Box(modifier = Modifier.weight(1f)) {
+          OutlinedTextField(
+            value = formattedDate,
+            onValueChange = {},
+            label = { Text(dateLabel) },
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
+            readOnly = true,
+            isError = uiState.dateError != null,
+            trailingIcon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+          )
+          Box(
+            modifier =
+              Modifier.matchParentSize()
+                .semantics {
+                  contentDescription = "$dateLabel: $formattedDate"
+                  role = Role.Button
+                }
+                .clickable { showDatePicker = true }
+          )
+        }
+        Box(modifier = Modifier.width(120.dp)) {
+          OutlinedTextField(
+            value = formattedTime,
+            onValueChange = {},
+            label = { Text(timeLabel) },
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
+            readOnly = true,
+            isError = uiState.dateError != null,
+            trailingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) },
+          )
+          Box(
+            modifier =
+              Modifier.matchParentSize()
+                .semantics {
+                  contentDescription = "$timeLabel: $formattedTime"
+                  role = Role.Button
+                }
+                .clickable { showTimePicker = true }
+          )
+        }
       }
-      if (uiState.dateError != null) {
+      uiState.dateError?.let { error ->
         Text(
-          text = uiState.dateError!!,
+          text = error,
           color = MaterialTheme.colorScheme.error,
           style = MaterialTheme.typography.bodySmall,
         )
