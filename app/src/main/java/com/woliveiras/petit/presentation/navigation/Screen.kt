@@ -38,7 +38,8 @@ sealed class Screen(val route: String) {
     const val ACTION_WEIGHT = "weight"
     const val ACTION_ADD_WEIGHT = "add-weight"
     const val ACTION_VACCINATION = "vaccination"
-    const val ACTION_DEWORMING = "deworming"
+    const val ACTION_DEWORMING_INTERNAL = "deworming-internal"
+    const val ACTION_DEWORMING_EXTERNAL = "deworming-external"
 
     fun createRoute(action: String) = "select-pet/$action"
   }
@@ -77,10 +78,15 @@ sealed class Screen(val route: String) {
   }
 
   /** Deworming form for adding/editing a deworming entry. */
-  data object DewormingForm : Screen("pets/{petId}/deworming/form?entryId={entryId}") {
-    fun createRoute(petId: String, entryId: String? = null) =
-      if (entryId != null) "pets/$petId/deworming/form?entryId=$entryId"
-      else "pets/$petId/deworming/form"
+  data object DewormingForm :
+    Screen("pets/{petId}/deworming/form?entryId={entryId}&dewormingType={dewormingType}") {
+    fun createRoute(petId: String, entryId: String? = null, dewormingType: String? = null): String {
+      val base = "pets/$petId/deworming/form"
+      val params = mutableListOf<String>()
+      if (entryId != null) params.add("entryId=$entryId")
+      if (dewormingType != null) params.add("dewormingType=$dewormingType")
+      return if (params.isEmpty()) base else "$base?${params.joinToString("&")}"
+    }
   }
 
   /** Settings screen. */

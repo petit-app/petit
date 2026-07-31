@@ -12,6 +12,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.presentation.feature.backup.BackupHistoryRoute
 import com.woliveiras.petit.presentation.feature.backup.BackupSettingsRoute
 import com.woliveiras.petit.presentation.feature.backup.RestoreBackupRoute
@@ -124,8 +125,14 @@ fun PetitNavGraph(
               navController.navigate(Screen.WeightForm.createRoute(petId))
             Screen.PetSelection.ACTION_VACCINATION ->
               navController.navigate(Screen.VaccinationRecords.createRoute(petId))
-            Screen.PetSelection.ACTION_DEWORMING ->
-              navController.navigate(Screen.DewormingRecords.createRoute(petId))
+            Screen.PetSelection.ACTION_DEWORMING_INTERNAL ->
+              navController.navigate(
+                Screen.DewormingForm.createRoute(petId, dewormingType = DewormingType.INTERNAL.name)
+              )
+            Screen.PetSelection.ACTION_DEWORMING_EXTERNAL ->
+              navController.navigate(
+                Screen.DewormingForm.createRoute(petId, dewormingType = DewormingType.EXTERNAL.name)
+              )
           }
         },
         onNavigateToAddPet = {
@@ -356,13 +363,20 @@ fun PetitNavGraph(
             nullable = true
             defaultValue = null
           },
+          navArgument("dewormingType") {
+            type = NavType.StringType
+            nullable = true
+            defaultValue = null
+          },
         ),
     ) { backStackEntry ->
       val petId = backStackEntry.arguments?.getString("petId") ?: return@composable
       val entryId = backStackEntry.arguments?.getString("entryId")
+      val dewormingType = backStackEntry.arguments?.getString("dewormingType")
       DewormingFormScreen(
         petId = petId,
         entryId = entryId,
+        preselectedDewormingType = dewormingType,
         onNavigateBack = { navController.popBackStack() },
       )
     }
@@ -533,7 +547,13 @@ fun PetitNavGraph(
         onSelectDeworming = {
           navController.popBackStack()
           navController.navigate(
-            Screen.PetSelection.createRoute(Screen.PetSelection.ACTION_DEWORMING)
+            Screen.PetSelection.createRoute(Screen.PetSelection.ACTION_DEWORMING_INTERNAL)
+          )
+        },
+        onSelectFleaAndTick = {
+          navController.popBackStack()
+          navController.navigate(
+            Screen.PetSelection.createRoute(Screen.PetSelection.ACTION_DEWORMING_EXTERNAL)
           )
         },
         onSelectReminder = {

@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Notifications
@@ -51,6 +54,7 @@ fun QuickAddScreen(
   onSelectWeight: () -> Unit,
   onSelectVaccination: () -> Unit,
   onSelectDeworming: () -> Unit,
+  onSelectFleaAndTick: () -> Unit,
   onSelectReminder: () -> Unit,
   onSelectNewPet: () -> Unit,
 ) {
@@ -63,7 +67,11 @@ fun QuickAddScreen(
     }
   ) { padding ->
     Column(
-      modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+      modifier =
+        Modifier.fillMaxSize()
+          .padding(padding)
+          .verticalScroll(rememberScrollState())
+          .padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       Text(
@@ -94,13 +102,22 @@ fun QuickAddScreen(
         onClick = onSelectVaccination,
       )
 
-      // Deworming option
+      // Internal dewormer option
       QuickAddOption(
         icon = Icons.Default.Healing,
         iconBackground = petitColors.dewormingSectionBg,
         title = stringResource(R.string.quick_add_deworming),
         description = stringResource(R.string.quick_add_deworming_desc),
         onClick = onSelectDeworming,
+      )
+
+      // Flea and tick option
+      QuickAddOption(
+        icon = Icons.Default.BugReport,
+        iconBackground = petitColors.dewormingSectionBg,
+        title = stringResource(R.string.quick_add_flea_tick),
+        description = stringResource(R.string.quick_add_flea_tick_desc),
+        onClick = onSelectFleaAndTick,
       )
 
       // Reminder option

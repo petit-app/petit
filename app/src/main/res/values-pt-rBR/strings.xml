@@ -60,7 +60,7 @@
   <!-- Pet Card -->
   <string name="pet_card_weight">Peso</string>
   <string name="pet_card_vaccine">Vacina</string>
-  <string name="pet_card_deworming">Vermífugo</string>
+  <string name="pet_card_deworming">Antiparasitário</string>
   <string name="pet_card_no_data">-</string>
 
   <!-- Pet Form Screen -->
@@ -139,7 +139,7 @@
   <string name="pet_detail_delete_message">Esta ação não pode ser desfeita. Todos os registros do pet serão removidos.</string>
   <string name="pet_detail_section_weight">Peso</string>
   <string name="pet_detail_section_vaccinations">Vacinações</string>
-  <string name="pet_detail_section_deworming">Desparasitação</string>
+  <string name="pet_detail_section_deworming">Antiparasitário</string>
   <string name="pet_detail_no_record">Sem registro</string>
   <string name="pet_detail_additional_info">Informações Adicionais</string>
   <string name="pet_detail_microchip_label">Microchip</string>
@@ -162,7 +162,7 @@
   <string name="pet_delete_records_title">Registros que serão perdidos</string>
   <string name="pet_delete_weight_records">Registros de peso</string>
   <string name="pet_delete_vaccination_records">Registros de vacinação</string>
-  <string name="pet_delete_deworming_records">Registros de vermífugo</string>
+  <string name="pet_delete_deworming_records">Registros de antiparasitário</string>
   <string name="pet_delete_total_records">Total de registros</string>
   <string name="pet_delete_confirm_button">Excluir permanentemente</string>
   <string name="pet_delete_success_title">%1$s foi excluído</string>
@@ -194,7 +194,7 @@
 
   <!-- Deworming Types -->
   <string name="deworming_internal">Vermífugo interno</string>
-  <string name="deworming_external">Antipulgas/carrapatos</string>
+  <string name="deworming_external">Antipulgas e carrapatos</string>
   <string name="deworming_both">Combo (interno + externo)</string>
 
   <!-- Age -->
@@ -235,19 +235,19 @@
   <string name="vaccination_select_pet_title">Selecione um pet</string>
   <string name="vaccination_select_pet_message">Para qual pet você quer registrar a vacinação?</string>
   <string name="deworming_select_pet_title">Selecione um pet</string>
-  <string name="deworming_select_pet_message">Para qual pet você quer registrar a vermifugação?</string>
+  <string name="deworming_select_pet_message">Para qual pet você quer registrar o antiparasitário?</string>
 
   <!-- Speed Dial Actions -->
   <string name="speed_dial_add_pet">Adicionar pet</string>
   <string name="speed_dial_add_weight">Adicionar peso</string>
   <string name="speed_dial_add_vaccine">Adicionar vacina</string>
-  <string name="speed_dial_add_deworming">Adicionar vermífugo</string>
+  <string name="speed_dial_add_deworming">Adicionar antiparasitário</string>
 
   <!-- Alerts -->
   <string name="alert_vaccine_overdue">Vacina %1$s atrasada</string>
   <string name="alert_vaccine_due">Vacina %1$s %2$s</string>
-  <string name="alert_deworming_overdue">Vermífugo atrasado</string>
-  <string name="alert_deworming_due">Vermífugo %1$s</string>
+  <string name="alert_deworming_overdue">Antiparasitário atrasado</string>
+  <string name="alert_deworming_due">Antiparasitário %1$s</string>
 
   <!-- Errors -->
   <string name="error_loading">Erro ao carregar dados</string>
@@ -318,7 +318,7 @@
   <string name="reminders_kind_custom">Personalizado</string>
   <string name="reminders_kind_weight">Pesagem</string>
   <string name="reminders_kind_vaccination">Vacinação</string>
-  <string name="reminders_kind_deworming">Vermífugo</string>
+  <string name="reminders_kind_deworming">Antiparasitário</string>
   <string name="reminders_kind_medication">Medicação</string>
   <string name="reminders_delete_title">Excluir lembrete?</string>
   <string name="reminders_delete_message">Esta ação não pode ser desfeita.</string>
@@ -327,13 +327,13 @@
   <string name="reminder_settings_title">Configurações de Lembretes</string>
   <string name="reminder_settings_section_general">Geral</string>
   <string name="reminder_settings_section_vaccination">Lembretes de Vacinação</string>
-  <string name="reminder_settings_section_deworming">Lembretes de Vermífugo</string>
+  <string name="reminder_settings_section_deworming">Lembretes de Antiparasitário</string>
   <string name="reminder_settings_section_weight">Lembretes de Pesagem</string>
   <string name="reminder_settings_notification_time">Horário padrão de notificação</string>
   <string name="reminder_settings_vaccination_title">Lembretes de vacinação</string>
   <string name="reminder_settings_vaccination_description">Lembretes automáticos antes das datas de vacinas</string>
-  <string name="reminder_settings_deworming_title">Lembretes de vermífugo</string>
-  <string name="reminder_settings_deworming_description">Lembretes automáticos antes das datas de vermífugo</string>
+  <string name="reminder_settings_deworming_title">Lembretes de antiparasitário</string>
+  <string name="reminder_settings_deworming_description">Lembretes automáticos antes das datas de antiparasitário</string>
   <string name="reminder_settings_weight_title">Lembretes de pesagem</string>
   <string name="reminder_settings_weight_description">Lembretes periódicos para pesar seus pets</string>
   <string name="reminder_settings_days_before">Dias antes</string>
@@ -350,8 +350,10 @@
   <string name="quick_add_weight_desc">Acompanhe o peso do seu pet</string>
   <string name="quick_add_vaccination">Vacinação</string>
   <string name="quick_add_vaccination_desc">Registre uma aplicação de vacina</string>
-  <string name="quick_add_deworming">Vermífugo</string>
-  <string name="quick_add_deworming_desc">Registre um tratamento vermífugo</string>
+  <string name="quick_add_deworming">Vermífugo interno</string>
+  <string name="quick_add_deworming_desc">Registre um tratamento contra vermes intestinais</string>
+  <string name="quick_add_flea_tick">Antipulgas e carrapatos</string>
+  <string name="quick_add_flea_tick_desc">Registre um tratamento contra pulgas, carrapatos e ácaros</string>
   <string name="quick_add_reminder">Lembrete</string>
   <string name="quick_add_reminder_desc">Crie um lembrete personalizado</string>
   <string name="quick_add_new_pet">Novo Pet</string>
@@ -359,7 +361,7 @@
 
   <!-- Feature Titles -->
   <string name="vaccination_title">Vacinação</string>
-  <string name="deworming_title">Vermífugo</string>
+  <string name="deworming_title">Antiparasitário</string>
   <string name="coming_soon">Em breve</string>
 
   <!-- Vaccination Screen -->
@@ -398,10 +400,10 @@
   <string name="action_clear">Limpar</string>
 
   <!-- Deworming Screen -->
-  <string name="deworming_add">Adicionar vermífugo</string>
-  <string name="deworming_add_title">Adicionar Vermífugo</string>
-  <string name="deworming_edit_title">Editar Vermífugo</string>
-  <string name="deworming_empty_title">Nenhum registro de vermífugo</string>
+  <string name="deworming_add">Adicionar antiparasitário</string>
+  <string name="deworming_add_title">Adicionar Antiparasitário</string>
+  <string name="deworming_edit_title">Editar Antiparasitário</string>
+  <string name="deworming_empty_title">Nenhum registro de antiparasitário</string>
   <string name="deworming_empty_message">Toque em + para adicionar o primeiro tratamento</string>
   <string name="deworming_last_date">Último: %1$s</string>
   <string name="deworming_next_date">Próximo: %1$s</string>
@@ -494,7 +496,7 @@
   <string name="import_pets_count">Pets: %1$d</string>
   <string name="import_weights_count">Registros de peso: %1$d</string>
   <string name="import_vaccinations_count">Registros de vacinação: %1$d</string>
-  <string name="import_dewormings_count">Registros de vermífugo: %1$d</string>
+  <string name="import_dewormings_count">Registros de antiparasitário: %1$d</string>
   <string name="import_tasks_count">Tarefas: %1$d</string>
   <string name="import_conflict_title">%1$d pet(s) já existe(m):</string>
   <string name="import_conflict_resolution_title">Como tratar conflitos?</string>
@@ -513,7 +515,7 @@
   <string name="delete_all_data_pets">Todos os pets cadastrados</string>
   <string name="delete_all_data_weights">Todos os registros de peso</string>
   <string name="delete_all_data_vaccinations">Todos os registros de vacinação</string>
-  <string name="delete_all_data_dewormings">Todos os registros de vermífugo</string>
+  <string name="delete_all_data_dewormings">Todos os registros de antiparasitário</string>
   <string name="delete_all_data_reminders">Todos os lembretes</string>
   <string name="delete_all_data_confirm_instruction">Digite EXCLUIR para confirmar:</string>
   <string name="delete_all_data_confirm_word">EXCLUIR</string>
@@ -530,7 +532,7 @@
   <string name="cd_icon_add">Adicionar</string>
   <string name="cd_icon_weight">Peso</string>
   <string name="cd_icon_vaccine">Vacinação</string>
-  <string name="cd_icon_deworming">Vermífugo</string>
+  <string name="cd_icon_deworming">Antiparasitário</string>
   <string name="cd_icon_pet">Pet</string>
   <string name="cd_icon_calendar">Calendário</string>
   <string name="cd_icon_warning">Aviso</string>
@@ -550,9 +552,9 @@
   <string name="timeline_section_recent">ATIVIDADE RECENTE</string>
   <string name="timeline_weight_recorded">pesou</string>
   <string name="timeline_vaccination_done">foi vacinado</string>
-  <string name="timeline_deworming_done">tomou vermífugo</string>
+  <string name="timeline_deworming_done">tomou antiparasitário</string>
   <string name="timeline_vaccination_due">vacina agendada</string>
-  <string name="timeline_deworming_due">vermífugo agendado</string>
+  <string name="timeline_deworming_due">antiparasitário agendado</string>
   <string name="timeline_today">Hoje</string>
   <string name="timeline_tomorrow">Amanhã</string>
   <string name="timeline_yesterday">Ontem</string>
@@ -572,7 +574,7 @@
   <string name="activity_timeline_filter_all_pets">Todos os pets</string>
   <string name="activity_timeline_filter_weight">Peso</string>
   <string name="activity_timeline_filter_vaccination">Vacinação</string>
-  <string name="activity_timeline_filter_deworming">Vermifugação</string>
+  <string name="activity_timeline_filter_deworming">Antiparasitário</string>
   <string name="activity_timeline_empty_title">Nenhuma atividade encontrada</string>
   <string name="activity_timeline_empty_description">Nenhum evento registrado no período selecionado</string>
   <string name="activity_timeline_select_date">Selecionar data</string>
@@ -585,10 +587,10 @@
   <string name="empty_vaccination_title">Nenhuma vacina registrada</string>
   <string name="empty_vaccination_description">Registre as vacinas de %1$s para acompanhar o calendário</string>
   <string name="empty_vaccination_action">Adicionar Vacina</string>
-  <string name="empty_deworming_title">Nenhuma vermifugação registrada</string>
-  <string name="empty_deworming_description">Registre os vermífugos de %1$s para não perder datas</string>
-  <string name="empty_deworming_action">Adicionar Vermífugo</string>
-  <string name="empty_home_recent_activity">Comece registrando peso, vacinas ou vermífugos dos seus pets</string>
+  <string name="empty_deworming_title">Nenhum antiparasitário registrado</string>
+  <string name="empty_deworming_description">Registre os antiparasitários de %1$s para não perder datas</string>
+  <string name="empty_deworming_action">Adicionar Antiparasitário</string>
+  <string name="empty_home_recent_activity">Comece registrando peso, vacinas ou antiparasitários dos seus pets</string>
 
   <!-- Tasks -->
   <string name="tasks_title">Tarefas</string>
@@ -603,13 +605,13 @@
   <string name="task_settings_title">Configurações de Tarefas</string>
   <string name="task_settings_section_general">Geral</string>
   <string name="task_settings_section_vaccination">Tarefas de Vacinação</string>
-  <string name="task_settings_section_deworming">Tarefas de Vermifugação</string>
+  <string name="task_settings_section_deworming">Tarefas de Antiparasitário</string>
   <string name="task_settings_section_weight">Tarefas de Peso</string>
   <string name="task_settings_notification_time">Horário padrão de notificação</string>
   <string name="task_settings_vaccination_title">Tarefas de vacinação</string>
   <string name="task_settings_vaccination_description">Tarefas automáticas antes das datas de vacinas</string>
-  <string name="task_settings_deworming_title">Tarefas de vermifugação</string>
-  <string name="task_settings_deworming_description">Tarefas automáticas antes das datas de vermífugos</string>
+  <string name="task_settings_deworming_title">Tarefas de antiparasitário</string>
+  <string name="task_settings_deworming_description">Tarefas automáticas antes das datas de antiparasitário</string>
   <string name="task_settings_weight_title">Tarefas de peso</string>
   <string name="task_settings_weight_description">Tarefas periódicas para pesar seus pets</string>
   <string name="task_settings_days_before">Dias antes</string>
@@ -643,7 +645,7 @@
   <!-- Task kind names -->
   <string name="task_kind_weight">Pesagem</string>
   <string name="task_kind_vaccination">Vacinação</string>
-  <string name="task_kind_deworming">Vermífugo</string>
+  <string name="task_kind_deworming">Antiparasitário</string>
   <string name="task_kind_medication">Medicação</string>
   <string name="task_kind_custom">Personalizado</string>
 
@@ -662,7 +664,7 @@
 
   <!-- Home next event labels -->
   <string name="home_next_event_vaccine">Vacina %1$s</string>
-  <string name="home_next_event_deworming">Vermífugo</string>
+  <string name="home_next_event_deworming">Antiparasitário</string>
 
   <!-- Pet form validation -->
   <string name="pet_validation_name_required">Nome é obrigatório</string>
@@ -694,7 +696,7 @@
   <string name="deworming_error_note_max_length">Observação deve ter no máximo 500 caracteres</string>
   <string name="deworming_error_date_future">Data não pode ser no futuro</string>
   <string name="deworming_error_next_dose_after">Próxima dose deve ser após a data de aplicação</string>
-  <string name="deworming_error_save">Erro ao salvar vermífugo</string>
+  <string name="deworming_error_save">Erro ao salvar antiparasitário</string>
   <string name="deworming_error_delete">Erro ao excluir registro</string>
 
   <!-- Weight validation -->
@@ -733,7 +735,7 @@
   <string name="onboarding_features_title">Tudo em um só lugar</string>
   <string name="onboarding_feature_weight">Controle de peso</string>
   <string name="onboarding_feature_vaccination">Registro de vacinas</string>
-  <string name="onboarding_feature_deworming">Controle de vermífugos</string>
+  <string name="onboarding_feature_deworming">Controle de antiparasitários</string>
   <string name="onboarding_feature_reminders">Lembretes inteligentes</string>
   <string name="onboarding_cta_title">Pronto para começar?</string>
   <string name="onboarding_cta_description">Cadastre seu primeiro pet e comece a acompanhar a saúde dele hoje.</string>
@@ -789,7 +791,7 @@
   <string name="family_group_result_pets">Pets</string>
   <string name="family_group_result_weights">Pesos</string>
   <string name="family_group_result_vaccinations">Vacinas</string>
-  <string name="family_group_result_dewormings">Vermífugos</string>
+  <string name="family_group_result_dewormings">Antiparasitários</string>
   <string name="family_group_result_tasks">Tarefas</string>
   <string name="family_group_error_no_endpoint">O dispositivo autorizado não está mais conectado.</string>
   <string name="family_group_error_payload_too_large">Os dados são grandes demais para transferir.</string>

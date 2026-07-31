@@ -65,7 +65,9 @@ fun PetSelectionScreen(
       Screen.PetSelection.ACTION_WEIGHT -> stringResource(R.string.weight_select_pet_title)
       Screen.PetSelection.ACTION_VACCINATION ->
         stringResource(R.string.vaccination_select_pet_title)
-      Screen.PetSelection.ACTION_DEWORMING -> stringResource(R.string.deworming_select_pet_title)
+      Screen.PetSelection.ACTION_DEWORMING_INTERNAL,
+      Screen.PetSelection.ACTION_DEWORMING_EXTERNAL ->
+        stringResource(R.string.deworming_select_pet_title)
       else -> stringResource(R.string.weight_select_pet_title)
     }
 

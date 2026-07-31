@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +62,7 @@ import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 fun DewormingFormScreen(
   petId: String,
   entryId: String? = null,
+  preselectedDewormingType: String? = null,
   onNavigateBack: () -> Unit,
   viewModel: DewormingViewModel = hiltViewModel(),
 ) {
@@ -71,7 +73,9 @@ fun DewormingFormScreen(
   var dewormingTypeExpanded by remember { mutableStateOf(false) }
 
   // Track if the user has explicitly selected a deworming type
-  var hasSelectedType by remember { mutableStateOf(false) }
+  var hasSelectedType by rememberSaveable { mutableStateOf(false) }
+  // Track if the entry point preselection was already applied, so a later change is kept
+  var hasAppliedPreselection by rememberSaveable { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
 
   // In edit mode, consider type as already selected
@@ -85,6 +89,19 @@ fun DewormingFormScreen(
   LaunchedEffect(entryId) {
     if (entryId != null) {
       viewModel.loadEntryForEdit(entryId)
+    }
+  }
+
+  // Pre-select the treatment type when the caregiver arrived from a typed entry point
+  LaunchedEffect(preselectedDewormingType) {
+    if (preselectedDewormingType != null && entryId == null && !hasAppliedPreselection) {
+      runCatching { DewormingType.valueOf(preselectedDewormingType) }
+        .getOrNull()
+        ?.let { type ->
+          viewModel.updateDewormingType(type)
+          hasSelectedType = true
+        }
+      hasAppliedPreselection = true
     }
   }
 

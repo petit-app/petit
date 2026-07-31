@@ -89,6 +89,119 @@ class DewormingComposeTest {
   }
 
   @Test
+  fun preselectedTypeOpensTheFormWithThatTreatmentSelected() {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    composeRule.setContent {
+      PetitTheme {
+        DewormingFormScreen(
+          petId = "pet-1",
+          preselectedDewormingType = DewormingType.EXTERNAL.name,
+          onNavigateBack = {},
+          viewModel = formViewModel(),
+        )
+      }
+    }
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.deworming_external))
+      .performScrollTo()
+      .assertIsDisplayed()
+    composeRule
+      .onAllNodesWithText(context.getString(R.string.deworming_field_type_select))
+      .assertCountEquals(0)
+  }
+
+  @Test
+  fun internalEntryPointPreselectsTheInternalTreatment() {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    composeRule.setContent {
+      PetitTheme {
+        DewormingFormScreen(
+          petId = "pet-1",
+          preselectedDewormingType = DewormingType.INTERNAL.name,
+          onNavigateBack = {},
+          viewModel = formViewModel(),
+        )
+      }
+    }
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.deworming_internal))
+      .performScrollTo()
+      .assertIsDisplayed()
+  }
+
+  @Test
+  fun caregiverCanChangeThePreselectedTreatment() {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    composeRule.setContent {
+      PetitTheme {
+        DewormingFormScreen(
+          petId = "pet-1",
+          preselectedDewormingType = DewormingType.EXTERNAL.name,
+          onNavigateBack = {},
+          viewModel = formViewModel(),
+        )
+      }
+    }
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.deworming_external))
+      .performScrollTo()
+      .performClick()
+    composeRule.onNodeWithText(context.getString(R.string.deworming_both)).performClick()
+
+    composeRule.onNodeWithText(context.getString(R.string.deworming_both)).assertIsDisplayed()
+  }
+
+  @Test
+  fun unknownPreselectedTypeLeavesTheTreatmentUnselected() {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    composeRule.setContent {
+      PetitTheme {
+        DewormingFormScreen(
+          petId = "pet-1",
+          preselectedDewormingType = "NOT_A_TYPE",
+          onNavigateBack = {},
+          viewModel = formViewModel(),
+        )
+      }
+    }
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.deworming_field_type_select))
+      .performScrollTo()
+      .assertIsDisplayed()
+  }
+
+  @Test
+  fun editingAnEntryIgnoresThePreselectedTreatment() {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    val existing = entry("entry-1", DewormingType.INTERNAL, day = 10, nextDueDate = null)
+    composeRule.setContent {
+      PetitTheme {
+        DewormingFormScreen(
+          petId = "pet-1",
+          entryId = existing.id,
+          preselectedDewormingType = DewormingType.EXTERNAL.name,
+          onNavigateBack = {},
+          viewModel = formViewModel(existing),
+        )
+      }
+    }
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.deworming_internal))
+      .performScrollTo()
+      .assertIsDisplayed()
+  }
+
+  @Test
   fun categorySummariesCountBothAsInternalAndExternal() {
     val today = LocalDate.of(2026, 7, 17)
     val combined = entry("both", DewormingType.BOTH, day = 10, nextDueDate = today.plusDays(5))
@@ -201,12 +314,12 @@ class DewormingComposeTest {
       updatedAt = day.toLong(),
     )
 
-  private fun formViewModel() =
+  private fun formViewModel(existingEntry: DewormingEntry? = null) =
     DewormingViewModel(
       savedStateHandle = SavedStateHandle(mapOf("petId" to "pet-1")),
       context = ApplicationProvider.getApplicationContext(),
       petRepository = FormPetRepository(),
-      dewormingRepository = FormDewormingRepository(),
+      dewormingRepository = FormDewormingRepository(existingEntry),
       autoTaskService = FormAutoTaskService(),
       clock = Clock.systemUTC(),
     )
@@ -235,14 +348,16 @@ class DewormingComposeTest {
     override suspend fun deletePet(id: String) = Unit
   }
 
-  private class FormDewormingRepository : DewormingEntryRepository {
+  private class FormDewormingRepository(private val existingEntry: DewormingEntry? = null) :
+    DewormingEntryRepository {
     private val entries = MutableStateFlow<List<DewormingEntry>>(emptyList())
 
     override fun getDewormingEntriesForPet(petId: String): Flow<List<DewormingEntry>> = entries
 
     override fun getLatestDewormingsForPet(petId: String): Flow<List<DewormingEntry>> = entries
 
-    override suspend fun getDewormingEntryById(id: String): DewormingEntry? = null
+    override suspend fun getDewormingEntryById(id: String): DewormingEntry? =
+      existingEntry?.takeIf { it.id == id }
 
     override fun getOverdueDewormings(): Flow<List<DewormingEntry>> = MutableStateFlow(emptyList())
 
