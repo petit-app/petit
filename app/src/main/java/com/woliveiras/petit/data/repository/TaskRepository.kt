@@ -1,6 +1,7 @@
 package com.woliveiras.petit.data.repository
 
 import com.woliveiras.petit.domain.model.Task
+import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -39,6 +40,9 @@ interface TaskRepository {
 
   /** Get completed tasks ordered by completion date. */
   fun getCompletedTasks(): Flow<List<Task>>
+
+  /** Get subject names already used for a kind, most recently used first. */
+  suspend fun getUsedSubjectNames(kind: TaskKind, petId: String?): List<String>
 
   /** Save a task (insert or update). */
   suspend fun saveTask(task: Task)

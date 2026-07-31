@@ -121,8 +121,12 @@ type dropdown plus a product field. The task form is the odd one out.
   second dose" over the catalog name.
 - Subject columns are additive and nullable so older backups keep importing and
   the migration cannot lose data.
-- Medication suggestions come from tasks and records already stored on the
-  device. No remote medicine catalog is introduced.
+- Medication suggestions come only from medicine names already typed on other
+  tasks stored on the device. No remote medicine catalog is introduced.
+- The subject fields join the conflict resolution fingerprint, so editing only
+  the subject on one device now counts as a real change during a merge.
+- Automatic tasks generated from health records keep no subject. Their titles
+  are already rebuilt from the record, so a subject line would repeat it.
 
 ## Open questions
 

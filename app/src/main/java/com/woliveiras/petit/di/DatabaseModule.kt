@@ -34,6 +34,7 @@ object DatabaseModule {
         PetitDatabase.MIGRATION_1_2,
         PetitDatabase.MIGRATION_2_3,
         PetitDatabase.MIGRATION_3_4,
+        PetitDatabase.MIGRATION_4_5,
       )
       .addCallback(
         object : RoomDatabase.Callback() {

@@ -149,6 +149,8 @@ fun Task.asConflictVersion(): ConflictVersion<Task> =
       petId,
       kind,
       referenceEntityId,
+      subjectCode,
+      subjectName,
       title,
       description,
       scheduledFor,

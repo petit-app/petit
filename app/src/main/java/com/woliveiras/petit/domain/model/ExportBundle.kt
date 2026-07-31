@@ -41,6 +41,9 @@ data class ExportBundle(
     private const val MAX_ENTRIES_PER_LIST = 10_000
     private const val SUPPORTED_SCHEMA_VERSION = 1
 
+    /** Subject codes are enum names, so anything else comes from a corrupt or crafted bundle. */
+    private val SUBJECT_CODE_PATTERN = Regex("[A-Z][A-Z0-9_]{0,63}")
+
     fun fromJson(json: JSONObject): ExportBundle {
       val metadata = ExportMetadata.fromJson(json.getJSONObject("metadata"))
 
@@ -179,6 +182,10 @@ data class ExportBundle(
           errors.add("Descrição de tarefa muito longa (id: ${entry.id})")
         if (entry.petId != null && entry.petId !in petIds)
           errors.add("Tarefa referencia pet inexistente (petId: ${entry.petId})")
+        if (entry.subjectCode != null && !entry.subjectCode.matches(SUBJECT_CODE_PATTERN))
+          errors.add("Código de assunto de tarefa inválido (id: ${entry.id})")
+        if (entry.subjectName != null && entry.subjectName.length > 100)
+          errors.add("Assunto de tarefa muito longo (id: ${entry.id})")
       }
 
       bundle.membershipChanges.forEach { change ->
@@ -431,6 +438,8 @@ fun Task.toExportJson(): JSONObject {
     put("petId", petId)
     put("kind", kind.name)
     put("referenceEntityId", referenceEntityId)
+    put("subjectCode", subjectCode)
+    put("subjectName", subjectName)
     put("title", title)
     put("description", description)
     put("scheduledFor", scheduledFor.format(dateTimeFormatter))
@@ -461,6 +470,8 @@ fun Task.Companion.fromExportJson(json: JSONObject): Task {
     petId = json.optStringOrNull("petId"),
     kind = kind,
     referenceEntityId = json.optStringOrNull("referenceEntityId"),
+    subjectCode = json.optStringOrNull("subjectCode"),
+    subjectName = json.optStringOrNull("subjectName"),
     title = json.getString("title"),
     description = json.optStringOrNull("description"),
     scheduledFor = LocalDateTime.parse(json.getString("scheduledFor"), dateTimeFormatter),

@@ -311,6 +311,9 @@ class AutoTaskServiceImplTest {
     override suspend fun deleteTasksByReferenceEntity(entityId: String) {
       deletedReferences += entityId
     }
+
+    override suspend fun getUsedSubjectNames(kind: TaskKind, petId: String?): List<String> =
+      emptyList()
   }
 
   private class RecordingTaskScheduler : TaskScheduler {

@@ -65,6 +65,7 @@ import com.woliveiras.petit.presentation.components.TimelineSection
 import com.woliveiras.petit.presentation.feature.tasks.getTaskKindIcon
 import com.woliveiras.petit.presentation.util.localizedName
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
+import com.woliveiras.petit.presentation.util.subjectLabel
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -368,7 +369,9 @@ private fun HomeTaskCard(task: Task, onClick: () -> Unit, onComplete: () -> Unit
       taskDate == today.plusDays(1) -> stringResource(R.string.task_date_tomorrow)
       else -> displayFormatter.shortDate(taskDate)
     }
-  val cardDescription = "${task.title}, $dateText"
+  val subjectText = task.subjectLabel()?.takeIf { it != task.title }
+  val cardDescription =
+    listOfNotNull(task.title, subjectText, dateText).joinToString(separator = ", ")
 
   Card(
     modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -411,6 +414,17 @@ private fun HomeTaskCard(task: Task, onClick: () -> Unit, onComplete: () -> Unit
         // Date info
 
         Spacer(modifier = Modifier.height(4.dp))
+
+        if (subjectText != null) {
+          Text(
+            text = subjectText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+          Spacer(modifier = Modifier.height(4.dp))
+        }
 
         Text(
           text = dateText,

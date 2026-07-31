@@ -28,6 +28,7 @@ class PetitDatabaseMigrationTest {
     context.deleteDatabase(TEST_DATABASE)
     context.deleteDatabase(TEST_DATABASE_2_3)
     context.deleteDatabase(TEST_DATABASE_3_4)
+    context.deleteDatabase(TEST_DATABASE_4_5)
   }
 
   @Test
@@ -187,6 +188,40 @@ class PetitDatabaseMigrationTest {
     }
   }
 
+  @Test
+  fun migration4To5AddsEmptySubjectColumnsAndKeepsExistingTasks() {
+    context.deleteDatabase(TEST_DATABASE_4_5)
+
+    openTaskSubjectDatabase(version = 4).use { helper ->
+      helper.writableDatabase.execSQL(
+        "INSERT INTO tasks(id, kind, title) VALUES (?, ?, ?)",
+        arrayOf<Any?>("task-v4", "MEDICATION", "Remédio"),
+      )
+    }
+
+    openTaskSubjectDatabase(version = 5).use { helper ->
+      val database = helper.writableDatabase
+      database
+        .query("SELECT title, subjectCode, subjectName FROM tasks WHERE id = ?", arrayOf("task-v4"))
+        .use { cursor ->
+          assertThat(cursor.moveToFirst()).isTrue()
+          assertThat(cursor.getString(0)).isEqualTo("Remédio")
+          assertThat(cursor.isNull(1)).isTrue()
+          assertThat(cursor.isNull(2)).isTrue()
+        }
+
+      database.execSQL(
+        "INSERT INTO tasks(id, kind, title, subjectCode, subjectName) VALUES (?, ?, ?, ?, ?)",
+        arrayOf<Any?>("task-v5", "VACCINATION", "Vacina", "RABIES", null),
+      )
+      database.query("SELECT subjectCode FROM tasks WHERE id = ?", arrayOf("task-v5")).use { cursor
+        ->
+        assertThat(cursor.moveToFirst()).isTrue()
+        assertThat(cursor.getString(0)).isEqualTo("RABIES")
+      }
+    }
+  }
+
   private fun openDatabase(version: Int): SupportSQLiteOpenHelper =
     FrameworkSQLiteOpenHelperFactory()
       .create(
@@ -276,10 +311,42 @@ class PetitDatabaseMigrationTest {
           .build()
       )
 
+  private fun openTaskSubjectDatabase(version: Int): SupportSQLiteOpenHelper =
+    FrameworkSQLiteOpenHelperFactory()
+      .create(
+        SupportSQLiteOpenHelper.Configuration.builder(context)
+          .name(TEST_DATABASE_4_5)
+          .callback(
+            object : SupportSQLiteOpenHelper.Callback(version) {
+              override fun onCreate(db: SupportSQLiteDatabase) {
+                require(version == 4)
+                db.execSQL(
+                  """
+                  CREATE TABLE tasks (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    kind TEXT NOT NULL,
+                    title TEXT NOT NULL
+                  )
+                  """
+                    .trimIndent()
+                )
+              }
+
+              override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                assertThat(oldVersion).isEqualTo(4)
+                assertThat(newVersion).isEqualTo(5)
+                PetitDatabase.MIGRATION_4_5.migrate(db)
+              }
+            }
+          )
+          .build()
+      )
+
   companion object {
     private const val TEST_DATABASE = "petit-migration-1-2-test"
     private const val TEST_DATABASE_2_3 = "petit-migration-2-3-test"
     private const val TEST_DATABASE_3_4 = "petit-migration-3-4-test"
+    private const val TEST_DATABASE_4_5 = "petit-migration-4-5-test"
 
     private val VERSION_1_FAMILY_GROUP_MEMBERS_SCHEMA =
       """

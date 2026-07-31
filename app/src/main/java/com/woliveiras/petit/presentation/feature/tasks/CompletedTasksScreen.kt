@@ -43,6 +43,7 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
+import com.woliveiras.petit.presentation.util.subjectLabel
 
 /** Screen showing completed tasks that can be reactivated or deleted. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,7 +122,9 @@ private fun CompletedTaskCard(
 ) {
   val displayFormatter = rememberAppDisplayFormatter()
   val formattedDate = displayFormatter.shortDate(task.scheduledFor.toLocalDate())
-  val cardDescription = "${task.title}, $formattedDate"
+  val subjectText = task.subjectLabel()?.takeIf { it != task.title }
+  val cardDescription =
+    listOfNotNull(task.title, subjectText, formattedDate).joinToString(separator = ", ")
 
   Card(
     colors =
@@ -154,6 +157,15 @@ private fun CompletedTaskCard(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
+          if (subjectText != null) {
+            Text(
+              text = subjectText,
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+            )
+          }
           Text(
             text = formattedDate,
             style = MaterialTheme.typography.bodySmall,

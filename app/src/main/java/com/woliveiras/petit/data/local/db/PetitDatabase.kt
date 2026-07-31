@@ -47,7 +47,7 @@ import com.woliveiras.petit.data.local.entity.WeightEntryEntity
       LanSeenNonceEntity::class,
       RestorableRevisionEntity::class,
     ],
-  version = 4,
+  version = 5,
   exportSchema = true,
 )
 abstract class PetitDatabase : RoomDatabase() {
@@ -199,6 +199,14 @@ abstract class PetitDatabase : RoomDatabase() {
             """
               .trimIndent()
           )
+        }
+      }
+
+    val MIGRATION_4_5 =
+      object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+          db.execSQL("ALTER TABLE tasks ADD COLUMN subjectCode TEXT")
+          db.execSQL("ALTER TABLE tasks ADD COLUMN subjectName TEXT")
         }
       }
 

@@ -7,11 +7,16 @@ import androidx.lifecycle.viewModelScope
 import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.PetRepository
 import com.woliveiras.petit.data.repository.TaskRepository
+import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
+import com.woliveiras.petit.domain.model.TaskSubjectControl
+import com.woliveiras.petit.domain.model.TaskSubjectOptions
+import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.presentation.util.rethrowIfCancellation
+import com.woliveiras.petit.presentation.util.taskSubjectLabel
 import com.woliveiras.petit.presentation.util.uiFailureText
 import com.woliveiras.petit.worker.TaskScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,13 +42,32 @@ data class TaskFormUiState(
   val selectedPetId: String? = null,
   val selectedPetName: String? = null,
   val kind: TaskKind = TaskKind.CUSTOM,
+  val subjectCode: String? = null,
+  val subjectName: String = "",
+  val subjectSuggestions: List<String> = emptyList(),
   val scheduledDate: LocalDateTime = LocalDateTime.now().plusHours(1),
   val availablePets: List<Pet> = emptyList(),
   val isSaving: Boolean = false,
   val titleError: String? = null,
   val dateError: String? = null,
   val descriptionError: String? = null,
-)
+  val subjectError: String? = null,
+) {
+  val subjectControl: TaskSubjectControl
+    get() = TaskSubjectOptions.controlFor(kind)
+
+  val vaccineOptions: List<VaccineType>
+    get() =
+      TaskSubjectOptions.vaccineOptions(
+        availablePets.firstOrNull { it.id == selectedPetId }?.petType
+      )
+
+  val antiparasiticOptions: List<DewormingType>
+    get() = TaskSubjectOptions.antiparasiticOptions()
+
+  val requiresSubjectFreeText: Boolean
+    get() = TaskSubjectOptions.requiresFreeText(subjectControl, subjectCode)
+}
 
 /** Events emitted by TaskFormViewModel. */
 sealed class TaskFormEvent {
@@ -73,6 +97,10 @@ constructor(
   private val _events = MutableSharedFlow<TaskFormEvent>()
   val events: SharedFlow<TaskFormEvent> = _events.asSharedFlow()
 
+  /** Once the caregiver writes a title, the subject never overwrites it. */
+  private var titleEditedByCaregiver = false
+  private var usedSubjectNames: List<String> = emptyList()
+
   init {
     loadPets()
     if (taskId != null) {
@@ -93,6 +121,7 @@ constructor(
       val task = taskRepository.getTaskById(taskId)
       if (task != null) {
         val petName = task.petId?.let { petId -> petRepository.getPetById(petId)?.name }
+        titleEditedByCaregiver = true
         _uiState.update {
           it.copy(
             isEditMode = true,
@@ -102,14 +131,18 @@ constructor(
             selectedPetId = task.petId,
             selectedPetName = petName,
             kind = task.kind,
+            subjectCode = task.subjectCode,
+            subjectName = task.subjectName ?: "",
             scheduledDate = task.scheduledFor,
           )
         }
+        loadSubjectSuggestions()
       }
     }
   }
 
   fun updateTitle(value: String) {
+    titleEditedByCaregiver = value.isNotBlank()
     _uiState.update { it.copy(title = value, titleError = null) }
   }
 
@@ -118,11 +151,52 @@ constructor(
   }
 
   fun updateSelectedPet(petId: String?, petName: String?) {
-    _uiState.update { it.copy(selectedPetId = petId, selectedPetName = petName) }
+    _uiState.update { state ->
+      val updated = state.copy(selectedPetId = petId, selectedPetName = petName)
+      val keepsSubject =
+        updated.subjectControl != TaskSubjectControl.VACCINE ||
+          updated.subjectCode == null ||
+          updated.subjectCode in updated.vaccineOptions.map(VaccineType::name)
+      (if (keepsSubject) updated else updated.clearSubject()).withPrefilledTitle()
+    }
+    loadSubjectSuggestions()
   }
 
   fun updateKind(kind: TaskKind) {
-    _uiState.update { it.copy(kind = kind) }
+    _uiState.update { state ->
+      val sameControl = TaskSubjectOptions.controlFor(kind) == state.subjectControl
+      state
+        .copy(kind = kind)
+        .let { if (sameControl) it else it.clearSubject() }
+        .withPrefilledTitle()
+    }
+    loadSubjectSuggestions()
+  }
+
+  fun updateSubjectCode(code: String?) {
+    _uiState.update { state ->
+      val keepsName =
+        state.subjectControl != TaskSubjectControl.VACCINE || code == VaccineType.OTHER.name
+      state
+        .copy(
+          subjectCode = code,
+          subjectName = if (keepsName) state.subjectName else "",
+          subjectError = null,
+        )
+        .withPrefilledTitle()
+    }
+  }
+
+  fun updateSubjectName(value: String) {
+    _uiState.update { state ->
+      state
+        .copy(
+          subjectName = value,
+          subjectError = null,
+          subjectSuggestions = TaskSubjectOptions.matchingSuggestions(value, usedSubjectNames),
+        )
+        .withPrefilledTitle()
+    }
   }
 
   fun updateScheduledDate(date: LocalDateTime) {
@@ -132,6 +206,21 @@ constructor(
   fun saveTask() {
     val state = _uiState.value
 
+    if (state.subjectControl != TaskSubjectControl.NONE) {
+      if (state.requiresSubjectFreeText && state.subjectName.isBlank()) {
+        _uiState.update {
+          it.copy(subjectError = context.getString(R.string.task_validation_subject_required))
+        }
+        return
+      }
+      if (state.subjectName.trim().length > MAX_SUBJECT_LENGTH) {
+        _uiState.update {
+          it.copy(subjectError = context.getString(R.string.task_validation_subject_max_length))
+        }
+        return
+      }
+    }
+
     if (state.title.isBlank()) {
       _uiState.update {
         it.copy(titleError = context.getString(R.string.task_validation_title_required))
@@ -139,7 +228,7 @@ constructor(
       return
     }
 
-    if (state.title.length > 100) {
+    if (state.title.length > MAX_TITLE_LENGTH) {
       _uiState.update {
         it.copy(titleError = context.getString(R.string.task_validation_title_max_length))
       }
@@ -178,6 +267,13 @@ constructor(
             petId = state.selectedPetId,
             kind = state.kind,
             referenceEntityId = null,
+            subjectCode =
+              state.subjectCode.takeIf { state.subjectControl != TaskSubjectControl.NONE },
+            subjectName =
+              state.subjectName
+                .trim()
+                .ifBlank { null }
+                ?.takeIf { state.subjectControl != TaskSubjectControl.NONE },
             title = state.title.trim(),
             description = state.description.trim().ifBlank { null },
             scheduledFor = state.scheduledDate,
@@ -215,5 +311,51 @@ constructor(
         _events.emit(TaskFormEvent.Error(e.uiFailureText(context, R.string.task_error_delete)))
       }
     }
+  }
+
+  private fun loadSubjectSuggestions() {
+    val state = _uiState.value
+    if (state.subjectControl != TaskSubjectControl.MEDICATION) {
+      usedSubjectNames = emptyList()
+      _uiState.update { it.copy(subjectSuggestions = emptyList()) }
+      return
+    }
+    viewModelScope.launch {
+      usedSubjectNames =
+        try {
+          taskRepository.getUsedSubjectNames(state.kind, state.selectedPetId)
+        } catch (failure: Exception) {
+          failure.rethrowIfCancellation()
+          emptyList()
+        }
+      _uiState.update {
+        it.copy(
+          subjectSuggestions =
+            TaskSubjectOptions.matchingSuggestions(it.subjectName, usedSubjectNames)
+        )
+      }
+    }
+  }
+
+  private fun TaskFormUiState.clearSubject(): TaskFormUiState =
+    copy(
+      subjectCode = null,
+      subjectName = "",
+      subjectError = null,
+      subjectSuggestions = emptyList(),
+    )
+
+  private fun TaskFormUiState.withPrefilledTitle(): TaskFormUiState =
+    if (titleEditedByCaregiver) this
+    else
+      copy(
+        title =
+          taskSubjectLabel(context, kind, subjectCode, subjectName).orEmpty().take(MAX_TITLE_LENGTH)
+      )
+
+  private companion object {
+    /** Both caps match the column limits validated on import. */
+    const val MAX_TITLE_LENGTH = 100
+    const val MAX_SUBJECT_LENGTH = 100
   }
 }

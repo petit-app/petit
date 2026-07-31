@@ -20,6 +20,8 @@ fun TaskEntity.toDomain(): Task =
         TaskKind.CUSTOM
       },
     referenceEntityId = referenceEntityId,
+    subjectCode = subjectCode,
+    subjectName = subjectName,
     title = title,
     description = description,
     scheduledFor =
@@ -47,6 +49,8 @@ fun Task.toEntity(): TaskEntity =
     petId = petId,
     kind = kind.name,
     referenceEntityId = referenceEntityId,
+    subjectCode = subjectCode,
+    subjectName = subjectName,
     title = title,
     description = description,
     scheduledFor = scheduledFor.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),

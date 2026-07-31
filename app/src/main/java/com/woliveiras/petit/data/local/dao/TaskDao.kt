@@ -68,6 +68,12 @@ interface TaskDao {
   )
   fun getNextTasks(from: Long, limit: Int = 5): Flow<List<TaskEntity>>
 
+  /** Get subject names already used for a kind, most recently used first. */
+  @Query(
+    "SELECT subjectName FROM tasks WHERE kind = :kind AND subjectName IS NOT NULL AND TRIM(subjectName) != '' AND (:petId IS NULL OR petId = :petId) AND deletedAt IS NULL GROUP BY subjectName ORDER BY MAX(updatedAt) DESC LIMIT :limit"
+  )
+  suspend fun getUsedSubjectNames(kind: String, petId: String?, limit: Int = 20): List<String>
+
   /** Insert a new task. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertTask(task: TaskEntity)
 

@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -48,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -55,6 +59,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.TaskKind
+import com.woliveiras.petit.domain.model.TaskSubjectControl
 import com.woliveiras.petit.presentation.components.PetitDatePickerDialog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
@@ -282,6 +287,13 @@ fun TaskFormScreen(
         }
       }
 
+      // Subject
+      TaskSubjectFields(
+        uiState = uiState,
+        onSubjectCodeChange = viewModel::updateSubjectCode,
+        onSubjectNameChange = viewModel::updateSubjectName,
+      )
+
       // Date and Time
       val dateLabel = stringResource(R.string.task_field_date)
       val timeLabel = stringResource(R.string.task_field_time)
@@ -350,6 +362,154 @@ fun TaskFormScreen(
           Spacer(modifier = Modifier.width(8.dp))
         }
         Text(stringResource(R.string.action_save))
+      }
+    }
+  }
+}
+
+/** Which item the task is about: a vaccine, an antiparasitic treatment, or a medicine. */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun TaskSubjectFields(
+  uiState: TaskFormUiState,
+  onSubjectCodeChange: (String?) -> Unit,
+  onSubjectNameChange: (String) -> Unit,
+) {
+  var subjectDropdownExpanded by remember { mutableStateOf(false) }
+  val unsetLabel = stringResource(R.string.task_field_subject_unset)
+
+  LaunchedEffect(uiState.subjectControl) { subjectDropdownExpanded = false }
+
+  when (uiState.subjectControl) {
+    TaskSubjectControl.NONE -> Unit
+    TaskSubjectControl.VACCINE -> {
+      val selected = uiState.vaccineOptions.firstOrNull { it.name == uiState.subjectCode }
+      ExposedDropdownMenuBox(
+        expanded = subjectDropdownExpanded,
+        onExpandedChange = { subjectDropdownExpanded = it },
+      ) {
+        OutlinedTextField(
+          value = selected?.localizedName() ?: unsetLabel,
+          onValueChange = {},
+          readOnly = true,
+          label = { Text(stringResource(R.string.task_field_subject_vaccine)) },
+          trailingIcon = {
+            ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectDropdownExpanded)
+          },
+          modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(
+          expanded = subjectDropdownExpanded,
+          onDismissRequest = { subjectDropdownExpanded = false },
+        ) {
+          DropdownMenuItem(
+            text = { Text(unsetLabel) },
+            onClick = {
+              onSubjectCodeChange(null)
+              subjectDropdownExpanded = false
+            },
+          )
+          uiState.vaccineOptions.forEach { vaccine ->
+            DropdownMenuItem(
+              text = { Text(vaccine.localizedName()) },
+              onClick = {
+                onSubjectCodeChange(vaccine.name)
+                subjectDropdownExpanded = false
+              },
+            )
+          }
+        }
+      }
+      if (uiState.requiresSubjectFreeText) {
+        OutlinedTextField(
+          value = uiState.subjectName,
+          onValueChange = onSubjectNameChange,
+          label = { Text(stringResource(R.string.vaccination_field_custom_name)) },
+          placeholder = {
+            Text(stringResource(R.string.vaccination_field_custom_name_placeholder))
+          },
+          modifier = Modifier.fillMaxWidth(),
+          singleLine = true,
+          isError = uiState.subjectError != null,
+          supportingText = uiState.subjectError?.let { { Text(it) } },
+        )
+      }
+    }
+    TaskSubjectControl.ANTIPARASITIC -> {
+      val selected = uiState.antiparasiticOptions.firstOrNull { it.name == uiState.subjectCode }
+      ExposedDropdownMenuBox(
+        expanded = subjectDropdownExpanded,
+        onExpandedChange = { subjectDropdownExpanded = it },
+      ) {
+        OutlinedTextField(
+          value = selected?.localizedName() ?: unsetLabel,
+          onValueChange = {},
+          readOnly = true,
+          label = { Text(stringResource(R.string.task_field_subject_antiparasitic)) },
+          trailingIcon = {
+            ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectDropdownExpanded)
+          },
+          modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(
+          expanded = subjectDropdownExpanded,
+          onDismissRequest = { subjectDropdownExpanded = false },
+        ) {
+          DropdownMenuItem(
+            text = { Text(unsetLabel) },
+            onClick = {
+              onSubjectCodeChange(null)
+              subjectDropdownExpanded = false
+            },
+          )
+          uiState.antiparasiticOptions.forEach { type ->
+            DropdownMenuItem(
+              text = { Text(type.localizedName()) },
+              onClick = {
+                onSubjectCodeChange(type.name)
+                subjectDropdownExpanded = false
+              },
+            )
+          }
+        }
+      }
+      OutlinedTextField(
+        value = uiState.subjectName,
+        onValueChange = onSubjectNameChange,
+        label = { Text(stringResource(R.string.task_field_subject_product)) },
+        placeholder = { Text(stringResource(R.string.task_field_subject_product_placeholder)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        isError = uiState.subjectError != null,
+        supportingText = uiState.subjectError?.let { { Text(it) } },
+      )
+    }
+    TaskSubjectControl.MEDICATION -> {
+      OutlinedTextField(
+        value = uiState.subjectName,
+        onValueChange = onSubjectNameChange,
+        label = { Text(stringResource(R.string.task_field_subject_medication)) },
+        placeholder = { Text(stringResource(R.string.task_field_subject_medication_placeholder)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        isError = uiState.subjectError != null,
+        supportingText = uiState.subjectError?.let { { Text(it) } },
+      )
+      if (uiState.subjectSuggestions.isNotEmpty()) {
+        Text(
+          text = stringResource(R.string.task_field_subject_suggestions),
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.semantics { heading() },
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+          uiState.subjectSuggestions.forEach { suggestion ->
+            SuggestionChip(
+              onClick = { onSubjectNameChange(suggestion) },
+              label = { Text(suggestion) },
+            )
+          }
+        }
       }
     }
   }

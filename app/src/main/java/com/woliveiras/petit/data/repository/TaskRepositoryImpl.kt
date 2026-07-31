@@ -4,6 +4,7 @@ import com.woliveiras.petit.data.local.dao.TaskDao
 import com.woliveiras.petit.data.mapper.toDomain
 import com.woliveiras.petit.data.mapper.toEntity
 import com.woliveiras.petit.domain.model.Task
+import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
 import java.time.LocalDate
 import java.time.LocalTime
@@ -75,6 +76,10 @@ class TaskRepositoryImpl @Inject constructor(private val taskDao: TaskDao) : Tas
 
   override fun getCompletedTasks(): Flow<List<Task>> {
     return taskDao.getCompletedTasks().map { entities -> entities.toDomain() }
+  }
+
+  override suspend fun getUsedSubjectNames(kind: TaskKind, petId: String?): List<String> {
+    return taskDao.getUsedSubjectNames(kind.name, petId)
   }
 
   override suspend fun saveTask(task: Task) {

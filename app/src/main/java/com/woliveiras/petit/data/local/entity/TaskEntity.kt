@@ -25,6 +25,8 @@ data class TaskEntity(
   val petId: String? = null,
   val kind: String,
   val referenceEntityId: String? = null,
+  val subjectCode: String? = null,
+  val subjectName: String? = null,
   val title: String,
   val description: String? = null,
   val scheduledFor: Long,

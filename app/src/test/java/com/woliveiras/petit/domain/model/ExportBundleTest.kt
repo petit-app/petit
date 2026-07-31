@@ -140,6 +140,31 @@ class ExportBundleTest {
   }
 
   @Test
+  fun taskSubjectRoundTripsAndOlderBundlesRestoreWithoutOne() {
+    val task =
+      Task(
+        id = "task-subject",
+        petId = "pet-1",
+        kind = TaskKind.MEDICATION,
+        subjectName = "Apoquel",
+        title = "Apoquel",
+        scheduledFor = LocalDateTime.of(2026, 7, 20, 9, 0),
+        createdAt = 1L,
+        updatedAt = 2L,
+      )
+
+    val json = emptyBundle(tasks = listOf(task)).toJson()
+    assertThat(ExportBundle.fromJson(json).tasks).containsExactly(task)
+
+    val legacyJson = emptyBundle(tasks = listOf(task)).toJson()
+    legacyJson.getJSONArray("tasks").getJSONObject(0).remove("subjectName")
+    legacyJson.getJSONArray("tasks").getJSONObject(0).remove("subjectCode")
+    val restored = ExportBundle.fromJson(legacyJson).tasks.single()
+    assertThat(restored.subjectName).isNull()
+    assertThat(restored.subjectCode).isNull()
+  }
+
+  @Test
   fun membershipChangesRoundTripAndContributeToTheTransferredEntityCount() {
     val change =
       MembershipChange(
@@ -245,6 +270,27 @@ class ExportBundleTest {
     assertThat(errors).hasSize(2)
     assertThat(errors[0]).contains("99")
     assertThat(errors[1]).contains("missing-pet")
+  }
+
+  @Test
+  fun aCraftedTaskSubjectIsRejectedByValidation() {
+    val craftedTask =
+      Task(
+        id = "task-1",
+        kind = TaskKind.MEDICATION,
+        subjectCode = "'; DROP TABLE tasks; --",
+        subjectName = "a".repeat(101),
+        title = "Crafted",
+        scheduledFor = LocalDateTime.of(2026, 8, 1, 9, 0),
+        createdAt = 1L,
+        updatedAt = 1L,
+      )
+
+    val errors = ExportBundle.validate(emptyBundle(tasks = listOf(craftedTask)))
+
+    assertThat(errors).hasSize(2)
+    assertThat(errors[0]).contains("task-1")
+    assertThat(errors[1]).contains("task-1")
   }
 
   private fun emptyBundle(tasks: List<Task> = emptyList()) =

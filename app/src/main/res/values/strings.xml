@@ -630,6 +630,14 @@
     <string name="task_field_kind">Type</string>
     <string name="task_field_date">Date *</string>
     <string name="task_field_time">Time</string>
+    <string name="task_field_subject_vaccine">Vaccine</string>
+    <string name="task_field_subject_antiparasitic">Treatment type</string>
+    <string name="task_field_subject_product">Product</string>
+    <string name="task_field_subject_product_placeholder">Optional, e.g.: Frontline</string>
+    <string name="task_field_subject_medication">Medicine</string>
+    <string name="task_field_subject_medication_placeholder">E.g.: Apoquel</string>
+    <string name="task_field_subject_unset">Not specified</string>
+    <string name="task_field_subject_suggestions">Suggestions from what you already used</string>
     <string name="action_add_task">Add task</string>
     <string name="action_complete_task">Complete task</string>
     <string name="action_reactivate_task">Reactivate task</string>
@@ -662,6 +670,8 @@
     <string name="task_error_reactivate">Error reactivating task</string>
     <string name="task_validation_title_required">Title is required</string>
     <string name="task_validation_date_future">Date must be in the future</string>
+    <string name="task_validation_subject_required">Tell us which vaccine it is</string>
+    <string name="task_validation_subject_max_length">The subject must be at most 100 characters</string>
 
     <!-- Home next event labels -->
     <string name="home_next_event_vaccine">Vaccine %1$s</string>

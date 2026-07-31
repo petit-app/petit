@@ -12,6 +12,7 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.workDataOf
 import com.google.common.truth.Truth.assertThat
+import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.TaskRepository
 import com.woliveiras.petit.data.repository.UserPreferences
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
@@ -201,6 +202,73 @@ class TaskNotificationWorkerLocalizationTest {
     assertThat(manager.activeNotifications).isEmpty()
   }
 
+  @Test
+  fun theSubjectLeadsTheNotificationTextWhenItAddsSomethingToTheTitle() = runTest {
+    val storedTask =
+      medicationTask(subjectName = "Apoquel", description = "Uma vez ao dia após a refeição")
+    val worker =
+      buildWorker(
+        FakeTaskRepository(storedTask),
+        TaskDisplayTextResolver { _, _ ->
+          TaskDisplayText("Remédio da Mimi", storedTask.description)
+        },
+      )
+
+    val result = worker.doWork()
+
+    assertThat(result).isEqualTo(ListenableWorker.Result.success())
+    assertThat(notificationText()).isEqualTo("Apoquel - Uma vez ao dia após a refeição")
+  }
+
+  @Test
+  fun aSubjectThatRepeatsTheTitleIsNotShownTwice() = runTest {
+    val storedTask = medicationTask(subjectName = "Apoquel", description = "Uma vez ao dia")
+    val worker =
+      buildWorker(
+        FakeTaskRepository(storedTask),
+        TaskDisplayTextResolver { _, _ -> TaskDisplayText("Apoquel", storedTask.description) },
+      )
+
+    worker.doWork()
+
+    assertThat(notificationText()).isEqualTo("Uma vez ao dia")
+  }
+
+  @Test
+  fun withoutASubjectOrDescriptionTheAppNameIsUsed() = runTest {
+    val storedTask = medicationTask(subjectName = null, description = null)
+    val worker =
+      buildWorker(
+        FakeTaskRepository(storedTask),
+        TaskDisplayTextResolver { _, _ -> TaskDisplayText("Remédio da Mimi", null) },
+      )
+
+    worker.doWork()
+
+    assertThat(notificationText()).isEqualTo(context.getString(R.string.app_name))
+  }
+
+  private fun medicationTask(subjectName: String?, description: String?) =
+    Task(
+      id = "auto_vacc_vacc-1",
+      petId = "pet-1",
+      kind = TaskKind.MEDICATION,
+      subjectName = subjectName,
+      title = "Remédio da Mimi",
+      description = description,
+      scheduledFor = LocalDateTime.of(2026, 7, 26, 9, 0),
+      createdAt = 1L,
+      updatedAt = 1L,
+    )
+
+  private fun notificationText(): String =
+    manager.activeNotifications
+      .single()
+      .notification
+      .extras
+      .getCharSequence("android.text")
+      .toString()
+
   private fun buildWorker(
     repository: TaskRepository,
     resolver: TaskDisplayTextResolver,
@@ -263,5 +331,8 @@ class TaskNotificationWorkerLocalizationTest {
     override suspend fun deleteTask(id: String) = Unit
 
     override suspend fun deleteTasksByReferenceEntity(entityId: String) = Unit
+
+    override suspend fun getUsedSubjectNames(kind: TaskKind, petId: String?): List<String> =
+      emptyList()
   }
 }

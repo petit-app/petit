@@ -22,6 +22,8 @@ import com.woliveiras.petit.domain.model.TaskStatus
 import com.woliveiras.petit.initialLanguageOrSystem
 import com.woliveiras.petit.presentation.util.TaskDisplayText
 import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
+import com.woliveiras.petit.presentation.util.forLanguage
+import com.woliveiras.petit.presentation.util.taskSubjectLabel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
@@ -65,7 +67,9 @@ constructor(
           )
           TaskDisplayText(task.title, task.description)
         }
-      showNotification(task.id, displayText.title, displayText.description, task.kind)
+      val subject =
+        taskSubjectLabel(context.forLanguage(language), task)?.takeIf { it != displayText.title }
+      showNotification(task.id, displayText.title, displayText.description, subject, task.kind)
 
       Result.success()
     } catch (cancellation: CancellationException) {
@@ -80,6 +84,7 @@ constructor(
     taskId: String,
     title: String,
     description: String?,
+    subject: String?,
     kind: TaskKind,
   ) {
     if (
@@ -111,11 +116,16 @@ constructor(
         TaskKind.CUSTOM -> "🔔"
       }
 
+    val contentText =
+      listOfNotNull(subject, description).joinToString(separator = " - ").ifBlank {
+        context.getString(R.string.app_name)
+      }
+
     val notification =
       NotificationCompat.Builder(context, PetitApplication.TASKS_CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_notification)
         .setContentTitle("$emoji $title")
-        .setContentText(description ?: context.getString(R.string.app_name))
+        .setContentText(contentText)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setAutoCancel(true)
         .setContentIntent(pendingIntent)

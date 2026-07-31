@@ -8,6 +8,8 @@ data class Task(
   val petId: String? = null,
   val kind: TaskKind,
   val referenceEntityId: String? = null,
+  val subjectCode: String? = null,
+  val subjectName: String? = null,
   val title: String,
   val description: String? = null,
   val scheduledFor: LocalDateTime,

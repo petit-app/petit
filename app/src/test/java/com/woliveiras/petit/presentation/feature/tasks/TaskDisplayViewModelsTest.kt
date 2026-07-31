@@ -279,6 +279,9 @@ class TaskDisplayViewModelsTest {
     override suspend fun deleteTask(id: String) = Unit
 
     override suspend fun deleteTasksByReferenceEntity(entityId: String) = Unit
+
+    override suspend fun getUsedSubjectNames(kind: TaskKind, petId: String?): List<String> =
+      emptyList()
   }
 
   private class FakeUserPreferencesRepository(language: AppLanguage = AppLanguage.ENGLISH) :

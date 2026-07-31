@@ -48,33 +48,37 @@ fun PetType.localizedName(): String =
     PetType.OTHER -> stringResource(R.string.pet_type_other)
   }
 
-@Composable
-fun VaccineType.localizedName(): String =
+/** Label resource for a vaccine, usable outside composition (workers, view models). */
+fun VaccineType.labelResId(): Int =
   when (this) {
-    VaccineType.V3 -> stringResource(R.string.vaccine_v3)
-    VaccineType.V4 -> stringResource(R.string.vaccine_v4)
-    VaccineType.V5 -> stringResource(R.string.vaccine_v5)
-    VaccineType.RABIES -> stringResource(R.string.vaccine_rabies)
-    VaccineType.FELV -> stringResource(R.string.vaccine_felv)
-    VaccineType.FIV -> stringResource(R.string.vaccine_fiv)
-    VaccineType.DHPP -> stringResource(R.string.vaccine_dhpp)
-    VaccineType.BORDETELLA -> stringResource(R.string.vaccine_bordetella)
-    VaccineType.LEPTOSPIROSIS -> stringResource(R.string.vaccine_leptospirosis)
-    VaccineType.LEISHMANIA -> stringResource(R.string.vaccine_leishmania)
-    VaccineType.GRIPE_CANINA -> stringResource(R.string.vaccine_gripe_canina)
-    VaccineType.RHDV -> stringResource(R.string.vaccine_rhdv)
-    VaccineType.MYXOMATOSIS -> stringResource(R.string.vaccine_myxomatosis)
-    VaccineType.POLYOMAVIRUS -> stringResource(R.string.vaccine_polyomavirus)
-    VaccineType.OTHER -> stringResource(R.string.vaccine_other)
+    VaccineType.V3 -> R.string.vaccine_v3
+    VaccineType.V4 -> R.string.vaccine_v4
+    VaccineType.V5 -> R.string.vaccine_v5
+    VaccineType.RABIES -> R.string.vaccine_rabies
+    VaccineType.FELV -> R.string.vaccine_felv
+    VaccineType.FIV -> R.string.vaccine_fiv
+    VaccineType.DHPP -> R.string.vaccine_dhpp
+    VaccineType.BORDETELLA -> R.string.vaccine_bordetella
+    VaccineType.LEPTOSPIROSIS -> R.string.vaccine_leptospirosis
+    VaccineType.LEISHMANIA -> R.string.vaccine_leishmania
+    VaccineType.GRIPE_CANINA -> R.string.vaccine_gripe_canina
+    VaccineType.RHDV -> R.string.vaccine_rhdv
+    VaccineType.MYXOMATOSIS -> R.string.vaccine_myxomatosis
+    VaccineType.POLYOMAVIRUS -> R.string.vaccine_polyomavirus
+    VaccineType.OTHER -> R.string.vaccine_other
   }
 
-@Composable
-fun DewormingType.localizedName(): String =
+/** Label resource for an antiparasitic treatment type, usable outside composition. */
+fun DewormingType.labelResId(): Int =
   when (this) {
-    DewormingType.INTERNAL -> stringResource(R.string.deworming_internal)
-    DewormingType.EXTERNAL -> stringResource(R.string.deworming_external)
-    DewormingType.BOTH -> stringResource(R.string.deworming_both)
+    DewormingType.INTERNAL -> R.string.deworming_internal
+    DewormingType.EXTERNAL -> R.string.deworming_external
+    DewormingType.BOTH -> R.string.deworming_both
   }
+
+@Composable fun VaccineType.localizedName(): String = stringResource(labelResId())
+
+@Composable fun DewormingType.localizedName(): String = stringResource(labelResId())
 
 @Composable
 fun TaskKind.localizedName(): String =

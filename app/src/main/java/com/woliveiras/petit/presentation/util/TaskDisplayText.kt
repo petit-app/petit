@@ -27,6 +27,26 @@ import javax.inject.Singleton
 /** Localized text to use only at a presentation boundary; the stored [Task] is never changed. */
 data class TaskDisplayText(val title: String, val description: String?)
 
+/** Resolves strings in the language the caregiver chose, not the one the process started with. */
+fun Context.forLanguage(language: AppLanguage?): Context {
+  val locale =
+    when (language) {
+      AppLanguage.ENGLISH -> Locale.ENGLISH
+      AppLanguage.PORTUGUESE_BR -> Locale.forLanguageTag(AppLanguage.PORTUGUESE_BR.code)
+      AppLanguage.SYSTEM ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          getSystemService(LocaleManager::class.java)?.systemLocales?.get(0)
+            ?: Resources.getSystem().configuration.locales[0]
+        } else {
+          return this
+        }
+      null -> return this
+    }
+  val configuration = Configuration(resources.configuration)
+  configuration.setLocales(LocaleList(locale))
+  return createConfigurationContext(configuration)
+}
+
 /**
  * Rebuilds text for structurally valid automatic tasks in the active locale.
  *
@@ -139,24 +159,7 @@ constructor(
     )
   }
 
-  private fun displayContext(language: AppLanguage?): Context {
-    val locale =
-      when (language) {
-        AppLanguage.ENGLISH -> Locale.ENGLISH
-        AppLanguage.PORTUGUESE_BR -> Locale.forLanguageTag(AppLanguage.PORTUGUESE_BR.code)
-        AppLanguage.SYSTEM ->
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.getSystemService(LocaleManager::class.java)?.systemLocales?.get(0)
-              ?: Resources.getSystem().configuration.locales[0]
-          } else {
-            return context
-          }
-        null -> return context
-      }
-    val configuration = Configuration(context.resources.configuration)
-    configuration.setLocales(LocaleList(locale))
-    return context.createConfigurationContext(configuration)
-  }
+  private fun displayContext(language: AppLanguage?): Context = context.forLanguage(language)
 
   private fun Task.isAutomaticVaccination(): Boolean =
     kind == TaskKind.VACCINATION &&
@@ -178,29 +181,7 @@ constructor(
 
   private fun Task.persistedText() = TaskDisplayText(title, description)
 
-  private fun VaccineType.resourceId(): Int =
-    when (this) {
-      VaccineType.RABIES -> R.string.vaccine_rabies
-      VaccineType.OTHER -> R.string.vaccine_other
-      VaccineType.V3 -> R.string.vaccine_v3
-      VaccineType.V4 -> R.string.vaccine_v4
-      VaccineType.V5 -> R.string.vaccine_v5
-      VaccineType.FELV -> R.string.vaccine_felv
-      VaccineType.FIV -> R.string.vaccine_fiv
-      VaccineType.DHPP -> R.string.vaccine_dhpp
-      VaccineType.BORDETELLA -> R.string.vaccine_bordetella
-      VaccineType.LEPTOSPIROSIS -> R.string.vaccine_leptospirosis
-      VaccineType.LEISHMANIA -> R.string.vaccine_leishmania
-      VaccineType.GRIPE_CANINA -> R.string.vaccine_gripe_canina
-      VaccineType.RHDV -> R.string.vaccine_rhdv
-      VaccineType.MYXOMATOSIS -> R.string.vaccine_myxomatosis
-      VaccineType.POLYOMAVIRUS -> R.string.vaccine_polyomavirus
-    }
+  private fun VaccineType.resourceId(): Int = labelResId()
 
-  private fun DewormingType.resourceId(): Int =
-    when (this) {
-      DewormingType.INTERNAL -> R.string.deworming_internal
-      DewormingType.EXTERNAL -> R.string.deworming_external
-      DewormingType.BOTH -> R.string.deworming_both
-    }
+  private fun DewormingType.resourceId(): Int = labelResId()
 }

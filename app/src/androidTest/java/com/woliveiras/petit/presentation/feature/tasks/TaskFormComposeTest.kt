@@ -2,10 +2,13 @@ package com.woliveiras.petit.presentation.feature.tasks
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,7 +20,9 @@ import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.Sex
 import com.woliveiras.petit.domain.model.Task
+import com.woliveiras.petit.domain.model.TaskKind
 import com.woliveiras.petit.domain.model.TaskStatus
+import com.woliveiras.petit.domain.model.VaccineType
 import com.woliveiras.petit.ui.theme.PetitTheme
 import com.woliveiras.petit.worker.TaskScheduler
 import kotlinx.coroutines.flow.Flow
@@ -70,16 +75,98 @@ class TaskFormComposeTest {
     composeRule.onNodeWithText(context.getString(R.string.action_ok)).assertIsDisplayed()
   }
 
-  private fun vm() =
+  @Test
+  fun medicationTasksAskWhichMedicineItIs() {
+    composeRule.setContent { PetitTheme { TaskFormScreen(onNavigateBack = {}, viewModel = vm()) } }
+    composeRule.waitForIdle()
+
+    selectKind(context.getString(R.string.task_kind_medication))
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.task_field_subject_medication))
+      .assertIsDisplayed()
+  }
+
+  @Test
+  fun customTasksDoNotAskForASubject() {
+    composeRule.setContent { PetitTheme { TaskFormScreen(onNavigateBack = {}, viewModel = vm()) } }
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.task_field_subject_medication))
+      .assertDoesNotExist()
+    composeRule
+      .onNodeWithText(context.getString(R.string.task_field_subject_vaccine))
+      .assertDoesNotExist()
+  }
+
+  @Test
+  fun medicationSuggestionsAreLabelledAndFillTheFieldWhenPicked() {
+    composeRule.setContent {
+      PetitTheme {
+        TaskFormScreen(onNavigateBack = {}, viewModel = vm(usedSubjectNames = listOf("Apoquel")))
+      }
+    }
+    composeRule.waitForIdle()
+
+    selectKind(context.getString(R.string.task_kind_medication))
+    composeRule
+      .onNodeWithText(context.getString(R.string.task_field_subject_medication))
+      .performTextInput("apo")
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.task_field_subject_suggestions))
+      .assertIsDisplayed()
+
+    composeRule.onNodeWithText("Apoquel").performClick()
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.task_field_subject_medication))
+      .assertTextContains("Apoquel")
+  }
+
+  @Test
+  fun theOtherVaccineAsksForItsName() {
+    val viewModel = vm()
+    composeRule.setContent {
+      PetitTheme { TaskFormScreen(onNavigateBack = {}, viewModel = viewModel) }
+    }
+    composeRule.waitForIdle()
+
+    selectKind(context.getString(R.string.task_kind_vaccination))
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.vaccination_field_custom_name))
+      .assertDoesNotExist()
+
+    composeRule.runOnUiThread { viewModel.updateSubjectCode(VaccineType.OTHER.name) }
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithText(context.getString(R.string.vaccination_field_custom_name))
+      .performScrollTo()
+      .assertIsDisplayed()
+  }
+
+  private fun selectKind(kindLabel: String) {
+    composeRule.onNodeWithText(context.getString(R.string.task_field_kind)).performClick()
+    composeRule.onNodeWithText(kindLabel).performClick()
+    composeRule.waitForIdle()
+  }
+
+  private fun vm(usedSubjectNames: List<String> = emptyList()) =
     TaskFormViewModel(
       savedStateHandle = SavedStateHandle(),
       context = ApplicationProvider.getApplicationContext(),
-      taskRepository = FormTaskRepository(),
+      taskRepository = FormTaskRepository(usedSubjectNames),
       petRepository = FormPetRepository(),
       taskScheduler = FormTaskScheduler(),
     )
 
-  private class FormTaskRepository : TaskRepository {
+  private class FormTaskRepository(private val usedSubjectNames: List<String> = emptyList()) :
+    TaskRepository {
     private val tasks = MutableStateFlow<List<Task>>(emptyList())
 
     override fun getPendingTasks(): Flow<List<Task>> = tasks
@@ -111,6 +198,9 @@ class TaskFormComposeTest {
     override suspend fun deleteTask(id: String) = Unit
 
     override suspend fun deleteTasksByReferenceEntity(entityId: String) = Unit
+
+    override suspend fun getUsedSubjectNames(kind: TaskKind, petId: String?): List<String> =
+      usedSubjectNames
   }
 
   private class FormPetRepository : PetRepository {
