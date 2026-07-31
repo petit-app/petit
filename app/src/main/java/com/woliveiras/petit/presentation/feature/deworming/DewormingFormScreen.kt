@@ -20,8 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -37,7 +35,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,11 +50,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.DewormingType
+import com.woliveiras.petit.presentation.components.PetitDatePickerDialog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
-import java.time.Instant
-import java.time.ZoneId
 
 /** Screen for adding or editing a deworming entry. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -106,70 +102,21 @@ fun DewormingFormScreen(
 
   // Application Date Picker Dialog
   if (showApplicationDatePicker) {
-    val datePickerState =
-      rememberDatePickerState(
-        initialSelectedDateMillis =
-          form.applicationDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-      )
-
-    DatePickerDialog(
+    PetitDatePickerDialog(
+      selectedDate = form.applicationDate,
+      onDateSelected = viewModel::updateApplicationDate,
       onDismissRequest = { showApplicationDatePicker = false },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            datePickerState.selectedDateMillis?.let { millis ->
-              val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-              if (!date.isAfter(uiState.today)) {
-                viewModel.updateApplicationDate(date)
-              }
-            }
-            showApplicationDatePicker = false
-          }
-        ) {
-          Text(stringResource(R.string.action_ok))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showApplicationDatePicker = false }) {
-          Text(stringResource(R.string.action_cancel))
-        }
-      },
-    ) {
-      DatePicker(state = datePickerState, showModeToggle = false)
-    }
+      maxDate = uiState.today,
+    )
   }
 
   // Next Due Date Picker Dialog
   if (showNextDueDatePicker) {
-    val datePickerState =
-      rememberDatePickerState(
-        initialSelectedDateMillis =
-          form.nextDueDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
-      )
-
-    DatePickerDialog(
+    PetitDatePickerDialog(
+      selectedDate = form.nextDueDate,
+      onDateSelected = viewModel::updateNextDueDate,
       onDismissRequest = { showNextDueDatePicker = false },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            datePickerState.selectedDateMillis?.let { millis ->
-              val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-              viewModel.updateNextDueDate(date)
-            }
-            showNextDueDatePicker = false
-          }
-        ) {
-          Text(stringResource(R.string.action_ok))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showNextDueDatePicker = false }) {
-          Text(stringResource(R.string.action_cancel))
-        }
-      },
-    ) {
-      DatePicker(state = datePickerState, showModeToggle = false)
-    }
+    )
   }
 
   Scaffold(

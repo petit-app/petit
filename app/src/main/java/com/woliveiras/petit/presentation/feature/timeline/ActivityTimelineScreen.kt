@@ -14,8 +14,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -27,8 +25,6 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,10 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
+import com.woliveiras.petit.presentation.components.PetitDatePickerDialog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.components.TimelineEventCard
-import java.time.Instant
-import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -230,30 +225,11 @@ fun ActivityTimelineScreen(
 
     // Date picker dialog
     if (showDatePicker) {
-      val datePickerState = rememberDatePickerState()
-      DatePickerDialog(
+      PetitDatePickerDialog(
+        selectedDate = uiState.customDate,
+        onDateSelected = viewModel::setCustomDate,
         onDismissRequest = { showDatePicker = false },
-        confirmButton = {
-          TextButton(
-            onClick = {
-              datePickerState.selectedDateMillis?.let { millis ->
-                val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-                viewModel.setCustomDate(date)
-              }
-              showDatePicker = false
-            }
-          ) {
-            Text(stringResource(android.R.string.ok))
-          }
-        },
-        dismissButton = {
-          TextButton(onClick = { showDatePicker = false }) {
-            Text(stringResource(android.R.string.cancel))
-          }
-        },
-      ) {
-        DatePicker(state = datePickerState)
-      }
+      )
     }
   }
 }

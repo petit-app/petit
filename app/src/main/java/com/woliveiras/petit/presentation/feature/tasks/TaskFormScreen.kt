@@ -20,8 +20,6 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -37,7 +35,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,13 +49,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.TaskKind
+import com.woliveiras.petit.presentation.components.PetitDatePickerDialog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneId
 
 /** Screen for creating or editing a standalone task. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,40 +84,13 @@ fun TaskFormScreen(
 
   // Date Picker Dialog
   if (showDatePicker) {
-    val datePickerState =
-      rememberDatePickerState(
-        initialSelectedDateMillis =
-          uiState.scheduledDate
-            .toLocalDate()
-            .atStartOfDay(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli()
-      )
-
-    DatePickerDialog(
+    PetitDatePickerDialog(
+      selectedDate = uiState.scheduledDate.toLocalDate(),
+      onDateSelected = { date ->
+        viewModel.updateScheduledDate(LocalDateTime.of(date, uiState.scheduledDate.toLocalTime()))
+      },
       onDismissRequest = { showDatePicker = false },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            datePickerState.selectedDateMillis?.let { millis ->
-              val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-              val newDateTime = LocalDateTime.of(date, uiState.scheduledDate.toLocalTime())
-              viewModel.updateScheduledDate(newDateTime)
-            }
-            showDatePicker = false
-          }
-        ) {
-          Text(stringResource(R.string.action_ok))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showDatePicker = false }) {
-          Text(stringResource(R.string.action_cancel))
-        }
-      },
-    ) {
-      DatePicker(state = datePickerState, showModeToggle = false)
-    }
+    )
   }
 
   // Time Picker Dialog

@@ -26,8 +26,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -43,7 +41,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,14 +71,13 @@ import com.woliveiras.petit.R
 import com.woliveiras.petit.domain.model.PetType
 import com.woliveiras.petit.domain.model.Sex
 import com.woliveiras.petit.domain.model.SpeciesCareCatalog
+import com.woliveiras.petit.presentation.components.PetitDatePickerDialog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedBreed
 import com.woliveiras.petit.presentation.util.localizedColor
 import com.woliveiras.petit.presentation.util.localizedName
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 
 // Common option key
 private const val OTHER_OPTION = "OTHER"
@@ -190,39 +186,12 @@ fun PetFormScreen(
 
   // Date Picker Dialog
   if (showDatePicker) {
-    val datePickerState =
-      rememberDatePickerState(
-        initialSelectedDateMillis =
-          uiState.birthDate?.let {
-            it.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-          }
-      )
-
-    DatePickerDialog(
+    PetitDatePickerDialog(
+      selectedDate = uiState.birthDate,
+      onDateSelected = viewModel::updateBirthDate,
       onDismissRequest = { showDatePicker = false },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            datePickerState.selectedDateMillis?.let { millis ->
-              val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-              if (!date.isAfter(LocalDate.now())) {
-                viewModel.updateBirthDate(date)
-              }
-            }
-            showDatePicker = false
-          }
-        ) {
-          Text(stringResource(R.string.action_ok))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showDatePicker = false }) {
-          Text(stringResource(R.string.action_cancel))
-        }
-      },
-    ) {
-      DatePicker(state = datePickerState, showModeToggle = false)
-    }
+      maxDate = LocalDate.now(),
+    )
   }
 
   Scaffold(

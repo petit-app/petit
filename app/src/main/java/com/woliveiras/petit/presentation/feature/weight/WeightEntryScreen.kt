@@ -23,8 +23,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -36,8 +34,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,11 +53,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.woliveiras.petit.R
+import com.woliveiras.petit.presentation.components.PetitDatePickerDialog
 import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 
 /** Screen for adding or editing a weight entry. After saving, navigates back to the weight list. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,37 +92,12 @@ fun WeightEntryScreen(
 
   // Date Picker Dialog
   if (showDatePicker) {
-    val datePickerState =
-      rememberDatePickerState(
-        initialSelectedDateMillis =
-          uiState.date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-      )
-
-    DatePickerDialog(
+    PetitDatePickerDialog(
+      selectedDate = uiState.date,
+      onDateSelected = viewModel::updateDate,
       onDismissRequest = { showDatePicker = false },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            datePickerState.selectedDateMillis?.let { millis ->
-              val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-              if (!date.isAfter(LocalDate.now())) {
-                viewModel.updateDate(date)
-              }
-            }
-            showDatePicker = false
-          }
-        ) {
-          Text(stringResource(R.string.action_ok))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showDatePicker = false }) {
-          Text(stringResource(R.string.action_cancel))
-        }
-      },
-    ) {
-      DatePicker(state = datePickerState, showModeToggle = false)
-    }
+      maxDate = LocalDate.now(),
+    )
   }
 
   Scaffold(
