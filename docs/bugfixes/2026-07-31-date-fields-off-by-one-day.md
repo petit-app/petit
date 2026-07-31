@@ -43,11 +43,11 @@ date was `31/07/2026`. The reporter's device is in a positive UTC offset zone
 
 ## Hypotheses
 
-| Rank | Hypothesis                                                                                                                  | Prediction                                                                                                                                | Result                                                 |
-| ---- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Rank | Hypothesis                                                                                                                  | Prediction                                                                                                                                | Result                                 |
+| ---- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | 1    | `initialSelectedDateMillis` receives a system-zone instant while Material 3 interprets and normalizes the selection in UTC. | In UTC+N, `LocalDate.atStartOfDay(systemDefault())` lands on the previous UTC day, so the picker highlights and returns the previous day. | confirmed, covered by regression tests |
-| 2    | The display formatter shifts the date.                                                                                      | `AppDisplayFormatter.localizedDate` round trips through the same zone it formats with, so it cannot shift.                                | falsified by code reading                              |
-| 3    | Room mapping shifts the date.                                                                                               | Storage happens after the picker already returned the wrong `LocalDate`.                                                                  | not the primary cause                                  |
+| 2    | The display formatter shifts the date.                                                                                      | `AppDisplayFormatter.localizedDate` round trips through the same zone it formats with, so it cannot shift.                                | falsified by code reading              |
+| 3    | Room mapping shifts the date.                                                                                               | Storage happens after the picker already returned the wrong `LocalDate`.                                                                  | not the primary cause                  |
 
 ## Root cause analysis
 

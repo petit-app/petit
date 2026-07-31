@@ -42,6 +42,9 @@ what a pet is taking right now.
 - Offer to create a recurring task from a medication treatment window and
   schedule, and keep the two linked so stopping the treatment stops the series.
 - Provide a medication entry point in the quick-add menu.
+- Let the caregiver find a record by the product or brand name they know, so
+  searching for a flea and tick product, a vaccine, or a medication leads to the
+  matching entry point even when the app names the category differently.
 - Include medication records in JSON export, import, and local sharing.
 
 ## Acceptance criteria
@@ -65,6 +68,12 @@ what a pet is taking right now.
   active queries and the row remains in the database.
 - Given a backup with medication records, When it is imported, Then records and
   their task links are restored, and older backups import unchanged.
+- Given a caregiver searching for a product name that belongs to the
+  antiparasitic catalog, When the results are shown, Then the antiparasitic
+  entry point is offered with the matching type preselected.
+- Given a search term that matches no catalog entry, When the results are shown,
+  Then the caregiver is offered the medication form with the term prefilled as
+  the medication name.
 
 ## Test strategy
 
@@ -92,6 +101,9 @@ create-treatment-then-create-reminder journey and the stop propagation.
 - Ongoing versus past is derived from dates and an explicit finish action, using
   an injectable clock.
 - The medication list is per pet and reachable from the pet profile.
+- Search matches the product names caregivers use, not the app's category
+  names, and routes to the existing record type instead of duplicating
+  antiparasitic or vaccine records as medications.
 
 ## Open questions
 

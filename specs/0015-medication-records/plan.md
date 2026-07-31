@@ -23,6 +23,9 @@ This plan is **Draft**. It waits for spec approval before any implementation.
   deworming feature to avoid new UI concepts.
 - Express the reminder offer as a use case that maps a treatment window and
   schedule to a recurring task, and keeps the link by reference id.
+- Resolve product name search in a pure domain matcher over the antiparasitic
+  and vaccine catalogs plus saved medication names, returning a routing target
+  rather than a record.
 - Extend the export bundle additively so older backups keep importing.
 
 ## Implementation sequence
@@ -33,10 +36,11 @@ This plan is **Draft**. It waits for spec approval before any implementation.
 4. [ ] Add the medication form and per-pet history screen.
 5. [ ] Add the active medication section to the pet profile and health summary.
 6. [ ] Add the medication entry point to the quick-add menu.
-7. [ ] Add the linked recurring task offer and the stop propagation.
-8. [ ] Extend export, import, and local sharing.
-9. [ ] Reconcile spec status, this plan, task checkboxes, and the specs index
-       with fresh evidence.
+7. [ ] Add the product name matcher and route it to the existing entry points.
+8. [ ] Add the linked recurring task offer and the stop propagation.
+9. [ ] Extend export, import, and local sharing.
+10. [ ] Reconcile spec status, this plan, task checkboxes, and the specs index
+        with fresh evidence.
 
 ## Commit boundaries
 
@@ -45,8 +49,9 @@ Intended boundaries, pending explicit authorization to commit:
 1. approved spec, plan, tasks, and specs index;
 2. data layer, migration, and domain rules;
 3. presentation surfaces and quick-add entry point;
-4. recurring task link;
-5. export, import, and sharing.
+4. product name search and routing;
+5. recurring task link;
+6. export, import, and sharing.
 
 No push, amend, rebase, merge, force-push, or pull request is authorized.
 
@@ -59,6 +64,9 @@ No push, amend, rebase, merge, force-push, or pull request is authorized.
 - **Schema churn:** additive migration with a Room migration test.
 - **Scope creep into dosing calculations:** first version records free text dose
   and does not compute dosages.
+- **Search creating duplicate concepts:** the matcher routes to the existing
+  antiparasitic and vaccine forms instead of letting those products be recorded
+  as medications.
 - **Clinical misinterpretation:** keep the existing disclaimer that Petit does
   not replace veterinary guidance.
 

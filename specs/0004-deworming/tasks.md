@@ -27,9 +27,15 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - acceptance criteria: all acceptance criteria have automated coverage.
   - test expectations: close remaining unit, Room, and Compose gaps; add E2E only if a cross-boundary journey remains uncovered.
   - verification: `./gradlew test && ./gradlew spotlessCheck`
-- [ ] **Make flea and tick treatment discoverable** (test-type: integration)
+- [x] **Rename the antiparasitic entry points** (test-type: integration)
   - blocked-by: record, edit, and delete deworming treatments
-  - desired behavior: name antiparasitic treatment in the quick-add menu and the pet profile shortcut, opening the deworming form with `EXTERNAL` preselected.
-  - acceptance criteria: the entry point mentions flea and tick treatment, the form opens with the external type selected, and the caregiver can still switch type before saving.
-  - test expectations: Compose tests for the entry point label, navigation, and preselected type; localized strings covered for every supported language.
+  - desired behavior: every entry point outside the form names antiparasitic treatment instead of the internal dewormer alone, in every supported language.
+  - acceptance criteria: quick add, speed dial, pet card, alerts, and reminder settings use the new vocabulary, and no identifier or stored value changes.
+  - test expectations: Compose tests for the renamed labels; localized strings covered for every supported language.
+  - verification: `./gradlew test`
+- [x] **Make flea and tick treatment discoverable** (test-type: integration)
+  - blocked-by: rename the antiparasitic entry points
+  - desired behavior: offer internal dewormer and flea and tick treatment as separate entries in the quick-add menu, each opening the form with its type preselected. The pet profile shortcut keeps opening the records list, which already shows both categories.
+  - acceptance criteria: the flea and tick entry opens the form with `EXTERNAL` selected, the internal entry with `INTERNAL`, and the caregiver can still switch type before saving.
+  - test expectations: Compose tests for the entry point labels and the preselected type; unit tests for the route encoding.
   - verification: `./gradlew test`

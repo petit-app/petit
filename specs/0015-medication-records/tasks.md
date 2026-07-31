@@ -40,6 +40,12 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - acceptance criteria: the option appears with a label and description consistent with the other quick-add entries and reaches the form.
   - test expectations: Compose test for the menu entry and navigation.
   - verification: `./gradlew test`
+- [ ] **Find a record by product name** (test-type: both)
+  - blocked-by: add a medication entry point to quick add
+  - desired behavior: match the product or brand names caregivers use against the antiparasitic and vaccine catalogs plus saved medication names, and route to the matching entry point instead of creating a duplicate record type.
+  - acceptance criteria: a catalog product opens its own form with the matching type preselected; an unknown term opens the medication form with the term prefilled; matching ignores case and accents.
+  - test expectations: unit tests for the matcher including accent and case folding and ambiguous terms; Compose tests for the results and navigation.
+  - verification: `./gradlew test`
 - [ ] **Create a reminder series from a treatment** (test-type: both)
   - blocked-by: 0014, list medications per pet
   - desired behavior: offer to create a recurring task from the treatment window and daily schedule, and link it to the medication.
