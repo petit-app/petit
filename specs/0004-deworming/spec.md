@@ -2,7 +2,7 @@
 spec: "0004"
 title: Deworming records
 family: pet-care
-status: Completed
+status: In Progress
 owner: woliveiras
 depends_on: ["0001"]
 ---
@@ -20,6 +20,10 @@ date order, and soft-deleted. Status is clock-controlled and rendered with an
 accessible visual indicator. Internal and external summaries select the latest
 applicable treatment independently, counting `BOTH` in both categories.
 
+Beta feedback showed a discoverability gap: the quick-add menu only names
+"Vermífugo", so caregivers looking for a flea and tick record do not realize
+the `EXTERNAL` option lives inside that form.
+
 ## Functional requirements
 
 - Record type `INTERNAL`, `EXTERNAL`, or `BOTH`, medication, administration date, next dose, and notes.
@@ -27,6 +31,7 @@ applicable treatment independently, counting `BOTH` in both categories.
 - Calculate `OK`, `SCHEDULED`, or `OVERDUE` for each record.
 - List history by date, with visual indicators, editing, and soft delete.
 - Count `BOTH` in the internal and external categories when the category view is available.
+- Name antiparasitic treatment in the entry points so flea and tick records are findable without opening the form.
 
 ## Acceptance criteria
 
@@ -35,6 +40,7 @@ applicable treatment independently, counting `BOTH` in both categories.
 - Given records of different types, When the history is opened, Then they appear in descending order.
 - Given type `BOTH`, When health by category is calculated, Then it counts as both internal and external.
 - Given a record, When it is edited or deleted, Then the screen reflects the change and deletion is logical.
+- Given the quick-add menu, When the caregiver looks for a flea and tick record, Then an entry names antiparasitic treatment and opens the deworming form with `EXTERNAL` preselected.
 
 ## Test strategy
 

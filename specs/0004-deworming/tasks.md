@@ -27,3 +27,9 @@ Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
   - acceptance criteria: all acceptance criteria have automated coverage.
   - test expectations: close remaining unit, Room, and Compose gaps; add E2E only if a cross-boundary journey remains uncovered.
   - verification: `./gradlew test && ./gradlew spotlessCheck`
+- [ ] **Make flea and tick treatment discoverable** (test-type: integration)
+  - blocked-by: record, edit, and delete deworming treatments
+  - desired behavior: name antiparasitic treatment in the quick-add menu and the pet profile shortcut, opening the deworming form with `EXTERNAL` preselected.
+  - acceptance criteria: the entry point mentions flea and tick treatment, the form opens with the external type selected, and the caregiver can still switch type before saving.
+  - test expectations: Compose tests for the entry point label, navigation, and preselected type; localized strings covered for every supported language.
+  - verification: `./gradlew test`

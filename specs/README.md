@@ -10,14 +10,14 @@ based on capability families, while delivery state is tracked through status.
 
 ## Numbering
 
-| Block     | Family          | Reserved for                                                         |
-| --------- | --------------- | -------------------------------------------------------------------- |
-| 0001–0099 | pet-care        | Pet registration, health, routine care, and the app-local experience |
-| 0100–0199 | local-sharing   | Family sharing without a remote server                               |
-| 0200–0299 | identity-access | Identity, account, and authorization                                 |
-| 0300–0399 | backup-recovery | Cloud backup, restore, and recovery                                  |
-| 0400–0499 | cloud-sync      | Remote synchronization and cloud collaboration                       |
-| 0500–0599 | release-engineering | Build, signing, store metadata, and distribution automation       |
+| Block     | Family              | Reserved for                                                         |
+| --------- | ------------------- | -------------------------------------------------------------------- |
+| 0001–0099 | pet-care            | Pet registration, health, routine care, and the app-local experience |
+| 0100–0199 | local-sharing       | Family sharing without a remote server                               |
+| 0200–0299 | identity-access     | Identity, account, and authorization                                 |
+| 0300–0399 | backup-recovery     | Cloud backup, restore, and recovery                                  |
+| 0400–0499 | cloud-sync          | Remote synchronization and cloud collaboration                       |
+| 0500–0599 | release-engineering | Build, signing, store metadata, and distribution automation          |
 
 ## Status
 
@@ -36,31 +36,33 @@ based on capability families, while delivery state is tracked through status.
 
 PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-management.md)
 
-| Spec                                 | Title                     | Status    | Depends on |
-| ------------------------------------ | ------------------------- | --------- | ---------- |
-| [0001](0001-pet-management/spec.md)  | Pet management            | Completed | —          |
-| [0002](0002-weight-tracking/spec.md) | Weight tracking           | Completed | 0001       |
-| [0003](0003-vaccination/spec.md)     | Vaccination records       | Completed | 0001       |
-| [0004](0004-deworming/spec.md)       | Deworming records         | Completed | 0001       |
-| [0005](0005-reminders/spec.md)       | Local tasks and reminders | Completed | 0001       |
-| [0006](0006-export-import/spec.md)   | JSON export and import    | Completed | 0001–0005  |
-| [0007](0007-home-dashboard/spec.md)  | Home dashboard            | Completed | 0001–0005  |
-| [0008](0008-onboarding/spec.md)      | Onboarding                | Completed | —          |
-| [0009](0009-app-preferences/spec.md) | App preferences           | In Progress | —          |
-| [0010](0010-delete-all-data/spec.md) | Delete all data           | Completed | 0001–0005  |
-| [0011](0011-species-aware-care-presets/spec.md) | Species-aware care presets | In Progress | 0001, 0003, 0004 |
-| [0012](0012-international-breed-catalog/spec.md) | International dog and cat breed catalog | Approved | 0001, 0006, 0011 |
-| [0013](0013-navigation-motion/spec.md) | Navigation motion | In Progress | — |
+| Spec                                             | Title                                   | Status      | Depends on       |
+| ------------------------------------------------ | --------------------------------------- | ----------- | ---------------- |
+| [0001](0001-pet-management/spec.md)              | Pet management                          | Completed   | —                |
+| [0002](0002-weight-tracking/spec.md)             | Weight tracking                         | Completed   | 0001             |
+| [0003](0003-vaccination/spec.md)                 | Vaccination records                     | Completed   | 0001             |
+| [0004](0004-deworming/spec.md)                   | Deworming records                       | In Progress | 0001             |
+| [0005](0005-reminders/spec.md)                   | Local tasks and reminders               | Completed   | 0001             |
+| [0006](0006-export-import/spec.md)               | JSON export and import                  | Completed   | 0001–0005        |
+| [0007](0007-home-dashboard/spec.md)              | Home dashboard                          | Completed   | 0001–0005        |
+| [0008](0008-onboarding/spec.md)                  | Onboarding                              | Completed   | —                |
+| [0009](0009-app-preferences/spec.md)             | App preferences                         | In Progress | —                |
+| [0010](0010-delete-all-data/spec.md)             | Delete all data                         | Completed   | 0001–0005        |
+| [0011](0011-species-aware-care-presets/spec.md)  | Species-aware care presets              | In Progress | 0001, 0003, 0004 |
+| [0012](0012-international-breed-catalog/spec.md) | International dog and cat breed catalog | Approved    | 0001, 0006, 0011 |
+| [0013](0013-navigation-motion/spec.md)           | Navigation motion                       | In Progress | —                |
+| [0014](0014-recurring-tasks/spec.md)             | Recurring tasks                         | Draft       | 0005             |
+| [0015](0015-medication-records/spec.md)          | Medication records                      | Draft       | 0001, 0014       |
 
 ### local-sharing
 
-| Spec                                           | Title                     | Status      | Depends on |
-| ---------------------------------------------- | ------------------------- | ----------- | ---------- |
-| [0101](0101-device-pairing/spec.md)            | Device pairing            | Implemented | —          |
-| [0102](0102-one-shot-transfer/spec.md)         | One-shot data transfer    | Implemented | 0101       |
-| [0103](0103-family-group/spec.md)              | Local family group        | Implemented | 0101       |
+| Spec                                           | Title                     | Status      | Depends on       |
+| ---------------------------------------------- | ------------------------- | ----------- | ---------------- |
+| [0101](0101-device-pairing/spec.md)            | Device pairing            | Implemented | —                |
+| [0102](0102-one-shot-transfer/spec.md)         | One-shot data transfer    | Implemented | 0101             |
+| [0103](0103-family-group/spec.md)              | Local family group        | Implemented | 0101             |
 | [0104](0104-local-network-sync/spec.md)        | Local network sync        | Implemented | 0101, 0103, 0105 |
-| [0105](0105-local-conflict-resolution/spec.md) | Local conflict resolution | Implemented | 0102       |
+| [0105](0105-local-conflict-resolution/spec.md) | Local conflict resolution | Implemented | 0102             |
 
 ### identity-access
 
@@ -73,15 +75,15 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 
 ### backup-recovery
 
-| Spec                                                        | Title                             | Status      | Depends on |
-| ----------------------------------------------------------- | --------------------------------- | ----------- | ---------- |
-| [0301](0301-manual-backup/spec.md)                          | Manual Google Drive backup        | In Progress | 0006, 0204 |
-| [0302](0302-restore-backup/spec.md)                         | Restore Google Drive backup       | In Progress | 0301       |
-| [0303](0303-manage-backups/spec.md)                         | Manage Google Drive backups       | In Progress | 0301       |
-| [0305](0305-automatic-backup/spec.md)                       | Automatic Google Drive backup     | In Progress | 0301       |
-| [0306](0306-backup-settings/spec.md)                        | Backup settings                   | In Progress | 0305       |
-| [0307](0307-backup-triggers/spec.md)                        | Backup triggers                   | In Progress | 0305, 0306 |
-| [0308](0308-google-drive-cloud-infrastructure/spec.md)      | Google Drive Cloud infrastructure | In Progress | 0204       |
+| Spec                                                   | Title                             | Status      | Depends on |
+| ------------------------------------------------------ | --------------------------------- | ----------- | ---------- |
+| [0301](0301-manual-backup/spec.md)                     | Manual Google Drive backup        | In Progress | 0006, 0204 |
+| [0302](0302-restore-backup/spec.md)                    | Restore Google Drive backup       | In Progress | 0301       |
+| [0303](0303-manage-backups/spec.md)                    | Manage Google Drive backups       | In Progress | 0301       |
+| [0305](0305-automatic-backup/spec.md)                  | Automatic Google Drive backup     | In Progress | 0301       |
+| [0306](0306-backup-settings/spec.md)                   | Backup settings                   | In Progress | 0305       |
+| [0307](0307-backup-triggers/spec.md)                   | Backup triggers                   | In Progress | 0305, 0306 |
+| [0308](0308-google-drive-cloud-infrastructure/spec.md) | Google Drive Cloud infrastructure | In Progress | 0204       |
 
 ### cloud-sync
 
@@ -95,6 +97,6 @@ PRD: [Pet health management in Petit](../prds/2026-07-17-petit-pet-health-manage
 
 ### release-engineering
 
-| Spec                                                 | Title                            | Status | Depends on |
-| ---------------------------------------------------- | -------------------------------- | ------ | ---------- |
+| Spec                                                  | Title                            | Status      | Depends on |
+| ----------------------------------------------------- | -------------------------------- | ----------- | ---------- |
 | [0501](0501-android-alpha-release-automation/spec.md) | Android alpha release automation | In Progress | —          |
