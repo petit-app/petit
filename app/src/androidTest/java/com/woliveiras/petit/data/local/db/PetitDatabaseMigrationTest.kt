@@ -222,6 +222,51 @@ class PetitDatabaseMigrationTest {
     }
   }
 
+  @Test
+  fun migration5To6AddsRepeatColumnsAndLeavesExistingTasksNonRecurring() {
+    context.deleteDatabase(TEST_DATABASE_5_6)
+
+    openTaskRepeatDatabase(version = 5).use { helper ->
+      helper.writableDatabase.execSQL(
+        "INSERT INTO tasks(id, kind, title) VALUES (?, ?, ?)",
+        arrayOf<Any?>("task-v5", "MEDICATION", "Remédio"),
+      )
+    }
+
+    openTaskRepeatDatabase(version = 6).use { helper ->
+      val database = helper.writableDatabase
+      database
+        .query(
+          "SELECT title, repeatRule, seriesId, occurrenceIndex FROM tasks WHERE id = ?",
+          arrayOf("task-v5"),
+        )
+        .use { cursor ->
+          assertThat(cursor.moveToFirst()).isTrue()
+          assertThat(cursor.getString(0)).isEqualTo("Remédio")
+          assertThat(cursor.isNull(1)).isTrue()
+          assertThat(cursor.isNull(2)).isTrue()
+          assertThat(cursor.getInt(3)).isEqualTo(0)
+        }
+
+      database.execSQL(
+        "INSERT INTO tasks(id, kind, title, repeatRule, seriesId, occurrenceIndex) " +
+          "VALUES (?, ?, ?, ?, ?, ?)",
+        arrayOf<Any?>("task-v6", "MEDICATION", "Remédio", "v1|8|HOURS||07:00|23:00|NEVER|", "s1", 2),
+      )
+      database
+        .query(
+          "SELECT repeatRule, seriesId, occurrenceIndex FROM tasks WHERE id = ?",
+          arrayOf("task-v6"),
+        )
+        .use { cursor ->
+          assertThat(cursor.moveToFirst()).isTrue()
+          assertThat(cursor.getString(0)).isEqualTo("v1|8|HOURS||07:00|23:00|NEVER|")
+          assertThat(cursor.getString(1)).isEqualTo("s1")
+          assertThat(cursor.getInt(2)).isEqualTo(2)
+        }
+    }
+  }
+
   private fun openDatabase(version: Int): SupportSQLiteOpenHelper =
     FrameworkSQLiteOpenHelperFactory()
       .create(
@@ -342,11 +387,43 @@ class PetitDatabaseMigrationTest {
           .build()
       )
 
+  private fun openTaskRepeatDatabase(version: Int): SupportSQLiteOpenHelper =
+    FrameworkSQLiteOpenHelperFactory()
+      .create(
+        SupportSQLiteOpenHelper.Configuration.builder(context)
+          .name(TEST_DATABASE_5_6)
+          .callback(
+            object : SupportSQLiteOpenHelper.Callback(version) {
+              override fun onCreate(db: SupportSQLiteDatabase) {
+                require(version == 5)
+                db.execSQL(
+                  """
+                  CREATE TABLE tasks (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    kind TEXT NOT NULL,
+                    title TEXT NOT NULL
+                  )
+                  """
+                    .trimIndent()
+                )
+              }
+
+              override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                assertThat(oldVersion).isEqualTo(5)
+                assertThat(newVersion).isEqualTo(6)
+                PetitDatabase.MIGRATION_5_6.migrate(db)
+              }
+            }
+          )
+          .build()
+      )
+
   companion object {
     private const val TEST_DATABASE = "petit-migration-1-2-test"
     private const val TEST_DATABASE_2_3 = "petit-migration-2-3-test"
     private const val TEST_DATABASE_3_4 = "petit-migration-3-4-test"
     private const val TEST_DATABASE_4_5 = "petit-migration-4-5-test"
+    private const val TEST_DATABASE_5_6 = "petit-migration-5-6-test"
 
     private val VERSION_1_FAMILY_GROUP_MEMBERS_SCHEMA =
       """

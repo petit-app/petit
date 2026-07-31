@@ -66,6 +66,7 @@ import com.woliveiras.petit.presentation.feature.tasks.getTaskKindIcon
 import com.woliveiras.petit.presentation.util.localizedName
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import com.woliveiras.petit.presentation.util.subjectLabel
+import com.woliveiras.petit.presentation.util.summary
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -370,8 +371,9 @@ private fun HomeTaskCard(task: Task, onClick: () -> Unit, onComplete: () -> Unit
       else -> displayFormatter.shortDate(taskDate)
     }
   val subjectText = task.subjectLabel()?.takeIf { it != task.title }
+  val repeatText = task.recurrence?.summary()
   val cardDescription =
-    listOfNotNull(task.title, subjectText, dateText).joinToString(separator = ", ")
+    listOfNotNull(task.title, subjectText, dateText, repeatText).joinToString(separator = ", ")
 
   Card(
     modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -433,6 +435,17 @@ private fun HomeTaskCard(task: Task, onClick: () -> Unit, onComplete: () -> Unit
             if (isOverdue) MaterialTheme.colorScheme.error
             else MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        if (repeatText != null) {
+          Spacer(modifier = Modifier.height(4.dp))
+          Text(
+            text = repeatText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+        }
       }
 
       Spacer(modifier = Modifier.height(12.dp))

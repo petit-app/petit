@@ -293,6 +293,52 @@ class ExportBundleTest {
     assertThat(errors[1]).contains("task-1")
   }
 
+  @Test
+  fun repeatingTaskRoundTripsWithItsRuleAndSeriesPosition() {
+    val repeating =
+      Task(
+        id = "task-1",
+        petId = "pet-1",
+        kind = TaskKind.MEDICATION,
+        title = "Antibiótico",
+        scheduledFor = LocalDateTime.of(2026, 7, 20, 9, 0),
+        recurrence =
+          TaskRecurrence(
+            interval = 8,
+            unit = RecurrenceUnit.HOURS,
+            dailyWindow = DailyWindow(java.time.LocalTime.of(7, 0), java.time.LocalTime.of(23, 0)),
+            end = RecurrenceEnd.AfterOccurrences(9),
+          ),
+        seriesId = "series-1",
+        occurrenceIndex = 3,
+        createdAt = 1L,
+        updatedAt = 2L,
+      )
+
+    val restored = ExportBundle.fromJson(emptyBundle(tasks = listOf(repeating)).toJson())
+
+    assertThat(restored.tasks).containsExactly(repeating)
+  }
+
+  @Test
+  fun anUnreadableRepeatRuleImportsAsANonRepeatingTask() {
+    val task =
+      Task(
+        id = "task-1",
+        kind = TaskKind.CUSTOM,
+        title = "Passear",
+        scheduledFor = LocalDateTime.of(2026, 7, 20, 9, 0),
+        createdAt = 1L,
+        updatedAt = 2L,
+      )
+    val crafted = task.toExportJson().put("repeatRule", "v9|nonsense")
+
+    val restored = Task.fromExportJson(crafted)
+
+    assertThat(restored.recurrence).isNull()
+    assertThat(restored.isRecurring).isFalse()
+  }
+
   private fun emptyBundle(tasks: List<Task> = emptyList()) =
     ExportBundle(
       metadata = ExportMetadata(appVersion = "1.0", exportDate = "2026-07-17T00:00:00Z"),

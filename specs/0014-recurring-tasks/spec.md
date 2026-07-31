@@ -2,7 +2,7 @@
 spec: "0014"
 title: Recurring tasks
 family: pet-care
-status: Draft
+status: Implemented
 owner: woliveiras
 depends_on: ["0005"]
 ---
@@ -149,6 +149,19 @@ repository, the notification worker, and the scheduling boundary.
   due date, and are explained rather than converted into repeat rules.
 - Repeat fields are additive in the export schema so older backups keep
   importing.
+- The pending occurrence is a single Room row that moves forward in place. It
+  only advances once the following occurrence has arrived, so a caregiver who
+  opens the app late still sees the occurrence that is due now instead of a
+  burst of missed ones. Completing an occurrence is the only moment a new row is
+  created, which keeps the completed history intact.
+- Reconciliation runs on app start instead of through a BOOT_COMPLETED or
+  TIMEZONE_CHANGED receiver. WorkManager already persists its queue across
+  reboots, and the start-up pass collapses whatever drifted while the app was
+  closed, so an extra receiver would only duplicate that work.
+- The conflict fingerprint for tasks now includes the encoded repeat rule, the
+  series identifier, and the occurrence index. Two devices that disagree about a
+  repeat rule are a real conflict, so leaving those fields out would silently
+  drop an edit during a merge.
 
 ## Open questions
 

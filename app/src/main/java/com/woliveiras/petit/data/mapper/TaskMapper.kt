@@ -4,6 +4,7 @@ import com.woliveiras.petit.data.local.entity.TaskEntity
 import com.woliveiras.petit.domain.model.SyncStatus
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
+import com.woliveiras.petit.domain.model.TaskRecurrence
 import com.woliveiras.petit.domain.model.TaskStatus
 import java.time.Instant
 import java.time.ZoneId
@@ -32,6 +33,9 @@ fun TaskEntity.toDomain(): Task =
       } catch (_: Exception) {
         TaskStatus.PENDING
       },
+    recurrence = TaskRecurrence.decode(repeatRule),
+    seriesId = seriesId,
+    occurrenceIndex = occurrenceIndex,
     createdAt = createdAt,
     updatedAt = updatedAt,
     deletedAt = deletedAt,
@@ -55,6 +59,9 @@ fun Task.toEntity(): TaskEntity =
     description = description,
     scheduledFor = scheduledFor.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
     status = status.name,
+    repeatRule = recurrence?.encode(),
+    seriesId = seriesId,
+    occurrenceIndex = occurrenceIndex,
     createdAt = createdAt,
     updatedAt = updatedAt,
     deletedAt = deletedAt,

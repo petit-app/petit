@@ -9,9 +9,9 @@ import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
-import com.woliveiras.petit.domain.model.TaskStatus
 import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
 import com.woliveiras.petit.worker.TaskScheduler
+import com.woliveiras.petit.worker.TaskSeriesCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
@@ -57,6 +57,7 @@ constructor(
   @ApplicationContext private val context: Context,
   private val taskRepository: TaskRepository,
   private val taskScheduler: TaskScheduler,
+  private val taskSeriesCoordinator: TaskSeriesCoordinator,
   private val taskDisplayTextResolver: TaskDisplayTextResolver,
   private val userPreferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
@@ -120,8 +121,7 @@ constructor(
   fun completeTask(taskId: String) {
     viewModelScope.launch {
       try {
-        taskScheduler.cancelTask(taskId)
-        taskRepository.updateTaskStatus(taskId, TaskStatus.COMPLETED)
+        taskSeriesCoordinator.completeOccurrence(taskId)
       } catch (_: Exception) {
         _events.emit(TaskListEvent.Error(context.getString(R.string.task_error_complete)))
       }

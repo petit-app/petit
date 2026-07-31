@@ -300,6 +300,8 @@ class AutoTaskServiceImplTest {
 
     override fun getCompletedTasks(): Flow<List<Task>> = MutableStateFlow(emptyList())
 
+    override suspend fun getPendingRecurringTasks(): List<Task> = emptyList()
+
     override suspend fun saveTask(task: Task) {
       saved += task
     }
@@ -318,10 +320,15 @@ class AutoTaskServiceImplTest {
 
   private class RecordingTaskScheduler : TaskScheduler {
     val scheduled = mutableListOf<Task>()
+    val scheduledAt = mutableListOf<Pair<String, java.time.LocalDateTime>>()
     val cancelled = mutableListOf<String>()
 
     override fun scheduleTask(task: Task) {
       scheduled += task
+    }
+
+    override fun scheduleTaskAt(taskId: String, scheduledFor: java.time.LocalDateTime) {
+      scheduledAt += taskId to scheduledFor
     }
 
     override fun cancelTask(taskId: String) {

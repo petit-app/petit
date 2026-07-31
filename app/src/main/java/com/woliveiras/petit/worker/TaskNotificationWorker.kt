@@ -23,6 +23,7 @@ import com.woliveiras.petit.initialLanguageOrSystem
 import com.woliveiras.petit.presentation.util.TaskDisplayText
 import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
 import com.woliveiras.petit.presentation.util.forLanguage
+import com.woliveiras.petit.presentation.util.recurrenceSummary
 import com.woliveiras.petit.presentation.util.taskSubjectLabel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -41,17 +42,20 @@ constructor(
   private val taskRepository: TaskRepository,
   private val taskDisplayTextResolver: TaskDisplayTextResolver,
   private val userPreferencesRepository: UserPreferencesRepository,
+  private val taskSeriesCoordinator: TaskSeriesCoordinator,
 ) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
     val taskId = inputData.getString(KEY_TASK_ID) ?: return Result.failure()
 
     return try {
-      val task = taskRepository.getTaskById(taskId) ?: return Result.failure()
+      val storedTask = taskRepository.getTaskById(taskId) ?: return Result.failure()
 
-      if (task.status == TaskStatus.COMPLETED) {
+      if (storedTask.status == TaskStatus.COMPLETED) {
         return Result.success()
       }
+
+      val task = taskSeriesCoordinator.onNotificationDelivered(storedTask)
 
       val language = userPreferencesRepository.initialLanguageOrSystem()
       val displayText =
@@ -69,7 +73,16 @@ constructor(
         }
       val subject =
         taskSubjectLabel(context.forLanguage(language), task)?.takeIf { it != displayText.title }
-      showNotification(task.id, displayText.title, displayText.description, subject, task.kind)
+      val repeat = task.recurrence?.let { recurrenceSummary(context.forLanguage(language), it) }
+      showNotification(
+        task.id,
+        displayText.title,
+        displayText.description,
+        subject,
+        repeat,
+        task.kind,
+      )
+      taskSeriesCoordinator.scheduleFollowUp(task)
 
       Result.success()
     } catch (cancellation: CancellationException) {
@@ -85,6 +98,7 @@ constructor(
     title: String,
     description: String?,
     subject: String?,
+    repeat: String?,
     kind: TaskKind,
   ) {
     if (
@@ -117,7 +131,7 @@ constructor(
       }
 
     val contentText =
-      listOfNotNull(subject, description).joinToString(separator = " - ").ifBlank {
+      listOfNotNull(subject, description, repeat).joinToString(separator = " - ").ifBlank {
         context.getString(R.string.app_name)
       }
 

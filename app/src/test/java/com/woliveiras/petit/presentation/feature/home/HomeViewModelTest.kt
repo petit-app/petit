@@ -22,6 +22,7 @@ import com.woliveiras.petit.domain.model.WeightEntry
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
 import com.woliveiras.petit.presentation.util.TaskDisplayText
 import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
+import com.woliveiras.petit.worker.NoOpTaskSeriesCoordinator
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
@@ -78,6 +79,7 @@ class HomeViewModelTest {
           timelineRepository = FailingTimelineRepository(),
           taskDisplayTextResolver = identityTaskDisplayTextResolver,
           userPreferencesRepository = FakeUserPreferencesRepository(),
+          taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
         )
 
       advanceUntilIdle()
@@ -106,6 +108,7 @@ class HomeViewModelTest {
           timelineRepository = timeline,
           taskDisplayTextResolver = identityTaskDisplayTextResolver,
           userPreferencesRepository = FakeUserPreferencesRepository(),
+          taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
         )
       advanceUntilIdle()
 
@@ -155,6 +158,7 @@ class HomeViewModelTest {
           timelineRepository = MutableTimelineRepository(),
           taskDisplayTextResolver = identityTaskDisplayTextResolver,
           userPreferencesRepository = FakeUserPreferencesRepository(),
+          taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
         )
 
       advanceUntilIdle()
@@ -183,6 +187,7 @@ class HomeViewModelTest {
               TaskDisplayText("Título localizado", "Descrição localizada")
             },
           userPreferencesRepository = FakeUserPreferencesRepository(),
+          taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
         )
 
       advanceUntilIdle()
@@ -211,6 +216,7 @@ class HomeViewModelTest {
           timelineRepository = timeline,
           taskDisplayTextResolver = identityTaskDisplayTextResolver,
           userPreferencesRepository = FakeUserPreferencesRepository(),
+          taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
         )
 
       advanceUntilIdle()
@@ -326,6 +332,8 @@ class HomeViewModelTest {
     override fun getNextTasks(limit: Int): Flow<List<Task>> = MutableStateFlow(emptyList())
 
     override suspend fun getPastDueTasks(): List<Task> = emptyList()
+
+    override suspend fun getPendingRecurringTasks(): List<Task> = emptyList()
 
     override fun getCompletedTasks(): Flow<List<Task>> = MutableStateFlow(emptyList())
 

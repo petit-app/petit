@@ -62,6 +62,12 @@ interface TaskDao {
   )
   suspend fun getPastDueTasks(now: Long): List<TaskEntity>
 
+  /** Get the pending occurrence of every repeating series. */
+  @Query(
+    "SELECT * FROM tasks WHERE repeatRule IS NOT NULL AND status = 'PENDING' AND deletedAt IS NULL ORDER BY scheduledFor ASC"
+  )
+  suspend fun getPendingRecurringTasks(): List<TaskEntity>
+
   /** Get the next N upcoming pending tasks. */
   @Query(
     "SELECT * FROM tasks WHERE scheduledFor >= :from AND status = 'PENDING' AND deletedAt IS NULL ORDER BY scheduledFor ASC LIMIT :limit"

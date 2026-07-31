@@ -306,6 +306,8 @@ class DeleteAllDataUseCaseIntegrationTest {
 
     override fun scheduleTask(task: com.woliveiras.petit.domain.model.Task) = Unit
 
+    override fun scheduleTaskAt(taskId: String, scheduledFor: java.time.LocalDateTime) = Unit
+
     override fun cancelTask(taskId: String) = Unit
 
     override fun cancelAllTasks() {

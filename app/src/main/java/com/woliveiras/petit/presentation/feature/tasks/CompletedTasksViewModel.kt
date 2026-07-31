@@ -91,12 +91,24 @@ constructor(
   fun reactivateTask(taskId: String) {
     viewModelScope.launch {
       try {
+        val task = taskRepository.getTaskById(taskId)
+        if (task == null) {
+          _events.emit(CompletedTasksEvent.Error(context.getString(R.string.task_error_reactivate)))
+          return@launch
+        }
+        // A completed occurrence of a series already has a pending successor. Reactivating it would
+        // leave two pending rows sharing the same rule, so the series would fork.
+        if (task.isRecurring) {
+          _events.emit(
+            CompletedTasksEvent.Error(context.getString(R.string.task_error_reactivate_series))
+          )
+          return@launch
+        }
         taskRepository.updateTaskStatus(taskId, TaskStatus.PENDING)
         // Reschedule notification
-        val task = taskRepository.getTaskById(taskId)
-        if (task != null) {
-          taskScheduler.scheduleTask(task)
-        }
+        taskScheduler.scheduleTask(task.copy(status = TaskStatus.PENDING))
+      } catch (cancellation: CancellationException) {
+        throw cancellation
       } catch (_: Exception) {
         _events.emit(CompletedTasksEvent.Error(context.getString(R.string.task_error_reactivate)))
       }

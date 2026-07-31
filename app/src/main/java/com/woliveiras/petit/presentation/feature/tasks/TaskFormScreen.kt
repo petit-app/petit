@@ -79,6 +79,7 @@ fun TaskFormScreen(
   var showDatePicker by remember { mutableStateOf(false) }
   var showTimePicker by remember { mutableStateOf(false) }
   var showDeleteConfirmation by remember { mutableStateOf(false) }
+  var showStopSeriesConfirmation by remember { mutableStateOf(false) }
   var petDropdownExpanded by remember { mutableStateOf(false) }
   var kindDropdownExpanded by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
@@ -88,6 +89,7 @@ fun TaskFormScreen(
       when (event) {
         is TaskFormEvent.TaskSaved -> onNavigateBack()
         is TaskFormEvent.TaskDeleted -> onNavigateBack()
+        is TaskFormEvent.SeriesStopped -> onNavigateBack()
         is TaskFormEvent.Error -> snackbarHostState.showSnackbar(event.message)
       }
     }
@@ -154,6 +156,29 @@ fun TaskFormScreen(
       },
       dismissButton = {
         TextButton(onClick = { showDeleteConfirmation = false }) {
+          Text(stringResource(R.string.action_cancel))
+        }
+      },
+    )
+  }
+
+  if (showStopSeriesConfirmation) {
+    AlertDialog(
+      onDismissRequest = { showStopSeriesConfirmation = false },
+      title = { Text(stringResource(R.string.task_repeat_stop_confirm_title)) },
+      text = { Text(stringResource(R.string.task_repeat_stop_confirm_message)) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showStopSeriesConfirmation = false
+            viewModel.stopSeries()
+          }
+        ) {
+          Text(stringResource(R.string.task_repeat_stop))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showStopSeriesConfirmation = false }) {
           Text(stringResource(R.string.action_cancel))
         }
       },
@@ -347,6 +372,27 @@ fun TaskFormScreen(
           color = MaterialTheme.colorScheme.error,
           style = MaterialTheme.typography.bodySmall,
         )
+      }
+
+      if (uiState.showsRepeatControls) {
+        TaskRepeatFields(
+          state = uiState.repeat,
+          error = uiState.repeatError,
+          startDate = uiState.scheduledDate.toLocalDate(),
+          onPresetChange = viewModel::updateRepeatPreset,
+          onStateChange = viewModel::updateRepeat,
+        )
+      } else {
+        AutomaticTaskRepeatNote()
+      }
+
+      if (uiState.canStopSeries) {
+        TextButton(
+          onClick = { showStopSeriesConfirmation = true },
+          modifier = Modifier.fillMaxWidth(),
+        ) {
+          Text(stringResource(R.string.task_repeat_stop))
+        }
       }
 
       Spacer(modifier = Modifier.height(8.dp))

@@ -58,6 +58,7 @@ import com.woliveiras.petit.presentation.components.PetitTopAppBar
 import com.woliveiras.petit.presentation.util.localizedName
 import com.woliveiras.petit.presentation.util.rememberAppDisplayFormatter
 import com.woliveiras.petit.presentation.util.subjectLabel
+import com.woliveiras.petit.presentation.util.summary
 import java.time.LocalDate
 
 /** Tasks list screen showing pending tasks with time-based filters. */
@@ -207,8 +208,9 @@ fun TaskCard(
     else MaterialTheme.colorScheme.surfaceContainerLow
   val dateText = formatTaskDate(task)
   val subjectText = task.subjectLabel()?.takeIf { it != task.title }
+  val repeatText = task.recurrence?.summary()
   val cardDescription =
-    listOfNotNull(task.title, subjectText, dateText).joinToString(separator = ", ")
+    listOfNotNull(task.title, subjectText, dateText, repeatText).joinToString(separator = ", ")
 
   Card(
     colors = CardDefaults.cardColors(containerColor = containerColor),
@@ -258,6 +260,15 @@ fun TaskCard(
               if (isOverdue) MaterialTheme.colorScheme.error
               else MaterialTheme.colorScheme.onSurfaceVariant,
           )
+          if (repeatText != null) {
+            Text(
+              text = repeatText,
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+            )
+          }
         }
       }
       Spacer(modifier = Modifier.width(8.dp))

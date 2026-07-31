@@ -35,6 +35,8 @@ import com.woliveiras.petit.worker.AutoTaskServiceImpl
 import com.woliveiras.petit.worker.BackupScheduler
 import com.woliveiras.petit.worker.TaskScheduler
 import com.woliveiras.petit.worker.TaskSchedulerImpl
+import com.woliveiras.petit.worker.TaskSeriesCoordinator
+import com.woliveiras.petit.worker.TaskSeriesCoordinatorImpl
 import com.woliveiras.petit.worker.WorkManagerBackupScheduler
 import dagger.Binds
 import dagger.Module
@@ -122,6 +124,12 @@ abstract class RepositoryModule {
   @Binds
   @Singleton
   abstract fun bindAutoTaskService(autoTaskServiceImpl: AutoTaskServiceImpl): AutoTaskService
+
+  @Binds
+  @Singleton
+  abstract fun bindTaskSeriesCoordinator(
+    taskSeriesCoordinatorImpl: TaskSeriesCoordinatorImpl
+  ): TaskSeriesCoordinator
 
   @Binds
   @Singleton

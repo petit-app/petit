@@ -186,6 +186,8 @@ data class ExportBundle(
           errors.add("Código de assunto de tarefa inválido (id: ${entry.id})")
         if (entry.subjectName != null && entry.subjectName.length > 100)
           errors.add("Assunto de tarefa muito longo (id: ${entry.id})")
+        if (entry.seriesId != null && entry.seriesId.length > 128)
+          errors.add("Identificador de série de tarefa inválido (id: ${entry.id})")
       }
 
       bundle.membershipChanges.forEach { change ->
@@ -444,11 +446,17 @@ fun Task.toExportJson(): JSONObject {
     put("description", description)
     put("scheduledFor", scheduledFor.format(dateTimeFormatter))
     put("status", status.name)
+    put("repeatRule", recurrence?.encode())
+    put("seriesId", seriesId)
+    put("occurrenceIndex", occurrenceIndex)
     put("createdAt", createdAt)
     put("updatedAt", updatedAt)
     put("deletedAt", deletedAt ?: JSONObject.NULL)
   }
 }
+
+/** A repeat rule is a short fixed-shape code, so anything longer comes from a crafted bundle. */
+private const val MAX_REPEAT_RULE = 128
 
 fun Task.Companion.fromExportJson(json: JSONObject): Task {
   val kind =
@@ -476,6 +484,9 @@ fun Task.Companion.fromExportJson(json: JSONObject): Task {
     description = json.optStringOrNull("description"),
     scheduledFor = LocalDateTime.parse(json.getString("scheduledFor"), dateTimeFormatter),
     status = status,
+    recurrence = TaskRecurrence.decode(json.optStringOrNull("repeatRule")?.take(MAX_REPEAT_RULE)),
+    seriesId = json.optStringOrNull("seriesId"),
+    occurrenceIndex = json.optInt("occurrenceIndex", 0).coerceAtLeast(0),
     createdAt = json.getLong("createdAt"),
     updatedAt = json.getLong("updatedAt"),
     deletedAt = json.optLongOrNull("deletedAt"),

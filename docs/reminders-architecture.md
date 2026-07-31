@@ -69,9 +69,37 @@ Responsibilities:
 
 ### Repeating Reminder
 
-1. Worker fires.
-2. Next schedule is calculated from repeat interval.
-3. Reminder is updated and rescheduled.
+Repeating tasks are stored as a series: one pending row plus the occurrences already completed.
+`TaskSeriesCoordinator` owns the whole lifecycle.
+
+Task columns that describe the series:
+
+- `repeatRule`: the encoded `TaskRecurrence` (`v1|interval|unit|weekdays|windowStart|windowEnd|endType|endValue`).
+- `seriesId`: shared by every occurrence of the same series.
+- `occurrenceIndex`: position of the pending occurrence inside the series.
+
+Flow when the notification fires:
+
+1. The worker loads the pending row and calls `onNotificationDelivered`.
+2. The coordinator advances the pending row in place when the delivery is late, so a caregiver who
+   never opens the app still sees a single actionable occurrence instead of a backlog.
+3. The worker posts the notification.
+4. Only then the worker calls `scheduleFollowUp`, which enqueues the following occurrence. The order
+   matters: the follow-up reuses the same unique work name, so enqueueing it before posting would
+   cancel the worker that is running.
+
+Flow when the caregiver marks an occurrence as done:
+
+1. `completeOccurrence` cancels the pending work and marks the row as completed.
+2. A new pending row is created for the next occurrence, inheriting `seriesId` and the repeat rule.
+3. Stopping a series (`stopSeries`) only removes the pending occurrence; the completed history stays.
+
+Recovery:
+
+- `reconcilePendingSeries` runs on app start and collapses missed occurrences, then reschedules.
+  This replaces `BOOT_COMPLETED` and `TIMEZONE_CHANGED` receivers: WorkManager already survives
+  reboots, and running the reconciliation on start keeps the app free of extra broadcast permissions
+  while still recovering from time and time zone changes.
 
 ## Permission Model
 

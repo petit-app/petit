@@ -19,6 +19,7 @@ import com.woliveiras.petit.presentation.util.rethrowIfCancellation
 import com.woliveiras.petit.presentation.util.taskSubjectLabel
 import com.woliveiras.petit.presentation.util.uiFailureText
 import com.woliveiras.petit.worker.TaskScheduler
+import com.woliveiras.petit.worker.TaskSeriesCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDateTime
@@ -46,12 +47,15 @@ data class TaskFormUiState(
   val subjectName: String = "",
   val subjectSuggestions: List<String> = emptyList(),
   val scheduledDate: LocalDateTime = LocalDateTime.now().plusHours(1),
+  val repeat: TaskRepeatFormState = TaskRepeatFormState(),
+  val isAutomaticTask: Boolean = false,
   val availablePets: List<Pet> = emptyList(),
   val isSaving: Boolean = false,
   val titleError: String? = null,
   val dateError: String? = null,
   val descriptionError: String? = null,
   val subjectError: String? = null,
+  val repeatError: String? = null,
 ) {
   val subjectControl: TaskSubjectControl
     get() = TaskSubjectOptions.controlFor(kind)
@@ -67,6 +71,14 @@ data class TaskFormUiState(
 
   val requiresSubjectFreeText: Boolean
     get() = TaskSubjectOptions.requiresFreeText(subjectControl, subjectCode)
+
+  /** Automatic health tasks follow the health record, so they never expose repeat controls. */
+  val showsRepeatControls: Boolean
+    get() = !isAutomaticTask
+
+  /** Only a saved repeating task can be stopped. */
+  val canStopSeries: Boolean
+    get() = isEditMode && !isAutomaticTask && repeat.repeats
 }
 
 /** Events emitted by TaskFormViewModel. */
@@ -74,6 +86,8 @@ sealed class TaskFormEvent {
   data object TaskSaved : TaskFormEvent()
 
   data object TaskDeleted : TaskFormEvent()
+
+  data object SeriesStopped : TaskFormEvent()
 
   data class Error(val message: String) : TaskFormEvent()
 }
@@ -87,6 +101,7 @@ constructor(
   private val taskRepository: TaskRepository,
   private val petRepository: PetRepository,
   private val taskScheduler: TaskScheduler,
+  private val taskSeriesCoordinator: TaskSeriesCoordinator,
 ) : ViewModel() {
 
   private val taskId: String? = savedStateHandle.get<String>("taskId")
@@ -134,6 +149,8 @@ constructor(
             subjectCode = task.subjectCode,
             subjectName = task.subjectName ?: "",
             scheduledDate = task.scheduledFor,
+            repeat = TaskRepeatFormState.of(task.recurrence),
+            isAutomaticTask = task.isAutomatic,
           )
         }
         loadSubjectSuggestions()
@@ -203,6 +220,25 @@ constructor(
     _uiState.update { it.copy(scheduledDate = date, dateError = null) }
   }
 
+  fun updateRepeat(repeat: TaskRepeatFormState) {
+    _uiState.update { it.copy(repeat = repeat, repeatError = null) }
+  }
+
+  fun updateRepeatPreset(preset: RepeatPreset) {
+    _uiState.update { state ->
+      val repeat = state.repeat
+      state.copy(
+        repeat =
+          repeat.copy(
+            preset = preset,
+            unit = preset.unit ?: repeat.unit,
+            interval = if (preset.unit == null) repeat.interval else preset.interval.toString(),
+          ),
+        repeatError = null,
+      )
+    }
+  }
+
   fun saveTask() {
     val state = _uiState.value
 
@@ -251,6 +287,13 @@ constructor(
       return
     }
 
+    if (state.repeat.repeats && !state.repeat.isValidFor(state.scheduledDate)) {
+      _uiState.update {
+        it.copy(repeatError = context.getString(R.string.repeat_validation_invalid))
+      }
+      return
+    }
+
     viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true) }
 
@@ -260,6 +303,13 @@ constructor(
           if (state.isEditMode) {
             taskRepository.getTaskById(state.editingTaskId!!)
           } else null
+
+        // A changed rule or a changed start restarts the series position, so an end condition
+        // counted in occurrences starts over instead of ending the series immediately.
+        val keepsSeriesPosition =
+          existingTask != null &&
+            existingTask.recurrence == state.repeat.recurrence &&
+            existingTask.scheduledFor == state.scheduledDate
 
         val task =
           Task(
@@ -278,6 +328,9 @@ constructor(
             description = state.description.trim().ifBlank { null },
             scheduledFor = state.scheduledDate,
             status = TaskStatus.PENDING,
+            recurrence = state.repeat.recurrence,
+            seriesId = existingTask?.seriesId,
+            occurrenceIndex = if (keepsSeriesPosition) existingTask.occurrenceIndex else 0,
             createdAt = existingTask?.createdAt ?: now,
             updatedAt = now,
           )
@@ -307,6 +360,18 @@ constructor(
         taskScheduler.cancelTask(id)
         taskRepository.deleteTask(id)
         _events.emit(TaskFormEvent.TaskDeleted)
+      } catch (e: Exception) {
+        _events.emit(TaskFormEvent.Error(e.uiFailureText(context, R.string.task_error_delete)))
+      }
+    }
+  }
+
+  fun stopSeries() {
+    val id = _uiState.value.editingTaskId ?: return
+    viewModelScope.launch {
+      try {
+        taskSeriesCoordinator.stopSeries(id)
+        _events.emit(TaskFormEvent.SeriesStopped)
       } catch (e: Exception) {
         _events.emit(TaskFormEvent.Error(e.uiFailureText(context, R.string.task_error_delete)))
       }

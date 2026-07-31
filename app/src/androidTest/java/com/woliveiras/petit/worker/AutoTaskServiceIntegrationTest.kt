@@ -147,6 +147,8 @@ class AutoTaskServiceIntegrationTest {
       scheduled += task
     }
 
+    override fun scheduleTaskAt(taskId: String, scheduledFor: java.time.LocalDateTime) = Unit
+
     override fun cancelTask(taskId: String) {
       cancelled += taskId
     }

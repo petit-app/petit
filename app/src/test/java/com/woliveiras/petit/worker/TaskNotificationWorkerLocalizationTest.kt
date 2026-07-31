@@ -17,11 +17,14 @@ import com.woliveiras.petit.data.repository.TaskRepository
 import com.woliveiras.petit.data.repository.UserPreferences
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.model.AppLanguage
+import com.woliveiras.petit.domain.model.RecurrenceUnit
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
+import com.woliveiras.petit.domain.model.TaskRecurrence
 import com.woliveiras.petit.domain.model.TaskStatus
 import com.woliveiras.petit.presentation.util.TaskDisplayText
 import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
+import com.woliveiras.petit.presentation.util.recurrenceSummary
 import java.time.LocalDateTime
 import java.util.Locale
 import java.util.concurrent.CancellationException
@@ -248,6 +251,66 @@ class TaskNotificationWorkerLocalizationTest {
     assertThat(notificationText()).isEqualTo(context.getString(R.string.app_name))
   }
 
+  @Test
+  fun aRepeatingTaskSaysSoInTheNotificationText() = runTest {
+    val storedTask =
+      medicationTask(subjectName = "Apoquel", description = "Após a refeição")
+        .copy(
+          recurrence = TaskRecurrence(interval = 8, unit = RecurrenceUnit.HOURS),
+          seriesId = "series-1",
+        )
+    val worker =
+      buildWorker(
+        FakeTaskRepository(storedTask),
+        TaskDisplayTextResolver { _, _ ->
+          TaskDisplayText("Remédio da Mimi", storedTask.description)
+        },
+      )
+
+    worker.doWork()
+
+    val cadence = recurrenceSummary(context, storedTask.recurrence!!)
+    assertThat(notificationText()).isEqualTo("Apoquel - Após a refeição - $cadence")
+  }
+
+  @Test
+  fun theFollowUpOccurrenceIsOnlyEnqueuedAfterTheNotificationIsPosted() = runTest {
+    val storedTask =
+      medicationTask(subjectName = "Apoquel", description = "Após a refeição")
+        .copy(
+          recurrence = TaskRecurrence(interval = 8, unit = RecurrenceUnit.HOURS),
+          seriesId = "series-1",
+        )
+    var notificationsWhenFollowUpWasEnqueued = -1
+    val coordinator =
+      object : TaskSeriesCoordinator {
+        override suspend fun completeOccurrence(taskId: String) = Unit
+
+        override suspend fun stopSeries(taskId: String) = Unit
+
+        override suspend fun onNotificationDelivered(task: Task): Task = task
+
+        override fun scheduleFollowUp(task: Task) {
+          notificationsWhenFollowUpWasEnqueued = manager.activeNotifications.size
+        }
+
+        override suspend fun reconcilePendingSeries() = Unit
+      }
+    val worker =
+      buildWorker(
+        FakeTaskRepository(storedTask),
+        TaskDisplayTextResolver { _, _ ->
+          TaskDisplayText("Remédio da Mimi", storedTask.description)
+        },
+        coordinator = coordinator,
+      )
+
+    val result = worker.doWork()
+
+    assertThat(result).isEqualTo(ListenableWorker.Result.success())
+    assertThat(notificationsWhenFollowUpWasEnqueued).isEqualTo(1)
+  }
+
   private fun medicationTask(subjectName: String?, description: String?) =
     Task(
       id = "auto_vacc_vacc-1",
@@ -273,6 +336,7 @@ class TaskNotificationWorkerLocalizationTest {
     repository: TaskRepository,
     resolver: TaskDisplayTextResolver,
     preferences: UserPreferencesRepository = FakeUserPreferencesRepository(),
+    coordinator: TaskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
   ): TaskNotificationWorker =
     TestListenableWorkerBuilder.from(context, TaskNotificationWorker::class.java)
       .setInputData(workDataOf(TaskNotificationWorker.KEY_TASK_ID to "auto_vacc_vacc-1"))
@@ -283,7 +347,14 @@ class TaskNotificationWorkerLocalizationTest {
             workerClassName: String,
             workerParameters: WorkerParameters,
           ): ListenableWorker =
-            TaskNotificationWorker(appContext, workerParameters, repository, resolver, preferences)
+            TaskNotificationWorker(
+              appContext,
+              workerParameters,
+              repository,
+              resolver,
+              preferences,
+              coordinator,
+            )
         }
       )
       .build()
@@ -321,6 +392,8 @@ class TaskNotificationWorkerLocalizationTest {
     override fun getNextTasks(limit: Int): Flow<List<Task>> = MutableStateFlow(listOf(task))
 
     override suspend fun getPastDueTasks(): List<Task> = emptyList()
+
+    override suspend fun getPendingRecurringTasks(): List<Task> = emptyList()
 
     override fun getCompletedTasks(): Flow<List<Task>> = MutableStateFlow(emptyList())
 

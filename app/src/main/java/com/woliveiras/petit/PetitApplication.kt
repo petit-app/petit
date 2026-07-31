@@ -3,6 +3,7 @@ package com.woliveiras.petit
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.woliveiras.petit.data.repository.FamilyGroupRepository
@@ -12,6 +13,7 @@ import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.usecase.backup.BackupTriggerCoordinator
 import com.woliveiras.petit.util.LocaleApplicator
 import com.woliveiras.petit.worker.LanSyncScheduler
+import com.woliveiras.petit.worker.TaskSeriesCoordinator
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -32,6 +34,7 @@ class PetitApplication : Application(), Configuration.Provider {
   @Inject lateinit var backupTriggerCoordinator: BackupTriggerCoordinator
   @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
   @Inject lateinit var localeApplicator: LocaleApplicator
+  @Inject lateinit var taskSeriesCoordinator: TaskSeriesCoordinator
   private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
   override fun onCreate() {
@@ -48,6 +51,16 @@ class PetitApplication : Application(), Configuration.Provider {
     applicationScope.launch {
       familyGroupRepository.isSyncEnabled.collect { shouldSchedule ->
         if (shouldSchedule) lanSyncScheduler.schedule() else lanSyncScheduler.cancel()
+      }
+    }
+    applicationScope.launch {
+      // Recovers repeating tasks after reboots, time changes and time zone changes.
+      try {
+        taskSeriesCoordinator.reconcilePendingSeries()
+      } catch (cancellation: CancellationException) {
+        throw cancellation
+      } catch (failure: Exception) {
+        Log.w(TAG, "Could not reconcile repeating tasks on start", failure)
       }
     }
     backupTriggerCoordinator.start(applicationScope)
@@ -74,6 +87,7 @@ class PetitApplication : Application(), Configuration.Provider {
 
   companion object {
     const val TASKS_CHANNEL_ID = "petit_reminders"
+    private const val TAG = "PetitApplication"
   }
 }
 

@@ -74,6 +74,9 @@ class TaskRepositoryImpl @Inject constructor(private val taskDao: TaskDao) : Tas
     return taskDao.getPastDueTasks(now).toDomain()
   }
 
+  override suspend fun getPendingRecurringTasks(): List<Task> =
+    taskDao.getPendingRecurringTasks().toDomain()
+
   override fun getCompletedTasks(): Flow<List<Task>> {
     return taskDao.getCompletedTasks().map { entities -> entities.toDomain() }
   }

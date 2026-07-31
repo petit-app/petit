@@ -638,6 +638,66 @@
     <string name="task_field_subject_medication_placeholder">E.g.: Apoquel</string>
     <string name="task_field_subject_unset">Not specified</string>
     <string name="task_field_subject_suggestions">Suggestions from what you already used</string>
+
+    <!-- Recurring tasks -->
+    <string name="task_field_repeat">Repeat</string>
+    <string name="repeat_preset_none">Does not repeat</string>
+    <string name="repeat_preset_daily">Every day</string>
+    <string name="repeat_preset_weekly">Every week</string>
+    <string name="repeat_preset_monthly">Every month</string>
+    <string name="repeat_preset_quarterly">Every 3 months</string>
+    <string name="repeat_preset_semiannual">Every 6 months</string>
+    <string name="repeat_preset_yearly">Every year</string>
+    <string name="repeat_preset_custom">Custom</string>
+    <string name="repeat_field_interval">Repeat every</string>
+    <string name="repeat_field_unit">Unit</string>
+    <string name="repeat_unit_hours">hours</string>
+    <string name="repeat_unit_days">days</string>
+    <string name="repeat_unit_weeks">weeks</string>
+    <string name="repeat_unit_months">months</string>
+    <string name="repeat_unit_years">years</string>
+    <string name="repeat_field_weekdays">Days of the week</string>
+    <string name="repeat_field_window">Only between set hours</string>
+    <string name="repeat_field_window_start">From</string>
+    <string name="repeat_field_window_end">Until</string>
+    <string name="repeat_field_end">Ends</string>
+    <string name="repeat_end_never">Never</string>
+    <string name="repeat_end_on_date">On a date</string>
+    <string name="repeat_end_after_occurrences">After a number of times</string>
+    <string name="repeat_field_end_date">End date</string>
+    <string name="repeat_field_end_count">Number of times</string>
+    <string name="repeat_validation_invalid">Check the repeat settings</string>
+    <string name="repeat_summary_weekdays">%1$s on %2$s</string>
+    <string name="repeat_summary_window">%1$s between %2$s and %3$s</string>
+    <string name="repeat_summary_until">%1$s, until %2$s</string>
+    <plurals name="repeat_summary_hours">
+        <item quantity="one">Every hour</item>
+        <item quantity="other">Every %d hours</item>
+    </plurals>
+    <plurals name="repeat_summary_days">
+        <item quantity="one">Every day</item>
+        <item quantity="other">Every %d days</item>
+    </plurals>
+    <plurals name="repeat_summary_weeks">
+        <item quantity="one">Every week</item>
+        <item quantity="other">Every %d weeks</item>
+    </plurals>
+    <plurals name="repeat_summary_months">
+        <item quantity="one">Every month</item>
+        <item quantity="other">Every %d months</item>
+    </plurals>
+    <plurals name="repeat_summary_years">
+        <item quantity="one">Every year</item>
+        <item quantity="other">Every %d years</item>
+    </plurals>
+    <plurals name="repeat_summary_times">
+        <item quantity="one">%1$s, once</item>
+        <item quantity="other">%1$s, %2$d times</item>
+    </plurals>
+    <string name="task_repeat_stop">Stop repeating</string>
+    <string name="task_repeat_stop_confirm_title">Stop this repeating task?</string>
+    <string name="task_repeat_stop_confirm_message">The next occurrence is cancelled. Completed ones stay in your history.</string>
+    <string name="task_auto_repeat_explanation">This task comes from the health record. The next one appears when you record the next dose, not from a repeat rule.</string>
     <string name="action_add_task">Add task</string>
     <string name="action_complete_task">Complete task</string>
     <string name="action_reactivate_task">Reactivate task</string>
@@ -668,6 +728,7 @@
     <string name="task_error_delete">Error deleting task</string>
     <string name="task_error_save">Error saving task</string>
     <string name="task_error_reactivate">Error reactivating task</string>
+    <string name="task_error_reactivate_series">This task repeats, so the next time is already scheduled</string>
     <string name="task_validation_title_required">Title is required</string>
     <string name="task_validation_date_future">Date must be in the future</string>
     <string name="task_validation_subject_required">Tell us which vaccine it is</string>

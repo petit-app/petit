@@ -38,6 +38,9 @@ interface TaskRepository {
   /** Get past due tasks that are still pending. */
   suspend fun getPastDueTasks(): List<Task>
 
+  /** Pending occurrence of every repeating series. */
+  suspend fun getPendingRecurringTasks(): List<Task>
+
   /** Get completed tasks ordered by completion date. */
   fun getCompletedTasks(): Flow<List<Task>>
 

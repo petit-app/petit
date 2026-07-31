@@ -610,6 +610,66 @@
   <string name="task_field_subject_medication_placeholder">Ej.: Apoquel</string>
   <string name="task_field_subject_unset">Sin especificar</string>
   <string name="task_field_subject_suggestions">Sugerencias de lo que ya usaste</string>
+
+  <!-- Recurring tasks -->
+  <string name="task_field_repeat">Repetir</string>
+  <string name="repeat_preset_none">No se repite</string>
+  <string name="repeat_preset_daily">Todos los días</string>
+  <string name="repeat_preset_weekly">Todas las semanas</string>
+  <string name="repeat_preset_monthly">Todos los meses</string>
+  <string name="repeat_preset_quarterly">Cada 3 meses</string>
+  <string name="repeat_preset_semiannual">Cada 6 meses</string>
+  <string name="repeat_preset_yearly">Todos los años</string>
+  <string name="repeat_preset_custom">Personalizado</string>
+  <string name="repeat_field_interval">Repetir cada</string>
+  <string name="repeat_field_unit">Unidad</string>
+  <string name="repeat_unit_hours">horas</string>
+  <string name="repeat_unit_days">días</string>
+  <string name="repeat_unit_weeks">semanas</string>
+  <string name="repeat_unit_months">meses</string>
+  <string name="repeat_unit_years">años</string>
+  <string name="repeat_field_weekdays">Días de la semana</string>
+  <string name="repeat_field_window">Solo entre horarios</string>
+  <string name="repeat_field_window_start">Desde</string>
+  <string name="repeat_field_window_end">Hasta</string>
+  <string name="repeat_field_end">Termina</string>
+  <string name="repeat_end_never">Nunca</string>
+  <string name="repeat_end_on_date">En una fecha</string>
+  <string name="repeat_end_after_occurrences">Después de algunas veces</string>
+  <string name="repeat_field_end_date">Fecha final</string>
+  <string name="repeat_field_end_count">Cantidad de veces</string>
+  <string name="repeat_validation_invalid">Revisa las opciones de repetición</string>
+  <string name="repeat_summary_weekdays">%1$s, %2$s</string>
+  <string name="repeat_summary_window">%1$s entre %2$s y %3$s</string>
+  <string name="repeat_summary_until">%1$s, hasta %2$s</string>
+  <plurals name="repeat_summary_hours">
+    <item quantity="one">Cada hora</item>
+    <item quantity="other">Cada %d horas</item>
+  </plurals>
+  <plurals name="repeat_summary_days">
+    <item quantity="one">Todos los días</item>
+    <item quantity="other">Cada %d días</item>
+  </plurals>
+  <plurals name="repeat_summary_weeks">
+    <item quantity="one">Todas las semanas</item>
+    <item quantity="other">Cada %d semanas</item>
+  </plurals>
+  <plurals name="repeat_summary_months">
+    <item quantity="one">Todos los meses</item>
+    <item quantity="other">Cada %d meses</item>
+  </plurals>
+  <plurals name="repeat_summary_years">
+    <item quantity="one">Todos los años</item>
+    <item quantity="other">Cada %d años</item>
+  </plurals>
+  <plurals name="repeat_summary_times">
+    <item quantity="one">%1$s, una vez</item>
+    <item quantity="other">%1$s, %2$d veces</item>
+  </plurals>
+  <string name="task_repeat_stop">Dejar de repetir</string>
+  <string name="task_repeat_stop_confirm_title">¿Detener esta tarea repetida?</string>
+  <string name="task_repeat_stop_confirm_message">Se cancela la próxima vez. Las ya completadas siguen en el historial.</string>
+  <string name="task_auto_repeat_explanation">Esta tarea viene del historial de salud. La próxima aparece cuando registres la próxima dosis, no por una regla de repetición.</string>
   <string name="action_add_task">Agregar tarea</string>
   <string name="action_complete_task">Completar tarea</string>
   <string name="action_reactivate_task">Reactivar tarea</string>
@@ -640,6 +700,7 @@
   <string name="task_error_delete">Error al eliminar tarea</string>
   <string name="task_error_save">Error al guardar tarea</string>
   <string name="task_error_reactivate">Error al reactivar tarea</string>
+  <string name="task_error_reactivate_series">Esta tarea se repite, así que la próxima vez ya está programada</string>
   <string name="task_validation_title_required">El título es obligatorio</string>
   <string name="task_validation_date_future">La fecha debe ser en el futuro</string>
   <string name="task_validation_subject_required">Indica cuál es la vacuna</string>

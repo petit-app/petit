@@ -4,16 +4,20 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.woliveiras.petit.R
 import com.woliveiras.petit.data.repository.TaskRepository
 import com.woliveiras.petit.data.repository.UserPreferences
 import com.woliveiras.petit.data.repository.UserPreferencesRepository
 import com.woliveiras.petit.domain.model.AppLanguage
 import com.woliveiras.petit.domain.model.AppTheme
+import com.woliveiras.petit.domain.model.RecurrenceUnit
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
+import com.woliveiras.petit.domain.model.TaskRecurrence
 import com.woliveiras.petit.domain.model.TaskStatus
 import com.woliveiras.petit.presentation.util.TaskDisplayText
 import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
+import com.woliveiras.petit.worker.NoOpTaskSeriesCoordinator
 import com.woliveiras.petit.worker.TaskScheduler
 import java.time.LocalDateTime
 import java.util.Locale
@@ -43,6 +47,7 @@ class TaskDisplayViewModelsTest {
   private val dispatcher = StandardTestDispatcher()
   private val context: Context = ApplicationProvider.getApplicationContext()
   private val scheduler = NoOpTaskScheduler()
+  private val seriesCoordinator = NoOpTaskSeriesCoordinator()
   private val resolver = TaskDisplayTextResolver { _, _ ->
     TaskDisplayText("Título localizado", "Descrição localizada")
   }
@@ -69,7 +74,8 @@ class TaskDisplayViewModelsTest {
         }
       val preferences = FakeUserPreferencesRepository()
 
-      val activeViewModel = TaskListViewModel(context, repository, scheduler, resolver, preferences)
+      val activeViewModel =
+        TaskListViewModel(context, repository, scheduler, seriesCoordinator, resolver, preferences)
       val completedViewModel =
         CompletedTasksViewModel(context, repository, scheduler, resolver, preferences)
       advanceUntilIdle()
@@ -110,7 +116,14 @@ class TaskDisplayViewModelsTest {
         }
       }
       val viewModel =
-        TaskListViewModel(context, repository, scheduler, languageResolver, preferences)
+        TaskListViewModel(
+          context,
+          repository,
+          scheduler,
+          seriesCoordinator,
+          languageResolver,
+          preferences,
+        )
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.tasks.map { it.title })
@@ -150,7 +163,14 @@ class TaskDisplayViewModelsTest {
         TaskDisplayText("${task.id} ${language?.code}", task.description)
       }
       val viewModel =
-        TaskListViewModel(context, repository, scheduler, delayedResolver, preferences)
+        TaskListViewModel(
+          context,
+          repository,
+          scheduler,
+          seriesCoordinator,
+          delayedResolver,
+          preferences,
+        )
       advanceUntilIdle()
 
       viewModel.setFilter(TaskFilter.TODAY)
@@ -204,9 +224,17 @@ class TaskDisplayViewModelsTest {
           }
         )
       val repository = FakeTaskRepository().apply { failStatusUpdate = true }
+      val failingCoordinator = NoOpTaskSeriesCoordinator().apply { failCompletion = true }
       val preferences = FakeUserPreferencesRepository(AppLanguage.PORTUGUESE_BR)
       val activeViewModel =
-        TaskListViewModel(localizedContext, repository, scheduler, resolver, preferences)
+        TaskListViewModel(
+          localizedContext,
+          repository,
+          scheduler,
+          failingCoordinator,
+          resolver,
+          preferences,
+        )
       val completedViewModel =
         CompletedTasksViewModel(localizedContext, repository, scheduler, resolver, preferences)
       val activeEvent = async { activeViewModel.events.first() }
@@ -221,6 +249,37 @@ class TaskDisplayViewModelsTest {
         .isEqualTo("Erro ao concluir tarefa")
       assertThat((completedEvent.await() as CompletedTasksEvent.Error).message)
         .isEqualTo("Erro ao reativar tarefa")
+    }
+
+  @Test
+  fun reactivatingAnOccurrenceOfASeriesIsRefusedSoTheSeriesDoesNotFork() =
+    runTest(dispatcher) {
+      val repository =
+        FakeTaskRepository().apply {
+          storedTask =
+            task("task-1", TaskStatus.COMPLETED)
+              .copy(
+                recurrence = TaskRecurrence(interval = 1, unit = RecurrenceUnit.DAYS),
+                seriesId = "series-1",
+              )
+        }
+      val viewModel =
+        CompletedTasksViewModel(
+          context,
+          repository,
+          scheduler,
+          resolver,
+          FakeUserPreferencesRepository(AppLanguage.ENGLISH),
+        )
+      val event = async { viewModel.events.first() }
+      runCurrent()
+
+      viewModel.reactivateTask("task-1")
+      advanceUntilIdle()
+
+      assertThat((event.await() as CompletedTasksEvent.Error).message)
+        .isEqualTo(context.getString(R.string.task_error_reactivate_series))
+      assertThat(repository.statusUpdates).isEmpty()
     }
 
   private fun task(id: String, status: TaskStatus) =
@@ -242,6 +301,8 @@ class TaskDisplayViewModelsTest {
     val dueInRangeBySubscription = mutableListOf<Flow<List<Task>>>()
     var rangeSubscriptions = 0
     var failStatusUpdate = false
+    var storedTask: Task? = null
+    val statusUpdates = mutableListOf<Pair<String, TaskStatus>>()
 
     override fun getPendingTasks(): Flow<List<Task>> = MutableStateFlow(emptyList())
 
@@ -249,7 +310,7 @@ class TaskDisplayViewModelsTest {
 
     override fun getTasksForPet(petId: String): Flow<List<Task>> = MutableStateFlow(emptyList())
 
-    override suspend fun getTaskById(id: String): Task? = null
+    override suspend fun getTaskById(id: String): Task? = storedTask?.takeIf { it.id == id }
 
     override fun getTasksDueToday(): Flow<List<Task>> = MutableStateFlow(emptyList())
 
@@ -266,6 +327,8 @@ class TaskDisplayViewModelsTest {
 
     override suspend fun getPastDueTasks(): List<Task> = emptyList()
 
+    override suspend fun getPendingRecurringTasks(): List<Task> = emptyList()
+
     override fun getCompletedTasks(): Flow<List<Task>> = completedTasks
 
     override suspend fun saveTask(task: Task) = Unit
@@ -274,6 +337,7 @@ class TaskDisplayViewModelsTest {
       if (failStatusUpdate) {
         error("Provider detail in English: update rejected")
       }
+      statusUpdates += id to status
     }
 
     override suspend fun deleteTask(id: String) = Unit
@@ -304,6 +368,8 @@ class TaskDisplayViewModelsTest {
 
   private class NoOpTaskScheduler : TaskScheduler {
     override fun scheduleTask(task: Task) = Unit
+
+    override fun scheduleTaskAt(taskId: String, scheduledFor: java.time.LocalDateTime) = Unit
 
     override fun cancelTask(taskId: String) = Unit
 

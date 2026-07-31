@@ -10,12 +10,16 @@ import com.woliveiras.petit.data.repository.TaskRepository
 import com.woliveiras.petit.domain.model.DewormingType
 import com.woliveiras.petit.domain.model.Pet
 import com.woliveiras.petit.domain.model.PetType
+import com.woliveiras.petit.domain.model.RecurrenceUnit
 import com.woliveiras.petit.domain.model.Sex
 import com.woliveiras.petit.domain.model.Task
 import com.woliveiras.petit.domain.model.TaskKind
+import com.woliveiras.petit.domain.model.TaskRecurrence
 import com.woliveiras.petit.domain.model.TaskStatus
 import com.woliveiras.petit.domain.model.VaccineType
+import com.woliveiras.petit.worker.NoOpTaskSeriesCoordinator
 import com.woliveiras.petit.worker.TaskScheduler
+import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -204,6 +208,7 @@ class TaskFormSubjectViewModelTest {
           taskRepository = repository,
           petRepository = FakePetRepository(),
           taskScheduler = NoOpTaskScheduler(),
+          taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
         )
       advanceUntilIdle()
 
@@ -216,6 +221,101 @@ class TaskFormSubjectViewModelTest {
       assertThat(viewModel.uiState.value.title).isEqualTo("Vermífugo")
     }
 
+  @Test
+  fun anEndDateThatNeverLetsTheTaskComeBackIsRejected() =
+    runTest(dispatcher) {
+      val repository = FakeTaskRepository()
+      val viewModel = viewModel(repository)
+      advanceUntilIdle()
+
+      val start = LocalDateTime.now().plusDays(2)
+      viewModel.updateKind(TaskKind.CUSTOM)
+      viewModel.updateTitle("Passear com o Lino")
+      viewModel.updateScheduledDate(start)
+      viewModel.updateRepeat(
+        TaskRepeatFormState(
+          preset = RepeatPreset.DAILY,
+          endMode = RepeatEndMode.ON_DATE,
+          endDate = start.toLocalDate(),
+        )
+      )
+      viewModel.saveTask()
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.repeatError)
+        .isEqualTo(context.getString(R.string.repeat_validation_invalid))
+      assertThat(repository.saved).isEmpty()
+    }
+
+  @Test
+  fun editingARepeatingTaskWithoutTouchingItsRuleKeepsTheSeriesPosition() =
+    runTest(dispatcher) {
+      val start = LocalDateTime.now().plusDays(3).withNano(0)
+      val stored =
+        Task(
+          id = "task-1",
+          kind = TaskKind.CUSTOM,
+          title = "Passear com o Lino",
+          scheduledFor = start,
+          recurrence = TaskRecurrence(interval = 1, unit = RecurrenceUnit.DAYS),
+          seriesId = "series-1",
+          occurrenceIndex = 4,
+          createdAt = 1L,
+          updatedAt = 1L,
+        )
+      val repository = FakeTaskRepository(storedTask = stored)
+      val viewModel = editingViewModel(repository, stored)
+      advanceUntilIdle()
+
+      viewModel.updateTitle("Passear com o Lino de manhã")
+      viewModel.saveTask()
+      advanceUntilIdle()
+
+      val saved = repository.saved.single()
+      assertThat(saved.occurrenceIndex).isEqualTo(4)
+      assertThat(saved.seriesId).isEqualTo("series-1")
+    }
+
+  @Test
+  fun changingTheCadenceRestartsTheSeriesPosition() =
+    runTest(dispatcher) {
+      val start = LocalDateTime.now().plusDays(3).withNano(0)
+      val stored =
+        Task(
+          id = "task-1",
+          kind = TaskKind.CUSTOM,
+          title = "Passear com o Lino",
+          scheduledFor = start,
+          recurrence = TaskRecurrence(interval = 1, unit = RecurrenceUnit.DAYS),
+          seriesId = "series-1",
+          occurrenceIndex = 4,
+          createdAt = 1L,
+          updatedAt = 1L,
+        )
+      val repository = FakeTaskRepository(storedTask = stored)
+      val viewModel = editingViewModel(repository, stored)
+      advanceUntilIdle()
+
+      viewModel.updateRepeatPreset(RepeatPreset.WEEKLY)
+      viewModel.saveTask()
+      advanceUntilIdle()
+
+      val saved = repository.saved.single()
+      assertThat(saved.occurrenceIndex).isEqualTo(0)
+      assertThat(saved.recurrence)
+        .isEqualTo(TaskRecurrence(interval = 1, unit = RecurrenceUnit.WEEKS))
+    }
+
+  private fun editingViewModel(repository: TaskRepository, editing: Task) =
+    TaskFormViewModel(
+      savedStateHandle = SavedStateHandle(mapOf("taskId" to editing.id)),
+      context = context,
+      taskRepository = repository,
+      petRepository = FakePetRepository(),
+      taskScheduler = NoOpTaskScheduler(),
+      taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
+    )
+
   private fun viewModel(repository: TaskRepository = FakeTaskRepository()) =
     TaskFormViewModel(
       savedStateHandle = SavedStateHandle(),
@@ -223,6 +323,7 @@ class TaskFormSubjectViewModelTest {
       taskRepository = repository,
       petRepository = FakePetRepository(),
       taskScheduler = NoOpTaskScheduler(),
+      taskSeriesCoordinator = NoOpTaskSeriesCoordinator(),
     )
 
   private class FakeTaskRepository(
@@ -251,6 +352,8 @@ class TaskFormSubjectViewModelTest {
     override fun getNextTasks(limit: Int): Flow<List<Task>> = MutableStateFlow(emptyList())
 
     override suspend fun getPastDueTasks(): List<Task> = emptyList()
+
+    override suspend fun getPendingRecurringTasks(): List<Task> = emptyList()
 
     override fun getCompletedTasks(): Flow<List<Task>> = MutableStateFlow(emptyList())
 
@@ -294,6 +397,8 @@ class TaskFormSubjectViewModelTest {
 
   private class NoOpTaskScheduler : TaskScheduler {
     override fun scheduleTask(task: Task) = Unit
+
+    override fun scheduleTaskAt(taskId: String, scheduledFor: java.time.LocalDateTime) = Unit
 
     override fun cancelTask(taskId: String) = Unit
 

@@ -18,6 +18,7 @@ import com.woliveiras.petit.domain.model.WeightEntry
 import com.woliveiras.petit.domain.model.WeightStatus
 import com.woliveiras.petit.domain.usecase.GetPetHealthSummaryAction
 import com.woliveiras.petit.presentation.util.TaskDisplayTextResolver
+import com.woliveiras.petit.worker.TaskSeriesCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
@@ -124,6 +125,7 @@ constructor(
   private val timelineRepository: TimelineRepository,
   private val taskDisplayTextResolver: TaskDisplayTextResolver,
   private val userPreferencesRepository: UserPreferencesRepository,
+  private val taskSeriesCoordinator: TaskSeriesCoordinator,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(HomeUiState())
@@ -288,10 +290,15 @@ constructor(
 
   fun completeTask(taskId: String) {
     viewModelScope.launch {
-      taskRepository.updateTaskStatus(
-        taskId,
-        com.woliveiras.petit.domain.model.TaskStatus.COMPLETED,
-      )
+      // Goes through the coordinator so completing a repeating task from Home opens its next
+      // occurrence instead of ending the series.
+      try {
+        taskSeriesCoordinator.completeOccurrence(taskId)
+      } catch (cancellation: CancellationException) {
+        throw cancellation
+      } catch (_: Exception) {
+        // The dashboard has no error surface; the task simply stays pending.
+      }
     }
   }
 }
